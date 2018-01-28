@@ -45,25 +45,47 @@ class ModuleTest(object):
             if max_error_i > max_error:
                 max_error = max_error_i
         
-        # benchmark pytorch
+        # benchmark pytorch throughput
+        torch.cuda.current_stream().synchronize()
+        t0 = time.time()
+        for i in range(50):
+            outputs = module(*inputs)
+        torch.cuda.current_stream().synchronize()
+        t1 = time.time()
+        
+        fps = 50.0 / (t1 - t0)
+        
+        # benchmark tensorrt throughput
+        torch.cuda.current_stream().synchronize()
+        t0 = time.time()
+        for i in range(50):
+            outputs = module_trt(*inputs)
+        torch.cuda.current_stream().synchronize()
+        t1 = time.time()
+        
+        fps_trt = 50.0 / (t1 - t0)
+        
+        # benchmark pytorch latency
+        torch.cuda.current_stream().synchronize()
         t0 = time.time()
         for i in range(50):
             outputs = module(*inputs)
             torch.cuda.current_stream().synchronize()
         t1 = time.time()
         
-        fps = 50.0 / (t1 - t0)
+        ms = 1000.0 * (t1 - t0) / 50.0
         
-        # benchmark tensorrt
+        # benchmark tensorrt latency
+        torch.cuda.current_stream().synchronize()
         t0 = time.time()
         for i in range(50):
             outputs = module_trt(*inputs)
             torch.cuda.current_stream().synchronize()
         t1 = time.time()
         
-        fps_trt = 50.0 / (t1 - t0)
+        ms_trt = 1000.0 * (t1 - t0) / 50.0
         
-        return max_error, fps, fps_trt
+        return max_error, fps, fps_trt, ms, ms_trt
             
         
 MODULE_TESTS = [
@@ -105,10 +127,10 @@ if __name__ == '__main__':
             continue
             
         # run test
-        max_error, fps, fps_trt = test.run()
+        max_error, fps, fps_trt, ms, ms_trt = test.run()
         
         # write entry
-        line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt)
+        line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt, ms, ms_trt)
         print(line)
         with open(args.output, 'a+') as f:
             f.write(line + '\n')

@@ -2,8 +2,8 @@ OUTPUT_FILE=$1
 
 touch $OUTPUT_FILE
 
-echo "| Name | Data Type | Input Shapes | torch2trt kwargs | Max Error | FPS (PyTorch) | FPS (TensorRT) |" >> $OUTPUT_FILE
-echo "|------|-----------|--------------|------------------|-----------|---------------|----------------|" >> $OUTPUT_FILE
+echo "| Name | Data Type | Input Shapes | torch2trt kwargs | Max Error | Throughput (PyTorch) | Throughput (TensorRT) | Latency (PyTorch) | Latency (TensorRT) |" >> $OUTPUT_FILE
+echo "|------|-----------|--------------|------------------|-----------|----------------------|-----------------------|-------------------|--------------------|" >> $OUTPUT_FILE
 
 python3 -m torch2trt.test -o $OUTPUT_FILE --name alexnet
 python3 -m torch2trt.test -o $OUTPUT_FILE --name squeezenet1_0
