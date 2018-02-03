@@ -49,6 +49,7 @@ class ModuleTest(object):
         t0 = time.time()
         for i in range(50):
             outputs = module(*inputs)
+            torch.cuda.current_stream().synchronize()
         t1 = time.time()
         
         fps = 50.0 / (t1 - t0)
@@ -57,6 +58,7 @@ class ModuleTest(object):
         t0 = time.time()
         for i in range(50):
             outputs = module_trt(*inputs)
+            torch.cuda.current_stream().synchronize()
         t1 = time.time()
         
         fps_trt = 50.0 / (t1 - t0)
