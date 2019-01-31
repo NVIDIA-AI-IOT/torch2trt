@@ -1,33 +1,41 @@
-This module includes code related to PyTorch -> TensorRT conversion.
-Most notably it includes the ``TRTModule`` class, which executes a TensorRT
-engine like a PyTorch module.  It also includes the ``torch2trt``
-function, which converts a PyTorch module to TensorRT using the TensorRT
-python API.  The converter works by attaching PyTorch to TensorRT 
-conversion functions pytorch functions that are supported by TensorRT. The
-list of conversion function mappings are contained in the ``CONVERTERS`` 
-global variable.  Pleast note, the list of converters is NOT comprehensive.
-Converters and plugins will be added as needed by various models.
+# torch2trt - A PyTorch -> TensorRT Converter
 
-### Convert a PyTorch module to TensorRT
+This is an experimental PyTorch to TensorRT converter which utilizes the 
+TensorRT Python API.  We've found it useful in some examples, but it is 
+not comprehensive.  
+
+### Setup
+
+```bash
+python setup.py install --user
+```
+
+### Usage
 
 ```python
 from torch2trt import torch2trt
 from torchvision.models.alexnet import alexnet
 
+# create some regular pytorch model...
 model = alexnet(pretrained=True).eval().cuda()
 
+# create example data
 x = torch.ones((1, 3, 224, 224)).cuda()
 
-# help(create_tensorrt_module) for more information
+# convert to TensorRT feeding sample data as input
 model_trt = torch2trt(model, [x])
+```
 
+We can then test the output of the regular and TensorRT optimized models
+
+```
 y = model(x)
 y_trt = model_trt(x)
 
 print(torch.max(torch.abs(y - y_trt)))
 ```
 
-### Register or override a converter
+### Add (or override) a converter
 
 Here we show how to add an example converter using the TensorRT
 python API.
