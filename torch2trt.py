@@ -145,6 +145,8 @@ class ConversionContext(object):
         for i, torch_output in enumerate(torch_outputs):
             trt_tensor = self.trt_tensors[torch_output.__hash__()]
             trt_tensor.name = names[i]
+            trt_tensor.location = torch_device_to_trt(torch_output.device)
+            trt_tensor.dtype = torch_dtype_to_trt(torch_output.dtype)
             self.network.mark_output(trt_tensor)
 
 
