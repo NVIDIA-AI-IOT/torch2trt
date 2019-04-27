@@ -35,6 +35,29 @@ y_trt = model_trt(x)
 print(torch.max(torch.abs(y - y_trt)))
 ```
 
+### Tested models
+
+| Model | PyTorch FP16 (Jetson Nano) | TensorRT FP16 (Jetson Nano) |
+|-------|--------------|-----------------|
+| alexnet |  |  |
+| resnet18 |  |  |
+| resnet50 |  |  |
+| resnet101 |  |  |
+| resnet152 |  |  |
+| densenet121 |  |  |
+| densenet169 |  |  |
+| densenet201 |  |  |
+| densenet161 |  |  |
+| vgg11 |  |  |
+| vgg13 |  |  |
+| vgg16 |  |  |
+| vgg19 |  |  |
+| vgg11_bn |  |  |
+| vgg13_bn |  |  |
+| vgg16_bn |  |  |
+| vgg19_bn |  |  |
+
+
 ### Add (or override) a converter
 
 Here we show how to add an example converter using the TensorRT
