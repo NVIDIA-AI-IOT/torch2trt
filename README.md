@@ -39,7 +39,7 @@ print(torch.max(torch.abs(y - y_trt)))
 
 | Model | PyTorch FP16 (Jetson Nano) | TensorRT FP16 (Jetson Nano) |
 |-------|--------------|-----------------|
-| alexnet | 18.3s | 13.2 |
+| alexnet | 0.018 | 0.013 |
 | squeezenet1_0 | 0.021 | 0.008 |
 | squeezenet1_1 |  |  |
 | resnet18 |  |  |
