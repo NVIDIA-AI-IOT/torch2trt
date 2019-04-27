@@ -6,7 +6,7 @@ TensorRT Python API.  The goals of the converter are
 * Easy to use - Convert models with a single function call ``torch2trt``
 * Easy to extend - Write your own layer converter in Python and register it with ``@tensorrt_converter``
 
-If you find an issue, please [let us know](../..//issues)!  We'd also love to hear if you add your own ``@tensorrt_converter``. It may be helpful to others.
+If you find an issue, please [let us know](../..//issues)!  We'd also love to hear if create your own ``@tensorrt_converter``. It may be helpful to others.
 
 ### Setup
 
