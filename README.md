@@ -55,7 +55,7 @@ Below are models that we benchmarked on NVIDIA Jetson Nano.  Timing just include
 | resnet152 | 200ms | 93ms |
 | densenet121 | 83ms | 46ms |
 | densenet169 | 116ms | 58ms |
-| densenet201 |  |  |
+| densenet201 | 139ms | 75ms |
 | densenet161 |  |  |
 | vgg11 |  |  |
 | vgg13 |  |  |
