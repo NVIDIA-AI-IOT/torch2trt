@@ -179,7 +179,7 @@ class TRTModule(torch.nn.Module):
             idx = self._trt_engine.get_binding_index(input_name)
             bindings[idx] = inputs[i].data_ptr()
 
-        self._trt_context.execute(batch_size, bindings)
+        self._trt_context.execute_async(batch_size, bindings, torch.cuda.current_stream().cuda_stream)
 
         outputs = tuple(outputs)
         if len(outputs) == 1:
@@ -441,10 +441,8 @@ def convert_BatchNorm2d(ctx):
 
     scale = module.weight.detach().cpu().numpy() / np.sqrt(module.running_var.detach().cpu().numpy() + module.eps)
     bias = module.bias.detach().cpu().numpy() - module.running_mean.detach().cpu().numpy() * scale
-    trt_scale = ctx.network.add_constant((scale.size, 1, 1), scale)
-    trt_bias = ctx.network.add_constant((bias.size, 1, 1), bias)
-    layer = ctx.network.add_elementwise(trt_input, trt_scale.get_output(0), trt.ElementWiseOperation.PROD)
-    layer = ctx.network.add_elementwise(layer.get_output(0), trt_bias.get_output(0), trt.ElementWiseOperation.SUM)
+    power = np.ones_like(scale)
+    layer = ctx.network.add_scale(trt_input, trt.ScaleMode.CHANNEL, bias, scale, power)
 
     ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
 
