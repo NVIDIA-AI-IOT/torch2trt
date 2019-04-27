@@ -50,7 +50,7 @@ Below are models that we benchmarked on NVIDIA Jetson Nano.  Timing just include
 | squeezenet1_1 | 16ms | 5.5ms |
 | resnet18 |  | 13ms |
 | resnet34 |  | 23ms |
-| resnet50 |  |  |
+| resnet50 | 77ms | 38ms |
 | resnet101 | 135ms | 62ms |
 | resnet152 |  |  |
 | densenet121 |  |  |
