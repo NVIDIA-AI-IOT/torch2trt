@@ -1,8 +1,12 @@
 # torch2trt - A PyTorch -> TensorRT Converter
 
-This is an experimental PyTorch to TensorRT converter which utilizes the 
-TensorRT Python API.  We've found it useful in some examples, but it is 
-not comprehensive.  
+torch2trt is a PyTorch to TensorRT converter which utilizes the 
+TensorRT Python API.  The converter is
+
+* Easy to use - Convert models with a single function call ``torch2trt``
+* Easy to extend - Write your own layer converter in Python and register it with ``@tensorrt_converter``
+
+If you find an issue, please [let us know](../..//issues)!  We'd also love to hear if you create your own ``@tensorrt_converter``. It may be helpful to others.
 
 ### Setup
 
@@ -37,22 +41,25 @@ print(torch.max(torch.abs(y - y_trt)))
 
 ### Tested models
 
+Below are models that we benchmarked on NVIDIA Jetson Nano.  Timing just includes model execution (not data copy).
+
 | Model | PyTorch FP16 (Jetson Nano) | TensorRT FP16 (Jetson Nano) |
 |-------|--------------|-----------------|
-| alexnet | 18.3s | 13.2 |
-| squeezenet1_0 | 0.021 | 0.008 |
-| squeezenet1_1 |  |  |
-| resnet18 |  |  |
-| resnet50 |  |  |
-| resnet101 |  |  |
-| resnet152 |  |  |
-| densenet121 |  |  |
-| densenet169 |  |  |
-| densenet201 |  |  |
-| densenet161 |  |  |
-| vgg11 |  |  |
-| vgg13 |  |  |
-| vgg16 |  |  |
+| alexnet | 18ms | 13ms |
+| squeezenet1_0 | 21ms | 8.4ms |
+| squeezenet1_1 | 16ms | 5.5ms |
+| resnet18 | 32ms | 11ms |
+| resnet34 | 58ms | 21ms |
+| resnet50 | 77ms | 38ms |
+| resnet101 | 135ms | 62ms |
+| resnet152 | 200ms | 93ms |
+| densenet121 | 83ms | 46ms |
+| densenet169 | 116ms | 58ms |
+| densenet201 | 139ms | 75ms |
+| densenet161 | 209ms | 97ms |
+| vgg11 | 61ms | 17ms |
+| vgg13 | 96ms | 33ms |
+| vgg16 | 137ms | 44ms |
 | vgg19 |  |  |
 | vgg11_bn |  |  |
 | vgg13_bn |  |  |
@@ -91,3 +98,11 @@ the following
   may be unexpected.
 
 Please see the ``torch2trt.py`` module for more examples.
+
+### A comment on variable size tensors
+
+TensorRT currently does not support variable size Tensors, so whatever input shape you use when converting, you must use
+when executing.  While this may seem
+limiting, it can actually be a good constraint when designing your model for use in embedded systems.  By 
+restricting to a fixed input size, we can expect similar memory usage and runtime.  Ultimately, even if 
+TensorRT didn't have this constraint, you'd probably want to have it anyways :)
