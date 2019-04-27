@@ -37,12 +37,14 @@ print(torch.max(torch.abs(y - y_trt)))
 
 ### Tested models
 
+Below are models that we benchmarked on NVIDIA Jetson Nano.  Timing just includes model execution (not data copy).
+
 | Model | PyTorch FP16 (Jetson Nano) | TensorRT FP16 (Jetson Nano) |
 |-------|--------------|-----------------|
 | alexnet | 18ms | 13ms |
 | squeezenet1_0 | 21ms | 8.4ms |
 | squeezenet1_1 | 16ms | 5.5ms |
-| resnet18 |  |  |
+| resnet18 | 29ms | 13ms |
 | resnet50 |  |  |
 | resnet101 |  |  |
 | resnet152 |  |  |
