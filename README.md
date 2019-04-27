@@ -1,8 +1,12 @@
 # torch2trt - A PyTorch -> TensorRT Converter
 
 This is PyTorch to TensorRT converter which utilizes the 
-TensorRT Python API.  It's very easy to use.  We've found it useful in some examples ([see below](#Tested-models)), but it is 
-not comprehensive.  
+TensorRT Python API.  The goals of the converter are
+
+* Easy to use - Convert models with a single function call ``torch2trt``
+* Easy to extend - Write your own layer converter in Python and register it with ``@tensorrt_converter``
+
+If you find an issue or write your own layer converter, please [let us know](../..//issues)!
 
 ### Setup
 
