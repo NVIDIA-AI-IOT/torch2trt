@@ -98,3 +98,10 @@ the following
   may be unexpected.
 
 Please see the ``torch2trt.py`` module for more examples.
+
+### A comment on variable size tensors
+
+In case you're unfamilar, TensorRT currently does not support variable size Tensors.  While this may seem
+limiting, it can actually be a good constraint when designing your model for use in embedded systems.  By 
+restricting to a fixed input size, we can expect similar memory usage and runtime.  Ultimately, even if 
+TensorRT didn't have this constraint, you'd probably want to have it anyways :)
