@@ -68,7 +68,18 @@ Below are models that we benchmarked on NVIDIA Jetson Nano.  Timing just include
 | [mobilenet_v2](https://github.com/tonylins/pytorch-mobilenet-v2) | 27ms | 16ms |
 
 
-### Add (or override) a converter
+### How does it work?
+
+This converter works by attaching conversion functions (like ``convert_ReLU``) to the original 
+PyTorch functional calls (like ``torch.nn.ReLU.forward``).  The sample input data is passed
+through the network, just as before, except now whenever a registered function (``torch.nn.ReLU.forward``)
+is encountered, the corresponding converter (``convert_ReLU``) is called.  The converter
+is passed some information, like the arguments to the original PyTorch function, the TensorRT
+network that is currently being constructed, and a dictionary of TensorRT tensors that have been
+added.  We call this collection of information the ``context`` in which the converter is called.
+You can use it to extend TensorRT network.
+
+### How to add (or override) a converter
 
 Here we show how to add an example converter using the TensorRT
 python API.
