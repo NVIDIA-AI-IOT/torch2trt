@@ -75,9 +75,9 @@ PyTorch functional calls (like ``torch.nn.ReLU.forward``).  The sample input dat
 through the network, just as before, except now whenever a registered function (``torch.nn.ReLU.forward``)
 is encountered, the corresponding converter (``convert_ReLU``) is called.  The converter
 is passed some information, like the arguments to the original PyTorch function, the TensorRT
-network that is currently being constructed, and a dictionary of TensorRT tensors that have been
-added.  We call this collection of information the ``context`` in which the converter is called.
-You can use it to extend TensorRT network.
+network that is currently being constructed, and a dictionary of TensorRT tensors that have already been
+added.  The converter then uses this information to add layers to the TensorRT network, and 
+add any new TensorRT tensors to the growing dictionary.
 
 ### How to add (or override) a converter
 
@@ -100,11 +100,12 @@ def convert_ReLU(ctx):
 The converter takes one argument, a ``ConversionContext``, which will contain
 the following
 
-* network: The TensorRT network that is being constructed.
-* method_args: Positional arguments that were passed to the specified Torch function.
-* method_kwargs: Keyword arguments that were passed to the specified Torch function.
-* method_return: The value returned by the specified Torch function.
-* trt_tensors: A dictionary mapping Torch tensors (by hash value) to TensorRT tensors.  The
+* network - The TensorRT network that is being constructed.
+
+* method_args - Positional arguments that were passed to the specified Torch function.
+* method_kwargs - Keyword arguments that were passed to the specified Torch function.
+* method_return - The value returned by the specified Torch function.
+* trt_tensors - A dictionary mapping Torch tensors (by hash value) to TensorRT tensors.  The
   converter must the set values for any output Tensors.  Otherwise, if a later function uses
   the Torch tensor, and there is not an associated TensorRT tensor in the map, results 
   may be unexpected.
