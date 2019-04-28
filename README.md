@@ -65,6 +65,7 @@ Below are models that we benchmarked on NVIDIA Jetson Nano.  Timing just include
 | vgg13_bn |  |  |
 | vgg16_bn |  |  |
 | vgg19_bn |  |  |
+| [mobilenet_v2](https://github.com/tonylins/pytorch-mobilenet-v2) |  |  |
 
 
 ### Add (or override) a converter
