@@ -73,7 +73,7 @@ Below are models that we benchmarked on NVIDIA Jetson Nano.  Timing just include
 This converter works by attaching conversion functions (like ``convert_ReLU``) to the original 
 PyTorch functional calls (like ``torch.nn.ReLU.forward``).  The sample input data is passed
 through the network, just as before, except now whenever a registered function (``torch.nn.ReLU.forward``)
-is encountered, the corresponding converter (``convert_ReLU``) is called.  The converter
+is encountered, the corresponding converter (``convert_ReLU``) is also called afterwards.  The converter
 is passed some information, like the arguments to the original PyTorch function, the TensorRT
 network that is currently being constructed, and a dictionary of TensorRT tensors that have already been
 added.  The converter then uses this information to add layers to the TensorRT network, and 
