@@ -102,12 +102,12 @@ the following
 
 * network - The TensorRT network that is being constructed.
 
-* method_args - Positional arguments that were passed to the specified Torch function.
-* method_kwargs - Keyword arguments that were passed to the specified Torch function.
-* method_return - The value returned by the specified Torch function.
-* trt_tensors - A dictionary mapping Torch tensors (by hash value) to TensorRT tensors.  The
+* ``ctx.method_args`` - Positional arguments that were passed to the specified PyTorch function.
+* ``ctx.method_kwargs`` - Keyword arguments that were passed to the specified PyTorch function.
+* ``ctx.method_return`` - The value returned by the specified PyTorch function.
+* ``ctx.trt_tensors`` - A dictionary mapping PyTorch tensors (by hash value) to TensorRT tensors.  The
   converter must the set values for any output Tensors.  Otherwise, if a later function uses
-  the Torch tensor, and there is not an associated TensorRT tensor in the map, results 
+  the PyTorch tensor, and there is not an associated TensorRT tensor in the map, results 
   may be unexpected.
 
 Please see the ``torch2trt.py`` module for more examples.
