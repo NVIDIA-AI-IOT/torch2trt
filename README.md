@@ -100,7 +100,7 @@ def convert_ReLU(ctx):
 The converter takes one argument, a ``ConversionContext``, which will contain
 the following
 
-* network - The TensorRT network that is being constructed.
+* ``ctx.network`` - The TensorRT network that is being constructed.
 
 * ``ctx.method_args`` - Positional arguments that were passed to the specified PyTorch function.
 * ``ctx.method_kwargs`` - Keyword arguments that were passed to the specified PyTorch function.
