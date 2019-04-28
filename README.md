@@ -1,4 +1,4 @@
-# torch2trt - A PyTorch -> TensorRT Converter
+# torch2trt
 
 torch2trt is a PyTorch to TensorRT converter which utilizes the 
 TensorRT Python API.  The converter is
