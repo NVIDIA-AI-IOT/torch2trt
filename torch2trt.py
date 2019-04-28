@@ -266,7 +266,9 @@ def convert_Conv2d(ctx):
     if not isinstance(padding, tuple):
         padding = (padding, ) * 2
 
-    bias = trt.Weights()
+    kernel = module.weight.detach().cpu().numpy()
+    
+    bias = trt.Weights(torch_dtype_to_trt(module.weight.dtype))
     if module.bias is not None:
         bias = module.bias.detach().cpu().numpy()
 
@@ -274,7 +276,7 @@ def convert_Conv2d(ctx):
         input=trt_input,
         num_output_maps=module.out_channels,
         kernel_shape=kernel_size,
-        kernel=module.weight.detach().cpu().numpy(),
+        kernel=kernel,
         bias=bias)
     layer.stride = stride
     layer.padding = padding
@@ -440,10 +442,11 @@ def convert_BatchNorm2d(ctx):
     input = ctx.method_args[1]
     output = ctx.method_return
     trt_input = ctx.trt_tensors[input.__hash__()]
-
+    
     scale = module.weight.detach().cpu().numpy() / np.sqrt(module.running_var.detach().cpu().numpy() + module.eps)
     bias = module.bias.detach().cpu().numpy() - module.running_mean.detach().cpu().numpy() * scale
     power = np.ones_like(scale)
+    
     layer = ctx.network.add_scale(trt_input, trt.ScaleMode.CHANNEL, bias, scale, power)
 
     ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
