@@ -104,7 +104,6 @@ class ConversionHook(object):
 class ConversionContext(object):
     def __init__(self, network, converters=CONVERTERS):
         self.network = network
-        self.trt_tensors = {}
         self.method_args = None
         self.method_kwargs = None
         self.method_return = None
@@ -128,14 +127,14 @@ class ConversionContext(object):
         self.input_names = names
 
         for i, torch_input in enumerate(torch_inputs):
-            if torch_input.__hash__() not in self.trt_tensors:
+            if not hasattr(torch_input, '_trt'):
                 trt_tensor = self.network.add_input(
                     name=names[i],
                     shape=tuple(torch_input.shape)[1:],
                     dtype=torch_dtype_to_trt(torch_input.dtype),
                 )
                 trt_tensor.location = torch_device_to_trt(torch_input.device)
-                self.trt_tensors[torch_input.__hash__()] = trt_tensor
+                torch_input._trt = trt_tensor
 
     def mark_outputs(self, torch_outputs, names=None):
         if names is None:
@@ -143,7 +142,7 @@ class ConversionContext(object):
         self.output_names = names
 
         for i, torch_output in enumerate(torch_outputs):
-            trt_tensor = self.trt_tensors[torch_output.__hash__()]
+            trt_tensor = torch_output._trt
             trt_tensor.name = names[i]
             trt_tensor.location = torch_device_to_trt(torch_output.device)
             trt_tensor.dtype = torch_dtype_to_trt(torch_output.dtype)
@@ -236,15 +235,14 @@ def convert_Linear(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     output = ctx.method_return
-    trt_input = ctx.trt_tensors[input.__hash__()]
 
     layer = ctx.network.add_fully_connected(
-        input=trt_input,
+        input=input._trt,
         num_outputs=module.out_features,
         kernel=module.weight.detach().cpu().numpy(),
         bias=module.bias.detach().cpu().numpy())
 
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.nn.Conv2d.forward')
@@ -252,7 +250,6 @@ def convert_Conv2d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     output = ctx.method_return
-    trt_input = ctx.trt_tensors[input.__hash__()]
 
     kernel_size = module.kernel_size
     if not isinstance(kernel_size, tuple):
@@ -273,7 +270,7 @@ def convert_Conv2d(ctx):
         bias = module.bias.detach().cpu().numpy()
 
     layer = ctx.network.add_convolution(
-        input=trt_input,
+        input=input._trt,
         num_output_maps=module.out_channels,
         kernel_shape=kernel_size,
         kernel=kernel,
@@ -284,7 +281,7 @@ def convert_Conv2d(ctx):
     if module.groups is not None:
         layer.num_groups = module.groups
 
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.nn.MaxPool2d.forward')
@@ -292,7 +289,6 @@ def convert_MaxPool2d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     output = ctx.method_return
-    trt_input = ctx.trt_tensors[input.__hash__()]
 
     kernel_size = module.kernel_size
     if not isinstance(kernel_size, tuple):
@@ -307,11 +303,11 @@ def convert_MaxPool2d(ctx):
         padding = (padding, ) * 2
 
     layer = ctx.network.add_pooling(
-        input=trt_input, type=trt.PoolingType.MAX, window_size=kernel_size)
+        input=input._trt, type=trt.PoolingType.MAX, window_size=kernel_size)
     layer.stride = stride
     layer.padding = padding
 
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.nn.AvgPool2d.forward')
@@ -319,7 +315,6 @@ def convert_AvgPool2d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     output = ctx.method_return
-    trt_input = ctx.trt_tensors[input.__hash__()]
 
     kernel_size = module.kernel_size
     if not isinstance(kernel_size, tuple):
@@ -332,12 +327,12 @@ def convert_AvgPool2d(ctx):
         padding = (padding, ) * 2
 
     layer = ctx.network.add_pooling(
-        input=trt_input, type=trt.PoolingType.AVERAGE, window_size=kernel_size)
+        input=input._trt, type=trt.PoolingType.AVERAGE, window_size=kernel_size)
     layer.stride = stride
     layer.padding = padding
     layer.average_count_excludes_padding = not module.count_include_pad
 
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.nn.AdaptiveAvgPool2d.forward')
@@ -345,20 +340,19 @@ def convert_AdaptiveAvgPool2d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     output = ctx.method_return
-    trt_input = ctx.trt_tensors[input.__hash__()]
 
     output_size = module.output_size
     if not isinstance(output_size, tuple):
         output_size = (output_size, ) * 2
 
-    stride = (trt_input.shape[-2] // output_size[-2], trt_input.shape[-1] // output_size[-1])
+    stride = (input._trt.shape[-2] // output_size[-2], input._trt.shape[-1] // output_size[-1])
 
     kernel_size = stride
     layer = ctx.network.add_pooling(
-        input=trt_input, type=trt.PoolingType.AVERAGE, window_size=kernel_size)
+        input=input._trt, type=trt.PoolingType.AVERAGE, window_size=kernel_size)
     layer.stride = stride
 
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.nn.functional.adaptive_avg_pool2d')
@@ -371,10 +365,9 @@ def convert_adaptive_avg_pool2d(ctx):
 def convert_ReLU(ctx):
     input = ctx.method_args[1]
     output = ctx.method_return
-    trt_input = ctx.trt_tensors[input.__hash__()]
     layer = ctx.network.add_activation(
-        input=trt_input, type=trt.ActivationType.RELU)
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+        input=input._trt, type=trt.ActivationType.RELU)
+    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.nn.functional.relu')
@@ -387,17 +380,16 @@ def convert_relu(ctx):
 def convert_ReLU6(ctx):
     input = ctx.method_args[1]
     output = ctx.method_return
-    trt_input = ctx.trt_tensors[input.__hash__()]
 
     layer = ctx.network.add_activation(
-        input=trt_input, type=trt.ActivationType.RELU)
-    shape = (1, ) * len(trt_input.shape)  # broadcast all dimensions
-    tensor = 6.0 * torch.ones(shape, dtype=torch_dtype_from_trt(trt_input.dtype)).cpu().numpy()
+        input=input._trt, type=trt.ActivationType.RELU)
+    shape = (1, ) * len(input._trt.shape)  # broadcast all dimensions
+    tensor = 6.0 * torch.ones(shape, dtype=torch_dtype_from_trt(input._trt.dtype)).cpu().numpy()
     trt_6 = ctx.network.add_constant(shape, tensor)
     layer = ctx.network.add_elementwise(
         layer.get_output(0), trt_6.get_output(0), trt.ElementWiseOperation.MIN)
 
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.nn.functional.relu6')
@@ -410,11 +402,10 @@ def convert_relu6(ctx):
 def convert_LogSoftmax(ctx):
     input = ctx.method_args[1]
     output = ctx.method_return
-    trt_input = ctx.trt_tensors[input.__hash__()]
-    layer = ctx.network.add_softmax(input=trt_input)
+    layer = ctx.network.add_softmax(input=input._trt)
     layer = ctx.network.add_unary(input=layer.get_output(0),
             op=trt.UnaryOperation.LOG)
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.nn.Dropout.forward')
@@ -423,7 +414,7 @@ def convert_LogSoftmax(ctx):
 def convert_Identity(ctx):
     input = ctx.method_args[1]
     output = ctx.method_return
-    ctx.trt_tensors[output.__hash__()] = ctx.trt_tensors[input.__hash__()]
+    output._trt = input._trt
 
 
 @tensorrt_converter('torch.Tensor.view')
@@ -433,7 +424,7 @@ def convert_Identity(ctx):
 def convert_identity(ctx):
     input = ctx.method_args[0]
     output = ctx.method_return
-    ctx.trt_tensors[output.__hash__()] = ctx.trt_tensors[input.__hash__()]
+    output._trt = input._trt
 
 
 @tensorrt_converter('torch.nn.BatchNorm2d.forward')
@@ -441,15 +432,14 @@ def convert_BatchNorm2d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     output = ctx.method_return
-    trt_input = ctx.trt_tensors[input.__hash__()]
     
     scale = module.weight.detach().cpu().numpy() / np.sqrt(module.running_var.detach().cpu().numpy() + module.eps)
     bias = module.bias.detach().cpu().numpy() - module.running_mean.detach().cpu().numpy() * scale
     power = np.ones_like(scale)
     
-    layer = ctx.network.add_scale(trt_input, trt.ScaleMode.CHANNEL, bias, scale, power)
+    layer = ctx.network.add_scale(input._trt, trt.ScaleMode.CHANNEL, bias, scale, power)
 
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    output._trt = layer.get_output(0)
 
 
 # TENSOR METHOD CONVERTERS
@@ -465,11 +455,11 @@ def convert_cat(ctx):
         dim = ctx.method_args[1]
 
     output = ctx.method_return
-    trt_inputs = [ctx.trt_tensors[i.__hash__()] for i in inputs]
+    trt_inputs = [i._trt for i in inputs]
 
     layer = ctx.network.add_concatenation(inputs=trt_inputs)
     layer.axis = dim - 1
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.Tensor.__iadd__')
@@ -478,7 +468,5 @@ def convert_add(ctx):
     input_a = ctx.method_args[0]
     input_b = ctx.method_args[1]
     output = ctx.method_return
-    trt_input_a = ctx.trt_tensors[input_a.__hash__()]
-    trt_input_b = ctx.trt_tensors[input_b.__hash__()]
-    layer = ctx.network.add_elementwise(trt_input_a, trt_input_b, trt.ElementWiseOperation.SUM)
-    ctx.trt_tensors[output.__hash__()] = layer.get_output(0)
+    layer = ctx.network.add_elementwise(input_a._trt, input_b._trt, trt.ElementWiseOperation.SUM)
+    output._trt = layer.get_output(0)
