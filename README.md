@@ -84,7 +84,7 @@ of the TensorRT network, and the optimized TensorRT engine is built.
 
 ### How to add (or override) a converter
 
-Here we show how to add an example converter using the TensorRT
+Here we show how to add a converter for the ``ReLU`` module using the TensorRT
 python API.
 
 ```python
