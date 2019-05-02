@@ -80,7 +80,7 @@ network that is being constructed.  The input tensors to the original PyTorch fu
 have an attribute ``_trt``, which is the TensorRT counterpart to the PyTorch tensor.  The conversion function
 uses this ``_trt`` to add layers to the TensorRT network, and then sets the ``_trt`` attribute for
 relevant output tensors.  Once the model is fully executed, the final tensors returns are marked as outputs
-of the TensorRT network, and the network is built.
+of the TensorRT network, and the optimized TensorRT engine is built.
 
 ### How to add (or override) a converter
 
