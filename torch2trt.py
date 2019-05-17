@@ -2,6 +2,7 @@ import torch
 import tensorrt as trt
 from copy import copy
 import numpy as np
+import atexit
 
 
 # UTILITY FUNCTIONS
@@ -50,6 +51,29 @@ def torch_device_from_trt(device):
     else:
         return TypeError('%s is not supported by torch' % device)
 
+    
+def trt_input_names(count):
+    return ['input_%d' % i for i in range(count)]
+
+
+def trt_output_names(count):
+    return ['output_%d' % i for i in range(count)]
+    
+
+def trt_num_inputs(engine):
+    count = 0
+    for i in range(engine.num_bindings):
+        if engine.binding_is_input(i):
+            count += 1
+    return count
+    
+
+def trt_num_outputs(engine):
+    count = 0
+    for i in range(engine.num_bindings):
+        if not engine.binding_is_input(i):
+            count += 1
+    return count
 
 
 # CONVERSION REGISTRY AND HOOKS
@@ -123,7 +147,7 @@ class ConversionContext(object):
 
     def add_inputs(self, torch_inputs, names=None):
         if names is None:
-            names = ['input_%d' % i for i in range(len(torch_inputs))]
+            names = trt_input_names(len(torch_inputs))
         self.input_names = names
 
         for i, torch_input in enumerate(torch_inputs):
@@ -138,7 +162,7 @@ class ConversionContext(object):
 
     def mark_outputs(self, torch_outputs, names=None):
         if names is None:
-            names = ['output_%d' % i for i in range(len(torch_outputs))]
+            names = trt_output_names(len(torch_outputs))
         self.output_names = names
 
         for i, torch_output in enumerate(torch_outputs):
@@ -150,14 +174,22 @@ class ConversionContext(object):
 
 
 class TRTModule(torch.nn.Module):
-    def __init__(self, engine, input_names, output_names, final_shapes=None):
-        self.input_names = input_names
-        self.output_names = output_names
+    def __init__(self, engine, input_names=None, output_names=None, final_shapes=None):
+        super(TRTModule, self).__init__()
+        
         self._trt_engine = engine
         self._trt_context = self._trt_engine.create_execution_context()
-        super(TRTModule, self).__init__()
+        
+        self.input_names = input_names
+        if self.input_names is None:
+            self.input_names = trt_input_names(trt_num_inputs(self._trt_engine))
+            
+        self.output_names = output_names
+        if self.output_names is None:
+            self.output_names = trt_output_names(trt_num_outputs(self._trt_engine))
+            
         self.final_shapes = final_shapes
-
+    
     def forward(self, *inputs):
         batch_size = inputs[0].shape[0]
         bindings = [None] * (len(self.input_names) + len(self.output_names))
