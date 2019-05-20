@@ -17,6 +17,10 @@ python setup.py install --user
 
 ### Usage
 
+Below are some usage examples, for more check out the [notebooks](notebooks).
+
+#### Convert
+
 ```python
 from torch2trt import torch2trt
 from torchvision.models.alexnet import alexnet
@@ -31,13 +35,42 @@ x = torch.ones((1, 3, 224, 224)).cuda()
 model_trt = torch2trt(model, [x])
 ```
 
-We can then test the output of the regular and TensorRT optimized models
+#### Execute
 
-```
+We can execute returned ``TRTModule`` just like the original PyTorch model
+
+```python
 y = model(x)
 y_trt = model_trt(x)
 
+# check the output against 
 print(torch.max(torch.abs(y - y_trt)))
+```
+
+We can also execute on fixed output buffers
+
+```python
+y = torch.empty((1, 1000)).cuda()
+
+model_trt.execute([x], [y])
+```
+
+#### Save and load
+
+We can save the model as a ``state_dict``.
+
+```python
+torch.save(model_trt.state_dict(), 'alexnet_trt.pth')
+```
+
+We can load the saved model into a ``TRTModule``
+
+```python
+from torch2trt import TRTModule
+
+model_trt = TRTModule()
+
+model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 ```
 
 ### Tested models
