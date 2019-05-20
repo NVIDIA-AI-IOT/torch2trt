@@ -1,8 +1,8 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='torch2trt',
     version='0.0',
     description='PyTorch to TensorRT converter',
-    py_modules=['torch2trt'],
+    packages=find_packages(),
 )
