@@ -47,14 +47,6 @@ y_trt = model_trt(x)
 print(torch.max(torch.abs(y - y_trt)))
 ```
 
-We can also execute on fixed output buffers
-
-```python
-y = torch.empty((1, 1000)).cuda()
-
-model_trt.execute([x], [y])
-```
-
 #### Save and load
 
 We can save the model as a ``state_dict``.
