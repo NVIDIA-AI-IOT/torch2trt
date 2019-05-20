@@ -50,14 +50,6 @@ def torch_device_from_trt(device):
         return torch.device('cpu')
     else:
         return TypeError('%s is not supported by torch' % device)
-
-    
-def trt_input_names(count):
-    return ['input_%d' % i for i in range(count)]
-
-
-def trt_output_names(count):
-    return ['output_%d' % i for i in range(count)]
     
 
 def trt_num_inputs(engine):
@@ -147,7 +139,7 @@ class ConversionContext(object):
 
     def add_inputs(self, torch_inputs, names=None):
         if names is None:
-            names = trt_input_names(len(torch_inputs))
+            names = ['input_%d' % i for i in range(len(torch_inputs))]
         self.input_names = names
 
         for i, torch_input in enumerate(torch_inputs):
@@ -162,7 +154,7 @@ class ConversionContext(object):
 
     def mark_outputs(self, torch_outputs, names=None):
         if names is None:
-            names = trt_output_names(len(torch_outputs))
+            names = ['output_%d' % i for i in range(len(torch_outputs))]
         self.output_names = names
 
         for i, torch_output in enumerate(torch_outputs):
@@ -174,22 +166,33 @@ class ConversionContext(object):
 
 
 class TRTModule(torch.nn.Module):
-    def __init__(self, engine, input_names=None, output_names=None, final_shapes=None):
+    def __init__(self, engine=None, input_names=None, output_names=None, final_shapes=None):
         super(TRTModule, self).__init__()
-        
-        self._trt_engine = engine
-        self._trt_context = self._trt_engine.create_execution_context()
-        
+        self._register_state_dict_hook(TRTModule._on_state_dict)
+        self.engine = engine
+        if self.engine is not None:
+            self.context = self.engine.create_execution_context()
         self.input_names = input_names
-        if self.input_names is None:
-            self.input_names = trt_input_names(trt_num_inputs(self._trt_engine))
-            
         self.output_names = output_names
-        if self.output_names is None:
-            self.output_names = trt_output_names(trt_num_outputs(self._trt_engine))
-            
         self.final_shapes = final_shapes
     
+    def _on_state_dict(self, state_dict, prefix, local_metadata):
+        state_dict[prefix + 'engine'] = bytes(self.engine.serialize())
+        state_dict[prefix + 'input_names'] = self.input_names
+        state_dict[prefix + 'output_names'] = self.output_names
+        state_dict[prefix + 'final_shapes'] = self.final_shapes
+    
+    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs):
+        engine_bytes = state_dict[prefix + 'engine']
+        
+        with trt.Logger() as logger, trt.Runtime(logger) as runtime:
+            self.engine = runtime.deserialize_cuda_engine(engine_bytes)
+            self.context = self.engine.create_execution_context()
+            
+        self.input_names = state_dict[prefix + 'input_names']
+        self.output_names = state_dict[prefix + 'output_names']
+        self.final_shapes = state_dict[prefix + 'final_shapes']
+        
     def forward(self, *inputs):
         batch_size = inputs[0].shape[0]
         bindings = [None] * (len(self.input_names) + len(self.output_names))
@@ -197,22 +200,22 @@ class TRTModule(torch.nn.Module):
         # create output tensors
         outputs = [None] * len(self.output_names)
         for i, output_name in enumerate(self.output_names):
-            idx = self._trt_engine.get_binding_index(output_name)
-            dtype = torch_dtype_from_trt(self._trt_engine.get_binding_dtype(idx))
+            idx = self.engine.get_binding_index(output_name)
+            dtype = torch_dtype_from_trt(self.engine.get_binding_dtype(idx))
             if self.final_shapes is not None:
                 shape = (batch_size, ) + self.final_shapes[i]
             else:
-                shape = (batch_size, ) + tuple(self._trt_engine.get_binding_shape(idx))
-            device = torch_device_from_trt(self._trt_engine.get_location(idx))
+                shape = (batch_size, ) + tuple(self.engine.get_binding_shape(idx))
+            device = torch_device_from_trt(self.engine.get_location(idx))
             output = torch.empty(size=shape, dtype=dtype, device=device)
             outputs[i] = output
             bindings[idx] = output.data_ptr()
 
         for i, input_name in enumerate(self.input_names):
-            idx = self._trt_engine.get_binding_index(input_name)
+            idx = self.engine.get_binding_index(input_name)
             bindings[idx] = inputs[i].data_ptr()
 
-        self._trt_context.execute_async(batch_size, bindings, torch.cuda.current_stream().cuda_stream)
+        self.context.execute_async(batch_size, bindings, torch.cuda.current_stream().cuda_stream)
 
         outputs = tuple(outputs)
         if len(outputs) == 1:
@@ -245,7 +248,7 @@ def torch2trt(module, inputs, input_names=None, output_names=None, max_batch_siz
         builder.max_batch_size = max_batch_size
 
         engine = builder.build_cuda_engine(network)
-
+    
     return TRTModule(engine, ctx.input_names, ctx.output_names, final_shapes)
 
 
