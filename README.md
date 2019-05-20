@@ -7,7 +7,7 @@ TensorRT Python API.  The converter is
 
 * Easy to extend - Write your own layer converter in Python and register it with ``@tensorrt_converter``
 
-If you find an issue, please [let us know](../..//issues)!  We'd also love to hear if you create your own ``@tensorrt_converter``. It may be helpful to others.
+If you find an issue, please [let us know](../..//issues)!
 
 ### Setup
 
