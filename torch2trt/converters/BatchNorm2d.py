@@ -1,0 +1,16 @@
+from torch2trt.torch2trt import *
+
+
+@tensorrt_converter('torch.nn.BatchNorm2d.forward')
+def convert_BatchNorm2d(ctx):
+    module = ctx.method_args[0]
+    input = ctx.method_args[1]
+    output = ctx.method_return
+    
+    scale = module.weight.detach().cpu().numpy() / np.sqrt(module.running_var.detach().cpu().numpy() + module.eps)
+    bias = module.bias.detach().cpu().numpy() - module.running_mean.detach().cpu().numpy() * scale
+    power = np.ones_like(scale)
+    
+    layer = ctx.network.add_scale(input._trt, trt.ScaleMode.CHANNEL, bias, scale, power)
+
+    output._trt = layer.get_output(0)
