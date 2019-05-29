@@ -67,31 +67,28 @@ model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 
 ### Tested models
 
-Below are models that we benchmarked on NVIDIA Jetson Nano.  Timing just includes model execution (not data copy).
+Below are models that we benchmarked on NVIDIA Jetson Nano using [this script](torch2trt/test.py).  Timing just includes model execution (not data copy).
 
-| Model | PyTorch FP16 (Jetson Nano) | TensorRT FP16 (Jetson Nano) |
-|-------|--------------|-----------------|
-| alexnet | 18ms | 13ms |
-| squeezenet1_0 | 21ms | 8.4ms |
-| squeezenet1_1 | 13ms | 4.7ms |
-| resnet18 | 32ms | 11ms |
-| resnet34 | 58ms | 21ms |
-| resnet50 | 77ms | 38ms |
-| resnet101 | 135ms | 62ms |
-| resnet152 | 200ms | 93ms |
-| densenet121 | 83ms | 46ms |
-| densenet169 | 116ms | 58ms |
-| densenet201 | 139ms | 75ms |
-| densenet161 | 209ms | 97ms |
-| vgg11 | 61ms | 17ms |
-| vgg13 | 96ms | 33ms |
-| vgg16 | 137ms | 44ms |
-| vgg19 |  |  |
-| vgg11_bn |  |  |
-| vgg13_bn |  |  |
-| vgg16_bn |  |  |
-| vgg19_bn |  |  |
-| [mobilenet_v2](https://github.com/tonylins/pytorch-mobilenet-v2) | 27ms | 16ms |
+| Model | Max Error | FPS (PyTorch) | FPS (TensorRT) |
+|------|-----------|---------------|----------------|
+| alexnet_fp16_3x224x224 | 3.05e-05 | 91.7 | 58.5 |
+| squeezenet1_0_fp16_3x224x224 | 0.00732 | 47.8 | 114 |
+| squeezenet1_1_fp16_3x224x224 | 0.00781 | 71.7 | 264 |
+| resnet18_fp16_3x224x224 | 0.00537 | 34.8 | 66.1 |
+| resnet34_fp16_3x224x224 | 0.0938 | 17.7 | 38.6 |
+| resnet50_fp16_3x224x224 | 0.123 | 13 | 27.7 |
+| resnet101_fp16_3x224x224 | 0 | 5.56 | 15.1 |
+| resnet152_fp16_3x224x224 | 0 | 5.01 | 10.8 |
+| densenet121_fp16_3x224x224 | 0.00488 | 10.7 | 38.5 |
+| densenet169_fp16_3x224x224 | 0.00488 | 8.02 | 31.2 |
+| densenet201_fp16_3x224x224 | 0.00537 | 5.01 | 8.41 |
+| densenet161_fp16_3x224x224 | 0.00635 | 4.67 | 11.9 |
+| vgg11_fp16_3x224x224 | 0.00104 | 15 | 14.7 |
+| vgg13_fp16_3x224x224 | 0.000504 | 10.5 | 11.8 |
+| vgg16_fp16_3x224x224 | 0.000565 | 7.23 | 10.3 |
+| vgg11_bn_fp16_3x224x224 | 0.000626 | 13.4 | 15.8 |
+| vgg13_bn_fp16_3x224x224 | 0.000908 | 9.19 | 12.9 |
+| vgg16_bn_fp16_3x224x224 | 0.00107 | 6.61 | 11 |
 
 
 ### How does it work?
