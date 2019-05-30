@@ -6,9 +6,9 @@ import re
 
 
 class ModuleTest(object):
-    def __init__(self, module_fn, type, device, input_shapes, **torch2trt_kwargs):
+    def __init__(self, module_fn, dtype, device, input_shapes, **torch2trt_kwargs):
         self.module_fn = module_fn
-        self.type = type
+        self.dtype = dtype
         self.device = device
         self.input_shapes = input_shapes
         self.torch2trt_kwargs = torch2trt_kwargs
@@ -20,13 +20,13 @@ class ModuleTest(object):
         # create module
         module = self.module_fn()
         module = module.to(self.device)
-        module = module.type(self.type)
+        module = module.type(self.dtype)
         module = module.eval()
         
         # create inputs
         inputs = ()
         for shape in self.input_shapes:
-            inputs += (torch.ones(shape).to(self.device).type(self.type), )
+            inputs += (torch.ones(shape).to(self.device).type(self.dtype), )
 
         # convert module
         module_trt = torch2trt(module, inputs, **self.torch2trt_kwargs)
@@ -95,18 +95,27 @@ if __name__ == '__main__':
     parser.add_argument('--name', help='Regular expression to filter modules to test by name', type=str, default='.*')
     args = parser.parse_args()
     
-    print('| Name | Max Error | FPS (PyTorch) | FPS (TensorRT) |')
-    print('|------|-----------|---------------|----------------|')
+    # write header
+    line0 = '| Name | Data Type | Input Shapes | torch2trt kwargs | Max Error | FPS (PyTorch) | FPS (TensorRT) |'
+    line1 = '|------|-----------|--------------|------------------|-----------|---------------|----------------|'
+    print(line0)
+    print(line1)
+    with open(args.output, 'a+') as f:
+        f.write(line0 + '\n')
+        f.write(line1 + '\n')
+        
     for test in MODULE_TESTS:
+        
+        # filter by module name
         name = test.module_name()
         if not re.search(args.name, name):
             continue
-        line = None
-        try:
-            max_error, fps, fps_trt = test.run()
-            line = '| %s | %.3g | %.3g | %.3g |' % (name, max_error, fps, fps_trt)
-        except:
-            line = '| %s |    |    |    |' % name
+            
+        # run test
+        max_error, fps, fps_trt = test.run()
+        
+        # write entry
+        line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt)
         print(line)
         with open(args.output, 'a+') as f:
             f.write(line + '\n')
