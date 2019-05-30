@@ -6,14 +6,16 @@ import re
 
 
 class ModuleTest(object):
-    def __init__(self, module_fn, type, device, input_shapes, max_error=1e-2, **torch2trt_kwargs):
+    def __init__(self, module_fn, type, device, input_shapes, **torch2trt_kwargs):
         self.module_fn = module_fn
         self.type = type
         self.device = device
         self.input_shapes = input_shapes
-        self.max_error = max_error
         self.torch2trt_kwargs = torch2trt_kwargs
         
+    def module_name(self):
+        return self.module_fn.__module__ + '.' + self.module_fn.__name__
+    
     def run(self):
         # create module
         module = self.module_fn()
@@ -61,43 +63,43 @@ class ModuleTest(object):
         
         return max_error, fps, fps_trt
             
-            
-                
-TESTS = {
-    'alexnet_fp16_3x224x224': ModuleTest(torchvision.models.alexnet, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'squeezenet1_0_fp16_3x224x224': ModuleTest(torchvision.models.squeezenet1_0, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'squeezenet1_1_fp16_3x224x224': ModuleTest(torchvision.models.squeezenet1_1, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'resnet18_fp16_3x224x224': ModuleTest(torchvision.models.resnet18, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'resnet34_fp16_3x224x224': ModuleTest(torchvision.models.resnet34, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'resnet50_fp16_3x224x224': ModuleTest(torchvision.models.resnet50, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'resnet101_fp16_3x224x224': ModuleTest(torchvision.models.resnet101, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'resnet152_fp16_3x224x224': ModuleTest(torchvision.models.resnet152, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'densenet121_fp16_3x224x224': ModuleTest(torchvision.models.densenet121, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'densenet169_fp16_3x224x224': ModuleTest(torchvision.models.densenet169, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'densenet201_fp16_3x224x224': ModuleTest(torchvision.models.densenet201, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'densenet161_fp16_3x224x224': ModuleTest(torchvision.models.densenet161, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'vgg11_fp16_3x224x224': ModuleTest(torchvision.models.vgg11, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'vgg13_fp16_3x224x224': ModuleTest(torchvision.models.vgg13, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'vgg16_fp16_3x224x224': ModuleTest(torchvision.models.vgg16, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'vgg19_fp16_3x224x224': ModuleTest(torchvision.models.vgg19, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'vgg11_bn_fp16_3x224x224': ModuleTest(torchvision.models.vgg11_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'vgg13_bn_fp16_3x224x224': ModuleTest(torchvision.models.vgg13_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'vgg16_bn_fp16_3x224x224': ModuleTest(torchvision.models.vgg16_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-    'vgg19_bn_fp16_3x224x224': ModuleTest(torchvision.models.vgg19_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], max_error=1e-2, fp16_mode=True),
-}
+        
+MODULE_TESTS = [
+    ModuleTest(torchvision.models.alexnet, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.squeezenet1_0, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.squeezenet1_1, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.resnet18, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.resnet34, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.resnet50, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.resnet101, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.resnet152, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.densenet121, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.densenet169, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.densenet201, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.densenet161, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.vgg11, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.vgg13, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.vgg16, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.vgg19, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.vgg11_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.vgg13_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.vgg16_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.vgg19_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+]
 
 
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', '-o', help='Test output file path', type=str, default='torch2trt_test.md')
-    parser.add_argument('--filter', '-f', help='Regular expression applied to filter tests by name', type=str, default='.*')
+    parser.add_argument('--name', help='Regular expression to filter modules to test by name', type=str, default='.*')
     args = parser.parse_args()
     
     print('| Name | Max Error | FPS (PyTorch) | FPS (TensorRT) |')
     print('|------|-----------|---------------|----------------|')
-    for name, test in TESTS.items():
-        if not re.match(args.filter, name):
+    for test in MODULE_TESTS:
+        name = test.module_name()
+        if not re.search(args.name, name):
             continue
         line = None
         try:
