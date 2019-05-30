@@ -2,6 +2,7 @@ from torch2trt import *
 import torchvision
 import time
 import argparse
+import re
 
 
 class ModuleTest(object):
@@ -40,7 +41,7 @@ class ModuleTest(object):
         for i in range(len(outputs)):
             max_error_i = torch.max(torch.abs(outputs[i] - outputs_trt[i]))
             if max_error_i > max_error:
-                max_error = max_error
+                max_error = max_error_i
         
         # benchmark pytorch
         t0 = time.time()
@@ -90,11 +91,14 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', '-o', help='Test output file path', type=str, default='torch2trt_test.md')
+    parser.add_argument('--filter', '-f', help='Regular expression applied to filter tests by name', type=str, default='.*')
     args = parser.parse_args()
     
     print('| Name | Max Error | FPS (PyTorch) | FPS (TensorRT) |')
     print('|------|-----------|---------------|----------------|')
     for name, test in TESTS.items():
+        if not re.match(args.filter, name):
+            continue
         line = None
         try:
             max_error, fps, fps_trt = test.run()
