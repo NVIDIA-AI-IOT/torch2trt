@@ -94,15 +94,6 @@ if __name__ == '__main__':
     parser.add_argument('--output', '-o', help='Test output file path', type=str, default='torch2trt_test.md')
     parser.add_argument('--name', help='Regular expression to filter modules to test by name', type=str, default='.*')
     args = parser.parse_args()
-    
-    # write header
-    line0 = '| Name | Data Type | Input Shapes | torch2trt kwargs | Max Error | FPS (PyTorch) | FPS (TensorRT) |'
-    line1 = '|------|-----------|--------------|------------------|-----------|---------------|----------------|'
-    print(line0)
-    print(line1)
-    with open(args.output, 'a+') as f:
-        f.write(line0 + '\n')
-        f.write(line1 + '\n')
         
     for test in MODULE_TESTS:
         
