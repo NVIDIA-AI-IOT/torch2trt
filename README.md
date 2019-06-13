@@ -70,29 +70,30 @@ model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 
 ### Tested models
 
-Below are models that we benchmarked on NVIDIA Jetson Nano using [this script](torch2trt/test.py). 
+We tested the converter against these models using [this script](torch2trt/test.py). 
 
-
-| Model | Max Error | FPS (PyTorch) | FPS (TensorRT) |
-|------|-----------|---------------|----------------|
-| alexnet_fp16_3x224x224 | 3.05e-05 | 91.7 | 58.5 |
-| squeezenet1_0_fp16_3x224x224 | 0.00732 | 47.8 | 114 |
-| squeezenet1_1_fp16_3x224x224 | 0.00781 | 71.7 | 264 |
-| resnet18_fp16_3x224x224 | 0.00537 | 34.8 | 66.1 |
-| resnet34_fp16_3x224x224 | 0.0938 | 17.7 | 38.6 |
-| resnet50_fp16_3x224x224 | 0.123 | 13 | 27.7 |
-| resnet101_fp16_3x224x224 | 0 | 5.56 | 15.1 |
-| resnet152_fp16_3x224x224 | 0 | 5.01 | 10.8 |
-| densenet121_fp16_3x224x224 | 0.00488 | 10.7 | 38.5 |
-| densenet169_fp16_3x224x224 | 0.00488 | 8.02 | 31.2 |
-| densenet201_fp16_3x224x224 | 0.00537 | 5.01 | 8.41 |
-| densenet161_fp16_3x224x224 | 0.00635 | 4.67 | 11.9 |
-| vgg11_fp16_3x224x224 | 0.00104 | 15 | 14.7 |
-| vgg13_fp16_3x224x224 | 0.000504 | 10.5 | 11.8 |
-| vgg16_fp16_3x224x224 | 0.000565 | 7.23 | 10.3 |
-| vgg11_bn_fp16_3x224x224 | 0.000626 | 13.4 | 15.8 |
-| vgg13_bn_fp16_3x224x224 | 0.000908 | 9.19 | 12.9 |
-| vgg16_bn_fp16_3x224x224 | 0.00107 | 6.61 | 11 |
+| Model | Jetson Nano | Jetson Xavier |
+|-------|-------------|---------------|
+| alexnet | | |
+| squeezenet1_0 | | |
+| squeezenet1_1 | | |
+| resnet18 | | |
+| resnet34 | | |
+| resnet50 | | |
+| resnet101 | | |
+| resnet152 | | |
+| densenet121 | | |
+| densenet169 | | |
+| densenet201 | | |
+| densenet161 | | |
+| vgg11 | | |
+| vgg13 | | |
+| vgg16 | | |
+| vgg19 | | |
+| vgg11_bn | | |
+| vgg13_bn | | |
+| vgg16_bn | | |
+| vgg19_bn | | |
 
 
 ### How does it work?
