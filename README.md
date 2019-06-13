@@ -72,7 +72,8 @@ model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 
 ### Tested models
 
-Below are models that we benchmarked on NVIDIA Jetson Nano using [this script](torch2trt/test.py).  Timing just includes model execution (not data copy).
+Below are models that we benchmarked on NVIDIA Jetson Nano using [this script](torch2trt/test.py). 
+
 
 | Model | Max Error | FPS (PyTorch) | FPS (TensorRT) |
 |------|-----------|---------------|----------------|
