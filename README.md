@@ -10,7 +10,7 @@ TensorRT Python API.  The converter is
 If you find an issue, please [let us know](../..//issues)!
 
 > Please note, this converter has limited coverage of TensorRT / PyTorch.  We created it 
-> to easily optimize the models listed below.  We use these models for tasks like collision avoidance and road
+> to easily prototype applications using the models listed below.  We use these models for tasks like collision avoidance and road
 > following in the [JetBot](https://github.com/NVIDIA-AI-IOT/jetbot) project.  If you find the converter
 > helpful with other models, please [let us know](../..//issues).
 
