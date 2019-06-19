@@ -70,7 +70,16 @@ model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 
 ### Models
 
-We tested the converter against these models using [this script](torch2trt/test.py). For more details, see the [raw output](benchmarks) from ``test.sh`` which calls [torch2trt/test.py](torch2trt/test.py).
+We tested the converter against these models using the [test.sh](test.sh) script.  You can generate the results by calling
+
+```bash
+bash test.sh TEST_OUTPUT.md
+```
+
+Below shows the execution time in FPS of each model.  You can find the raw output in the [benchmarks](benchmarks) folder.
+
+> Even though we report the results below in FPS, they are actually a measure of the model's *latency*.  We use batch size 1 and perform [synchronization](https://github.com/NVIDIA-AI-IOT-private/torch2trt/blob/master/torch2trt/test.py#L61) after every model execution call.  Higher *throughput* may be possible by asynchronous execution and increased batch size.
+
 
 | Model | Nano (PyTorch) | Nano (TensorRT) |
 |-------|:--------------:|:---------------:|
