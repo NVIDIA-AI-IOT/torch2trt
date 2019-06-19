@@ -70,7 +70,7 @@ model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 
 ### Models
 
-We tested the converter against these models using [this script](torch2trt/test.py). 
+We tested the converter against these models using [this script](torch2trt/test.py). For more details, see the [raw output](benchmarks) from ``test.sh`` which calls [torch2trt/test.py](torch2trt/test.py).
 
 | Model | Nano (PyTorch) | Nano (TensorRT) |
 |-------|:--------------:|:---------------:|
