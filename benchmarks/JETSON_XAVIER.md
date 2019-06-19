@@ -1,9 +1,5 @@
 | Name | Data Type | Input Shapes | torch2trt kwargs | Max Error | Throughput (PyTorch) | Throughput (TensorRT) | Latency (PyTorch) | Latency (TensorRT) |
 |------|-----------|--------------|------------------|-----------|----------------------|-----------------------|-------------------|--------------------|
-| Name | Data Type | Input Shapes | torch2trt kwargs | Max Error | Throughput (PyTorch) | Throughput (TensorRT) | Latency (PyTorch) | Latency (TensorRT) |
-|------|-----------|--------------|------------------|-----------|----------------------|-----------------------|-------------------|--------------------|
-| Name | Data Type | Input Shapes | torch2trt kwargs | Max Error | Throughput (PyTorch) | Throughput (TensorRT) | Latency (PyTorch) | Latency (TensorRT) |
-|------|-----------|--------------|------------------|-----------|----------------------|-----------------------|-------------------|--------------------|
 | torchvision.models.alexnet.alexnet | float16 | [(1, 3, 224, 224)] | {'fp16_mode': True} | 2.29E-05 | 250 | 580 | 4.75 | 1.93 |
 | torchvision.models.squeezenet.squeezenet1_0 | float16 | [(1, 3, 224, 224)] | {'fp16_mode': True} | 3.03E-02 | 130 | 890 | 7.31 | 1.37 |
 | torchvision.models.squeezenet.squeezenet1_1 | float16 | [(1, 3, 224, 224)] | {'fp16_mode': True} | 1.95E-03 | 132 | 1.39e+03 | 7.41 | 0.951 |
