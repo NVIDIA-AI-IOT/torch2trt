@@ -72,27 +72,27 @@ model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 
 We tested the converter against these models using [this script](torch2trt/test.py). 
 
-| Model | Jetson Nano | Jetson Xavier |
-|-------|-------------|---------------|
-| alexnet | | |
-| squeezenet1_0 | | |
-| squeezenet1_1 | | |
-| resnet18 | | |
-| resnet34 | | |
-| resnet50 | | |
-| resnet101 | | |
-| resnet152 | | |
-| densenet121 | | |
-| densenet169 | | |
-| densenet201 | | |
-| densenet161 | | |
-| vgg11 | | |
-| vgg13 | | |
-| vgg16 | | |
+| Model | Nano (PyTorch) | Nano (TensorRT) |
+|-------|:--------------:|:---------------:|
+| alexnet | 45.3 | 67.5 |
+| squeezenet1_0 | 40.5 | 130 |
+| squeezenet1_1 | 69.1 | 229 |
+| resnet18 | 28.6 | 87.6 |
+| resnet34 | 15.5 | 49.6 |
+| resnet50 | 11.3 | 33.4 |
+| resnet101 | 7.05 | 19.7 |
+| resnet152 | 4.74 | 13.9 |
+| densenet121 | 11.1 | 40.3 |
+| densenet169 | 8.13 | 31.9 |
+| densenet201 | 6.84 | 24.5 |
+| densenet161 | 4.01 | 15.2 |
+| vgg11 | 8.79 | 18 |
+| vgg13 | 6.4 | 14.4 |
+| vgg16 | 4.96 | 11.7 |
 | vgg19 | | |
-| vgg11_bn | | |
-| vgg13_bn | | |
-| vgg16_bn | | |
+| vgg11_bn | 8.46 | 18.2 |
+| vgg13_bn | 6.16 | 14.5 |
+| vgg16_bn | 4.83 | 11.8 |
 | vgg19_bn | | |
 
 
