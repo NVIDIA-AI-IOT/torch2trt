@@ -68,7 +68,7 @@ model_trt = TRTModule()
 model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 ```
 
-### Tested models
+### Models
 
 We tested the converter against these models using [this script](torch2trt/test.py). 
 
