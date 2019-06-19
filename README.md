@@ -81,28 +81,28 @@ Below shows the execution time in FPS of each model.  You can find the raw outpu
 > Even though we report the results below in FPS, they are actually a measure of the model's *latency*.  We use batch size 1 and perform [synchronization](https://github.com/NVIDIA-AI-IOT-private/torch2trt/blob/master/torch2trt/test.py#L61) after every model execution call.  Higher *throughput* may be possible by asynchronous execution and increased batch size.
 
 
-| Model | Nano (PyTorch) | Nano (TensorRT) |
-|-------|:--------------:|:---------------:|
-| alexnet | 45.3 | 67.5 |
-| squeezenet1_0 | 40.5 | 130 |
-| squeezenet1_1 | 69.1 | 229 |
-| resnet18 | 28.6 | 87.6 |
-| resnet34 | 15.5 | 49.6 |
-| resnet50 | 11.3 | 33.4 |
-| resnet101 | 7.05 | 19.7 |
-| resnet152 | 4.74 | 13.9 |
-| densenet121 | 11.1 | 40.3 |
-| densenet169 | 8.13 | 31.9 |
-| densenet201 | 6.84 | 24.5 |
-| densenet161 | 4.01 | 15.2 |
-| vgg11 | 8.79 | 18 |
-| vgg13 | 6.4 | 14.4 |
-| vgg16 | 4.96 | 11.7 |
-| vgg19 | | |
-| vgg11_bn | 8.46 | 18.2 |
-| vgg13_bn | 6.16 | 14.5 |
-| vgg16_bn | 4.83 | 11.8 |
-| vgg19_bn | | |
+| Model | Nano (PyTorch) | Nano (TensorRT) | Xavier (PyTorch) | Xavier (TensorRT) |
+|-------|:--------------:|:---------------:|:----------------:|:-----------------:|
+| alexnet |  |  | 250 | 580 |
+| squeezenet1_0 |  |  | 130 | 890 |
+| squeezenet1_1 |  |  | 132 | 1390 |
+| resnet18 |  |  | 140 | 712 |
+| resnet34 |  |  | 79.2 | 393 |
+| resnet50 |  |  | 55.5 | 312 |
+| resnet101 |  |  | 28.5 | 170 |
+| resnet152 |  |  | 18.9 | 121 |
+| densenet121 |  |  | 23.0 | 168 |
+| densenet169 |  |  | 16.3 | 118 |
+| densenet201 |  |  | 13.3 | 90.9 |
+| densenet161 |  |  | 17.2 | 82.4 |
+| vgg11 |  |  | 85.2 | 201 |
+| vgg13 |  |  | 71.9 | 166 |
+| vgg16 |  |  | 61.7 | 139 |
+| vgg19 |  |  | 54.1 | 121 |
+| vgg11_bn |  |  | 81.8 | 201 |
+| vgg13_bn |  |  | 68.0 | 166 |
+| vgg16_bn |  |  | 58.5 | 140 |
+| vgg19_bn |  |  | 51.4 | 121 |
 
 
 ### How does it work?
