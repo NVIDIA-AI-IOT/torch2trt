@@ -76,10 +76,7 @@ We tested the converter against these models using the [test.sh](test.sh) script
 bash test.sh TEST_OUTPUT.md
 ```
 
-Below shows the execution time in FPS of each model.  You can find the raw output in the [benchmarks](benchmarks) folder.
-
-> Even though we report the results below in FPS, they are actually a measure of the model's *latency*.  We use batch size 1 and perform [synchronization](https://github.com/NVIDIA-AI-IOT-private/torch2trt/blob/master/torch2trt/test.py#L61) after every model execution call.  Higher *throughput* may be possible by asynchronous execution and increased batch size.
-
+Below shows the throughput of each model in FPS.  You can find the raw output (which includes latency) in the [benchmarks](benchmarks) folder.
 
 | Model | Nano (PyTorch) | Nano (TensorRT) | Xavier (PyTorch) | Xavier (TensorRT) |
 |-------|:--------------:|:---------------:|:----------------:|:-----------------:|
