@@ -15,6 +15,8 @@ If you find an issue, please [let us know](../..//issues)!
 ### Setup
 
 ```bash
+git clone https://github.com/NVIDIA-AI-IOT/torch2trt
+cd torch2trt
 python setup.py install --user
 ```
 
