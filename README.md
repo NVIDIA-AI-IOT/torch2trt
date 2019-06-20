@@ -142,10 +142,3 @@ the following
 * ``ctx.method_return`` - The value returned by the specified PyTorch function.  The converter must set the ``_trt`` attribute where relevant.
 
 Please see the ``torch2trt.py`` module for more examples.
-
-### A comment on variable size tensors
-
-TensorRT currently does not support variable size Tensors, so whatever input shape you use when converting, you must use
-when executing.  While this may seem
-limiting, it can actually be a good constraint when designing your model for use in embedded systems.  By 
-restricting to a fixed input size, we can expect similar memory usage and runtime. 
