@@ -78,7 +78,7 @@ We tested the converter against these models using the [test.sh](test.sh) script
 bash test.sh TEST_OUTPUT.md
 ```
 
-Below shows the throughput of each model in FPS.  You can find the raw output (which includes latency) in the [benchmarks](benchmarks) folder.
+> The results below show the throughput in FPS.  You can find the raw output, which includes latency, in the [benchmarks folder](benchmarks).
 
 | Model | Nano (PyTorch) | Nano (TensorRT) | Xavier (PyTorch) | Xavier (TensorRT) |
 |-------|:--------------:|:---------------:|:----------------:|:-----------------:|
