@@ -143,4 +143,4 @@ the following
 * ``ctx.method_kwargs`` - Keyword arguments that were passed to the specified PyTorch function.
 * ``ctx.method_return`` - The value returned by the specified PyTorch function.  The converter must set the ``_trt`` attribute where relevant.
 
-Please see the ``torch2trt.py`` module for more examples.
+Please see [this folder](torch2trt/converters) for more examples.
