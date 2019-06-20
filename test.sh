@@ -1,3 +1,5 @@
+#!/bin/bash
+
 OUTPUT_FILE=$1
 
 touch $OUTPUT_FILE
