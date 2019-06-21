@@ -20,7 +20,7 @@ cd torch2trt
 sudo python setup.py install
 ```
 
-> JetCam is tested against a system configured with the [JetCard](http://github.com/NVIDIA-AI-IOT/jetcard) setup.  Different system configurations may require additional steps.
+> torch2trt is tested against a system configured with the [JetCard](http://github.com/NVIDIA-AI-IOT/jetcard) setup.  Different system configurations may require additional steps.
 
 ## Usage
 
