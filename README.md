@@ -17,8 +17,10 @@ If you find an issue, please [let us know](../..//issues)!
 ```bash
 git clone https://github.com/NVIDIA-AI-IOT/torch2trt
 cd torch2trt
-python setup.py install --user
+sudo python setup.py install
 ```
+
+> JetCam is tested against a system configured with the [JetCard](http://github.com/NVIDIA-AI-IOT/jetcard) setup.  Different system configurations may require additional steps.
 
 ## Usage
 
