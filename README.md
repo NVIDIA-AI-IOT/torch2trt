@@ -12,19 +12,21 @@ If you find an issue, please [let us know](../..//issues)!
 > Please note, this converter has limited coverage of TensorRT / PyTorch.  We created it primarily
 > to easily optimize the models used in the [JetBot](https://github.com/NVIDIA-AI-IOT/jetbot) project.  If you find the converter helpful with other models, please [let us know](../..//issues).
 
-### Setup
+## Setup
 
 ```bash
 git clone https://github.com/NVIDIA-AI-IOT/torch2trt
 cd torch2trt
-python setup.py install --user
+sudo python setup.py install
 ```
 
-### Usage
+> JetCam is tested against a system configured with the [JetCard](http://github.com/NVIDIA-AI-IOT/jetcard) setup.  Different system configurations may require additional steps.
+
+## Usage
 
 Below are some usage examples, for more check out the [notebooks](notebooks).
 
-#### Convert
+### Convert
 
 ```python
 from torch2trt import torch2trt
@@ -40,7 +42,7 @@ x = torch.ones((1, 3, 224, 224)).cuda()
 model_trt = torch2trt(model, [x])
 ```
 
-#### Execute
+### Execute
 
 We can execute returned ``TRTModule`` just like the original PyTorch model
 
@@ -52,7 +54,7 @@ y_trt = model_trt(x)
 print(torch.max(torch.abs(y - y_trt)))
 ```
 
-#### Save and load
+### Save and load
 
 We can save the model as a ``state_dict``.
 
@@ -70,7 +72,7 @@ model_trt = TRTModule()
 model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 ```
 
-### Models
+## Models
 
 We tested the converter against these models using the [test.sh](test.sh) script.  You can generate the results by calling
 
@@ -104,7 +106,7 @@ bash test.sh TEST_OUTPUT.md
 | vgg19_bn |  |  | 51.4 | 121 |
 
 
-### How does it work?
+## How does it work?
 
 This converter works by attaching conversion functions (like ``convert_ReLU``) to the original 
 PyTorch functional calls (like ``torch.nn.ReLU.forward``).  The sample input data is passed
@@ -117,7 +119,7 @@ uses this ``_trt`` to add layers to the TensorRT network, and then sets the ``_t
 relevant output tensors.  Once the model is fully executed, the final tensors returns are marked as outputs
 of the TensorRT network, and the optimized TensorRT engine is built.
 
-### How to add (or override) a converter
+## How to add (or override) a converter
 
 Here we show how to add a converter for the ``ReLU`` module using the TensorRT
 python API.
