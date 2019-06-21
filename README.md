@@ -77,7 +77,7 @@ model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 We tested the converter against these models using the [test.sh](test.sh) script.  You can generate the results by calling
 
 ```bash
-bash test.sh TEST_OUTPUT.md
+./test.sh TEST_OUTPUT.md
 ```
 
 > The results below show the throughput in FPS.  You can find the raw output, which includes latency, in the [benchmarks folder](benchmarks).
