@@ -15,3 +15,4 @@ from .relu import *
 from .ReLU import *
 from .relu6 import *
 from .ReLU6 import *
+from .view import *
