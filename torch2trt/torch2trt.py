@@ -225,6 +225,10 @@ class TRTModule(torch.nn.Module):
 
 def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt.Logger.ERROR, max_batch_size=1,
         fp16_mode=False, max_workspace_size=0):
+
+    # copy inputs to avoid modifications to source data
+    inputs = [tensor.clone() for tensor in inputs]
+
     with trt.Logger(log_level) as logger, trt.Builder(logger) as builder,\
             builder.create_network() as network, ConversionContext(network) as ctx:
 

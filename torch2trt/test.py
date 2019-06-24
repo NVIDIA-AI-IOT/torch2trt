@@ -1,9 +1,9 @@
 from torch2trt import *
 from .module_test import ModuleTest, MODULE_TESTS
-import torchvision
 import time
 import argparse
 import re
+from termcolor import colored
 
 
 def run(self):
@@ -16,18 +16,21 @@ def run(self):
     # create inputs
     inputs = ()
     for shape in self.input_shapes:
-        inputs += (torch.ones(shape).to(self.device).type(self.dtype), )
+        inputs += (torch.randn(shape).to(self.device).type(self.dtype), )
+
+    # create copy of inputs to handle inplace ops
+    inputs_trt = tuple([tensor.clone() for tensor in inputs])
 
     # convert module
     module_trt = torch2trt(module, inputs, **self.torch2trt_kwargs)
 
     # test output against original
     outputs = module(*inputs)
-    outputs_trt = module_trt(*inputs)
+    outputs_trt = module_trt(*inputs_trt)
 
     if not isinstance(outputs, tuple):
         outputs = (outputs, )
-
+    
     # compute max error
     max_error = 0
     for i in range(len(outputs)):
@@ -83,6 +86,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', '-o', help='Test output file path', type=str, default='torch2trt_test.md')
     parser.add_argument('--name', help='Regular expression to filter modules to test by name', type=str, default='.*')
+    parser.add_argument('--tolerance', help='Maximum error to print warning for entry', type=float, default='-1')
     args = parser.parse_args()
         
     for test in MODULE_TESTS:
@@ -97,6 +101,11 @@ if __name__ == '__main__':
         
         # write entry
         line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt, ms, ms_trt)
-        print(line)
+
+        if args.tolerance >= 0 and max_error > args.tolerance:
+            print(colored(line, 'yellow'))
+        else:
+            print(line)
+
         with open(args.output, 'a+') as f:
             f.write(line + '\n')
