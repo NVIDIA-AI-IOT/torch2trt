@@ -1,4 +1,5 @@
 from torch2trt.torch2trt import *
+from torch2trt.module_test import add_module_test
 
 
 @tensorrt_converter('torch.nn.Linear.forward')
@@ -23,3 +24,8 @@ def convert_Linear(ctx):
     layer.reshape_dims = (-1,)
 
     output._trt = layer.get_output(0)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10)])
+def test_Linear_basic():
+    return torch.nn.Linear(10, 5)
