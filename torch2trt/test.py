@@ -16,7 +16,7 @@ def run(self):
     # create inputs
     inputs = ()
     for shape in self.input_shapes:
-        inputs += (torch.ones(shape).to(self.device).type(self.dtype), )
+        inputs += (torch.randn(shape).to(self.device).type(self.dtype), )
 
     # convert module
     module_trt = torch2trt(module, inputs, **self.torch2trt_kwargs)
