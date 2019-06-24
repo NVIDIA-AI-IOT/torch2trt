@@ -18,16 +18,19 @@ def run(self):
     for shape in self.input_shapes:
         inputs += (torch.randn(shape).to(self.device).type(self.dtype), )
 
+    # create copy of inputs to handle inplace ops
+    inputs_trt = tuple([tensor.clone() for tensor in inputs])
+
     # convert module
     module_trt = torch2trt(module, inputs, **self.torch2trt_kwargs)
 
     # test output against original
     outputs = module(*inputs)
-    outputs_trt = module_trt(*inputs)
+    outputs_trt = module_trt(*inputs_trt)
 
     if not isinstance(outputs, tuple):
         outputs = (outputs, )
-
+    
     # compute max error
     max_error = 0
     for i in range(len(outputs)):
