@@ -1,9 +1,9 @@
 from torch2trt import *
 from .module_test import ModuleTest, MODULE_TESTS
-import torchvision
 import time
 import argparse
 import re
+from termcolor import colored
 
 
 def run(self):
@@ -86,6 +86,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', '-o', help='Test output file path', type=str, default='torch2trt_test.md')
     parser.add_argument('--name', help='Regular expression to filter modules to test by name', type=str, default='.*')
+    parser.add_argument('--tolerance', help='Maximum error to print warning for entry', type=float, default='-1')
     args = parser.parse_args()
         
     for test in MODULE_TESTS:
@@ -100,6 +101,11 @@ if __name__ == '__main__':
         
         # write entry
         line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt, ms, ms_trt)
-        print(line)
+
+        if args.tolerance >= 0 and max_error > args.tolerance:
+            print(colored(line, 'yellow'))
+        else:
+            print(line)
+
         with open(args.output, 'a+') as f:
             f.write(line + '\n')
