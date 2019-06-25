@@ -2,15 +2,16 @@
 
 plugin = interpolate
 dir = .
+torch_dir = /usr/local/lib/python3.6/dist-packages/torch
 
 rule protoc
   command = protoc $in --cpp_out=$dir --python_out=$dir $cflags
 
 rule cxx
-  command = g++ -c $in -fpic -o $out -lprotobuf
+  command = g++ -c $in -fpic -o $out -I $torch_dir/include -I $torch_dir/include/torch/csrc/api/include
 
 rule link
-  command = g++ -shared -o $out $in
+  command = g++ -shared -o $out $in -lprotobuf -lc10 -lc10_cuda -ltorch -L $torch_dir/lib
 
 build $plugin.pb.h $plugin.pb.cc ${plugin}_pb2.py: protoc $plugin.proto
 build $plugin.pb.o: cxx $plugin.pb.cc
