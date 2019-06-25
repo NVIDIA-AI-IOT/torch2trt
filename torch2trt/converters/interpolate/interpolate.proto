@@ -1,9 +1,8 @@
 syntax = "proto3";
 
 
-message message_interpolate {
+message interpolate_message {
   repeated int64 size = 1;
-  repeated double scale_factor = 2;
-  string mode = 3;
-  bool align_corners = 4;
+  string mode = 2;
+  bool align_corners = 3;
 }
