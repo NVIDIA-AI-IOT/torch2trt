@@ -1,0 +1,18 @@
+#cflags = -c -fpic
+
+plugin = interpolate
+dir = .
+
+rule protoc
+  command = protoc $in --cpp_out=$dir --python_out=$dir $cflags
+
+rule cxx
+  command = g++ -c $in -fpic -o $out -lprotobuf
+
+rule link
+  command = g++ -shared -o $out $in
+
+build $plugin.pb.h $plugin.pb.cc ${plugin}_pb2.py: protoc $plugin.proto
+build $plugin.pb.o: cxx $plugin.pb.cc
+build $plugin.o: cxx $plugin.cpp
+build $plugin.so: link $plugin.o $plugin.pb.o
