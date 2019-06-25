@@ -29,7 +29,8 @@ rule cxx
 PLUGIN_TEMPLATE = Template(
 """
 build $plugin_dir/$plugin.pb.h $plugin_dir/$plugin.pb.cc $plugin_dir/${plugin}_pb2.py: protoc $plugin_dir/$plugin.proto
-build $plugin.pb.o $plugin.o: cxx $plugin_dir/$plugin.pb.cc $plugin_dir/$plugin.cpp
+build $plugin.pb.o: cxx $plugin_dir/$plugin.pb.cc
+build $plugin.o: cxx $plugin_dir/$plugin.cpp
 """
 )
 
