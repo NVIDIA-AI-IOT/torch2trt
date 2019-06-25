@@ -39,8 +39,9 @@ public:
     Dims dims;
     dims.nbDims = inputs->nbDims;
 
+    dims.d[0] = inputs->d[0];
     for (int i = 0; i < message.size_size(); i++) {
-      dims.d[i] = message.size(i);
+      dims.d[i + 1] = message.size(i);
     }
 
     return dims;
@@ -90,8 +91,8 @@ public:
     batch_output_sizes.insert(batch_output_sizes.begin(), batchSize);
 
     // create tensor wrappers
-    at::Tensor input = at::from_blob((void*) inputs[0], input_sizes, [](void*){}, tensor_options);
-    at::Tensor output = at::from_blob(outputs[0], input_sizes, [](void*){}, tensor_options);
+    at::Tensor input = at::from_blob((void*) inputs[0], batch_input_sizes, [](void*){}, tensor_options);
+    at::Tensor output = at::from_blob(outputs[0], batch_output_sizes, [](void*){}, tensor_options);
 
     // create new torch cuda stream
     at::cuda::CUDAStream torch_stream = at::cuda::getStreamFromPool();
@@ -107,7 +108,7 @@ public:
 
     // enqueue work
     if (message.mode() == "bilinear") {
-      at::upsample_bilinear2d_out(output, input, {output_sizes[2], output_sizes[3]}, message.align_corners());
+      at::upsample_bilinear2d_out(output, input, {message.size(0), message.size(1)}, message.align_corners());
     }
 
     // capture event on enqueued stream
@@ -176,11 +177,4 @@ public:
 
 REGISTER_TENSORRT_PLUGIN(interpolate_PluginCreator);
 
-}
-
-int main() {
-
-  interpolate_message m;
-  std::cout << m.size_size() << std::endl;
-  return 0;
 }
