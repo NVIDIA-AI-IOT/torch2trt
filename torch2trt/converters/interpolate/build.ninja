@@ -3,17 +3,40 @@
 plugin = interpolate
 dir = .
 torch_dir = /usr/local/lib/python3.6/dist-packages/torch
+cuda_dir = /usr/local/cuda
 
 rule protoc
   command = protoc $in --cpp_out=$dir --python_out=$dir $cflags
 
 rule cxx
-  command = g++ -c $in -fpic -o $out -I $torch_dir/include -I $torch_dir/include/torch/csrc/api/include
-
-rule link
-  command = g++ -shared -o $out $in -lprotobuf -lc10 -lc10_cuda -ltorch -L $torch_dir/lib
+  command = g++ $in -o $out -I$cuda_dir/include -I$torch_dir/include -I$torch_dir/include/torch/csrc/api/include -L$torch_dir/lib -L$cuda_dir/lib64 -lc10 -lc10_cuda -ltorch -lcudart -lcaffe2 -lcaffe2_gpu -D_GLIBCXX_USE_CXX11_ABI=0 -lprotobuf -lprotobuf-lite -pthread -lpthread
 
 build $plugin.pb.h $plugin.pb.cc ${plugin}_pb2.py: protoc $plugin.proto
-build $plugin.pb.o: cxx $plugin.pb.cc
-build $plugin.o: cxx $plugin.cpp
-build $plugin.so: link $plugin.o $plugin.pb.o
+build $plugin: cxx $plugin.pb.cc $plugin.cpp
+
+#
+#rule cxx
+#  command = g++ $in -o $out -I $torch_dir/include -I $torch_dir/include/torch/csrc/api/include -I $cuda_dir/include -lprotobuf -lc10 -lc10_cuda -ltorch -pthread -lpthread -L $torch_dir/lib -L$cuda_dir/lib64 -lcudart -lcaffe2 -lcaffe2_gpu -D_GLIBCXX_USE_CXX11_ABI=0 -lnvinfer -lprotobuf-lite -lprotoc
+#
+#rule cxx_plugin
+#  command = g++ -c -fPIC $in -I $torch_dir/include -I $torch_dir/include/torch/csrc/api/include -I $cuda_dir/include -D_GLIBCXX_USE_CXX11_ABI=0
+#
+#rule cxx_proto
+#  command = g++ -c -fPIC $in
+#
+#rule link
+#  command = g++ -shared -o $out $in -pthread -lpthread -lprotobuf -lprotobuf-lite -lnvinfer -lc10 -lc10_cuda -ltorch -L $torch_dir/lib -L $cuda_dir/lib64
+#
+#rule exe
+#  command = g++ $in -o $out -L. -l$plugin#-I $torch_dir/include -I $torch_dir/include/torch/csrc/api/include -I $cuda_dir/include -lc10 -lc10_cuda -ltorch -L$torch_dir/lib -lcudart -L $cuda_dir/lib64 -lcaffe2 -lcaffe2_gpu -D_GLIBCXX_USE_CXX11_ABI=0 -lnvinfer
+#
+#build $plugin.pb.h $plugin.pb.cc ${plugin}_pb2.py: protoc $plugin.proto
+#build $plugin.pb.o: cxx_proto $plugin.pb.cc
+#build $plugin.o: cxx_plugin $plugin.cpp
+#build $plugin.so: link $plugin.o $plugin.pb.o
+#
+#build $plugin.pb.o: cxx $plugin.pb.cc
+#build $plugin.o: cxx $plugin.cpp
+#build $plugin.so: cxx $plugin.cpp $plugin.pb.cc
+
+#build test: exe test.cpp
