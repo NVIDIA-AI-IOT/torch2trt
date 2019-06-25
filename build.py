@@ -1,4 +1,5 @@
 import imp
+import subprocess
 import os
 from string import Template
 
@@ -33,7 +34,8 @@ build $plugin.pb.o $plugin.o: cxx $plugin_dir/$plugin.pb.cc $plugin_dir/$plugin.
 )
 
 
-if __name__ == '__main__':
+def build():
+    global PLUGINS, BASE_FOLDER, NINJA_STR, PLUGIN_TEMPLATE
     plugin_o_files = []
     for plugin in PLUGINS:
         NINJA_STR += \
@@ -45,9 +47,14 @@ if __name__ == '__main__':
 
     NINJA_STR += Template(
 """
-build torch2trt.so: link $o_files
+build torch2trt/libtorch2trt.so: link $o_files
 """
     ).substitute({'o_files': ' '.join(plugin_o_files)})
 
     with open('build.ninja', 'w') as f:
         f.write(NINJA_STR)
+
+    subprocess.call(['ninja'])
+
+if __name__ == '__main__':
+    build()
