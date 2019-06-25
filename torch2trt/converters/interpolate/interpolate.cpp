@@ -109,6 +109,7 @@ public:
     // enqueue work
     if (message.mode() == "bilinear") {
       at::upsample_bilinear2d_out(output, input, {message.size(0), message.size(1)}, message.align_corners());
+    } else if (message.mode() == "nearest") {
     }
 
     // capture event on enqueued stream
