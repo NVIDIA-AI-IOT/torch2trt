@@ -1,7 +1,9 @@
 syntax = "proto3";
 
 
-message interpolate_message {
+package torch2trt;
+
+message interpolate_Message {
   repeated int64 size = 1;
   string mode = 2;
   bool align_corners = 3;
