@@ -13,15 +13,15 @@ using namespace nvinfer1;
 namespace torch2trt
 {
 
-class interpolate_plugin : public IPluginV2 {
+class interpolate_Plugin : public IPluginV2 {
 private:
-  interpolate_message message;
+  interpolate_Message message;
   at::TensorOptions tensor_options;
   std::vector<long> input_sizes;
   std::vector<long> output_sizes;
 
 public:
-  interpolate_plugin(interpolate_message message) : message(message) {}
+  interpolate_Plugin(interpolate_Message message) : message(message) {}
 
   const char* getPluginType() const override {
     return "interpolate";
@@ -109,6 +109,12 @@ public:
     // enqueue work
     if (message.mode() == "bilinear") {
       at::upsample_bilinear2d_out(output, input, {message.size(0), message.size(1)}, message.align_corners());
+    } else if (message.mode() == "nearest") {
+      at::upsample_nearest2d_out(output, input, {message.size(0), message.size(1)});
+    } else if (message.mode() == "area") {
+      at::adaptive_avg_pool2d_out(output, input, {message.size(0), message.size(1)});
+    } else if (message.mode() == "bicubic") {
+      at::upsample_bicubic2d_out(output, input, {message.size(0), message.size(1)}, message.align_corners());
     }
 
     // capture event on enqueued stream
@@ -135,7 +141,7 @@ public:
   void destroy() override {}
 
   IPluginV2* clone() const override {
-    return new interpolate_plugin(message);
+    return new interpolate_Plugin(message);
   }
 
   void setPluginNamespace(const char* pluginNamespace) override {}
@@ -163,9 +169,9 @@ public:
   }
 
   IPluginV2 *deserializePlugin(const char *name, const void *data, size_t length) override {
-    interpolate_message message;
+    interpolate_Message message;
     message.ParseFromArray(data, length);
-    return new interpolate_plugin(message);
+    return new interpolate_Plugin(message);
   }
 
   void setPluginNamespace(const char *N) override {}
