@@ -6,11 +6,8 @@ package_data = {}
 
 if '--plugins' in sys.argv:
     sys.argv.remove('--plugins')
-    try:
-        build()
-        package_data['torch2trt'] = ['libtorch2trt.so']
-    except RuntimeError:
-        print('Could not build plugins')
+    build()
+    package_data['torch2trt'] = ['libtorch2trt.so']
 
 setup(
     name='torch2trt',

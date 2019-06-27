@@ -11,5 +11,5 @@ def load_plugins():
 try:
     load_plugins()
     PLUGINS_LOADED = True
-except RuntimeError:
+except OSError:
     PLUGINS_LOADED = False
