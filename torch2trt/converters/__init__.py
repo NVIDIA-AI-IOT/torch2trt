@@ -9,6 +9,7 @@ from .Conv2d import *
 from .ConvTranspose2d import *
 from .identity import *
 from .Identity import *
+from .interpolate import *
 from .Linear import *
 from .LogSoftmax import *
 from .MaxPool2d import *
