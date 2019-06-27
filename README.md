@@ -28,7 +28,7 @@ sudo python setup.py install
 
 To install with plugins to support some operations in PyTorch that are not natviely supported with TensorRT, call the following
 
-> This is *experimental* and currently only includes a plugin for ``torch.nn.functional.interpolate``
+> This currently only includes a plugin for ``torch.nn.functional.interpolate``
 
 ```bash
 sudo apt-get install libprotobuf* protobuf-compiler ninja-build
@@ -61,13 +61,13 @@ model_trt = torch2trt(model, [x])
 
 ### Execute
 
-We can execute returned ``TRTModule`` just like the original PyTorch model
+We can execute the returned ``TRTModule`` just like the original PyTorch model
 
 ```python
 y = model(x)
 y_trt = model_trt(x)
 
-# check the output against 
+# check the output against PyTorch
 print(torch.max(torch.abs(y - y_trt)))
 ```
 
