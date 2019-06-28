@@ -14,7 +14,10 @@ def convert_mean(ctx):
     elif len(ctx.method_args) >= 2:
         dim = ctx.method_args[1]
         
-    # convert dim to tuple  
+    # convert list to tuple
+    if isinstance(dim, list):
+        dim = tuple(dim)
+        
     if not isinstance(dim, tuple):
         dim = (dim, )
         
