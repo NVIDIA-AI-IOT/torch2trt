@@ -77,20 +77,30 @@ def attach_converter(ctx, method, converter):
     """Gets a function that executes PyTorch method and TensorRT converter"""
 
     def wrapper(*args, **kwargs):
+        skip = True
+
+        # check if another (parent) converter has lock
+        if not ctx.lock:
+            ctx.lock = True
+            skip = False
+
         # run original method
         outputs = method(*args, **kwargs)
 
-        # call conversion hook
-        ctx.method_args = args
-        ctx.method_kwargs = kwargs
-        ctx.method_return = outputs
-        #print('%s : %s' % (method.__qualname__, converter.__name__))
-        converter(ctx)
+        if not skip:
+            # call conversion hook
+            ctx.method_args = args
+            ctx.method_kwargs = kwargs
+            ctx.method_return = outputs
 
-        # convert to None so conversion will fail for unsupported layers
-        ctx.method_args = None
-        ctx.method_kwargs = None
-        ctx.method_return = None
+            #print('%s : %s' % (method.__qualname__, converter.__name__))
+            converter(ctx)
+
+            # convert to None so conversion will fail for unsupported layers
+            ctx.method_args = None
+            ctx.method_kwargs = None
+            ctx.method_return = None
+            ctx.lock = False
 
         return outputs
 
@@ -119,6 +129,7 @@ class ConversionHook(object):
 class ConversionContext(object):
     def __init__(self, network, converters=CONVERTERS):
         self.network = network
+        self.lock = False
         self.method_args = None
         self.method_kwargs = None
         self.method_return = None
