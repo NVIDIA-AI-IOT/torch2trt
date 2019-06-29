@@ -9,7 +9,6 @@ from .Conv2d import *
 from .ConvTranspose2d import *
 from .identity import *
 from .Identity import *
-from .interpolate import *
 from .Linear import *
 from .LogSoftmax import *
 from .MaxPool2d import *
@@ -20,3 +19,8 @@ from .ReLU6 import *
 from .view import *
 from .transpose import *
 from .mean import *
+
+try:
+    from .interpolate import *
+except:
+    pass
