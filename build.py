@@ -9,22 +9,19 @@ PLUGINS = [
 
 BASE_FOLDER = 'torch2trt/converters'
 
-NINJA_STR = Template(
+NINJA_TEMPLATE = Template(
 """
 rule link
-  command = g++ -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -lc10 -lc10_cuda -ltorch -lcudart -lcaffe2 -lcaffe2_gpu -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer
+  command = g++ -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -L$trt_lib_dir -lc10 -lc10_cuda -ltorch -lcudart -lcaffe2 -lcaffe2_gpu -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer
 
 rule protoc
   command = protoc $$in --cpp_out=. --python_out=.
 
 rule cxx
-  command = g++ -c -fPIC $$in -I$cuda_dir/include -I$torch_dir/include -I$torch_dir/include/torch/csrc/api/include -I. 
+  command = g++ -c -fPIC $$in -I$cuda_dir/include -I$torch_dir/include -I$torch_dir/include/torch/csrc/api/include -I. -std=c++11 -I$trt_inc_dir
 
 """
-).substitute({
-    'torch_dir': imp.find_module('torch')[1],
-    'cuda_dir': '/usr/local/cuda'
-})
+)
 
 PLUGIN_TEMPLATE = Template(
 """
@@ -35,8 +32,16 @@ build $plugin.o: cxx $plugin_dir/$plugin.cpp
 )
 
 
-def build():
-    global PLUGINS, BASE_FOLDER, NINJA_STR, PLUGIN_TEMPLATE
+def build(cuda_dir="/usr/local/cuda", torch_dir=imp.find_module('torch')[1], trt_inc_dir="/usr/include/x86_64-linux-gnu", trt_lib_dir="/usr/lib/x86_64-linux-gnu"):
+    global PLUGINS, BASE_FOLDER, NINJA_TEMPLATE, PLUGIN_TEMPLATE
+    
+    NINJA_STR = NINJA_TEMPLATE.substitute({
+        'torch_dir': torch_dir,
+        'cuda_dir': cuda_dir,
+        'trt_inc_dir': trt_inc_dir,
+        'trt_lib_dir': trt_lib_dir,
+    })
+
     plugin_o_files = []
     for plugin in PLUGINS:
         NINJA_STR += \
@@ -45,7 +50,7 @@ def build():
                 'plugin_dir': os.path.join(BASE_FOLDER, plugin),
             })
         plugin_o_files += [plugin + '.pb.o', plugin + '.o']
-
+        
     NINJA_STR += Template(
 """
 build torch2trt/libtorch2trt.so: link $o_files
