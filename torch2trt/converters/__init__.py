@@ -19,6 +19,7 @@ from .ReLU6 import *
 from .view import *
 from .transpose import *
 from .mean import *
+from .softmax import *
 
 try:
     from .interpolate import *
