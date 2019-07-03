@@ -9,27 +9,20 @@ PLUGINS = [
 
 BASE_FOLDER = 'torch2trt/converters'
 
-NINJA_TEMPLATE = Template(
-    """
-    rule link
-    command = g++ -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -L$trt_lib_dir -lc10 -lc10_cuda -ltorch -lcudart -lcaffe2 -lcaffe2_gpu -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer
+NINJA_TEMPLATE = Template((
+    "rule link\n"
+    "  command = g++ -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -L$trt_lib_dir -lc10 -lc10_cuda -ltorch -lcudart -lcaffe2 -lcaffe2_gpu -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer\n"
+    "rule protoc\n"
+    "  command = protoc $$in --cpp_out=. --python_out=.\n"
+    "rule cxx\n"
+    "  command = g++ -c -fPIC $$in -I$cuda_dir/include -I$torch_dir/include -I$torch_dir/include/torch/csrc/api/include -I. -std=c++11 -I$trt_inc_dir\n"
+))
 
-    rule protoc
-    command = protoc $$in --cpp_out=. --python_out=.
-
-    rule cxx
-    command = g++ -c -fPIC $$in -I$cuda_dir/include -I$torch_dir/include -I$torch_dir/include/torch/csrc/api/include -I. -std=c++11 -I$trt_inc_dir
-
-    """
-)
-
-PLUGIN_TEMPLATE = Template(
-    """
-    build $plugin_dir/$plugin.pb.h $plugin_dir/$plugin.pb.cc $plugin_dir/${plugin}_pb2.py: protoc $plugin_dir/$plugin.proto
-    build $plugin.pb.o: cxx $plugin_dir/$plugin.pb.cc
-    build $plugin.o: cxx $plugin_dir/$plugin.cpp
-    """
-)
+PLUGIN_TEMPLATE = Template((
+    "build $plugin_dir/$plugin.pb.h $plugin_dir/$plugin.pb.cc $plugin_dir/${plugin}_pb2.py: protoc $plugin_dir/$plugin.proto\n"
+    "build $plugin.pb.o: cxx $plugin_dir/$plugin.pb.cc\n"
+    "build $plugin.o: cxx $plugin_dir/$plugin.cpp\n"
+))
 
 
 def build(cuda_dir="/usr/local/cuda",
@@ -55,11 +48,9 @@ def build(cuda_dir="/usr/local/cuda",
             })
         plugin_o_files += [plugin + '.pb.o', plugin + '.o']
 
-    NINJA_STR += Template(
-        """
-        build torch2trt/libtorch2trt.so: link $o_files
-        """
-    ).substitute({'o_files': ' '.join(plugin_o_files)})
+    NINJA_STR += Template((
+        "build torch2trt/libtorch2trt.so: link $o_files\n"
+    )).substitute({'o_files': ' '.join(plugin_o_files)})
 
     with open('build.ninja', 'w') as f:
         f.write(NINJA_STR)
