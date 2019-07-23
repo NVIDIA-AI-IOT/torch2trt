@@ -19,8 +19,8 @@ from .ReLU6 import *
 from .view import *
 from .transpose import *
 from .mean import *
-from .softmax import *
-
+from .pad import *
+from .slice import *
 try:
     from .interpolate import *
 except:
