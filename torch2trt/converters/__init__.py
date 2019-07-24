@@ -2,6 +2,7 @@ from .adaptive_avg_pool2d import *
 from .AdaptiveAvgPool2d import *
 from .add import *
 from .mul import *
+from .div import *
 from .iadd import *
 from .AvgPool2d import *
 from .BatchNorm2d import *
