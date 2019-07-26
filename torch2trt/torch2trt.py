@@ -235,7 +235,7 @@ class TRTModule(torch.nn.Module):
 
 
 def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt.Logger.ERROR, max_batch_size=1,
-        fp16_mode=False, max_workspace_size=0):
+        fp16_mode=False, max_workspace_size=0, strict_type_constraints=False):
 
     # copy inputs to avoid modifications to source data
     inputs = [tensor.clone() for tensor in inputs]
@@ -260,6 +260,7 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
         builder.max_workspace_size = max_workspace_size
         builder.fp16_mode = fp16_mode
         builder.max_batch_size = max_batch_size
+        builder.strict_type_constraints = strict_type_constraints
 
         engine = builder.build_cuda_engine(network)
     
