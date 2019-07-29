@@ -5,6 +5,7 @@ from .mul import *
 from .div import *
 from .iadd import *
 from .AvgPool2d import *
+from .BatchNorm1d import *
 from .BatchNorm2d import *
 from .cat import *
 from .Conv1d import *
