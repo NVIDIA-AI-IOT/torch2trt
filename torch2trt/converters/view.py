@@ -2,6 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
+@tensorrt_converter('torch.flatten')
 @tensorrt_converter('torch.Tensor.reshape')
 @tensorrt_converter('torch.Tensor.view')
 def convert_view(ctx):
