@@ -59,23 +59,47 @@ public:
 
   void configureWithFormat(const Dims* inputDims, int nbInputs, const Dims* outputDims,
       int nbOutputs, DataType type, PluginFormat format, int maxBatchSize) override {
-    tensor_options = tensor_options.device(c10::kCUDA);
+    
+    // set data type
     if (type == DataType::kFLOAT) {
-      tensor_options = tensor_options.dtype(c10::kFloat);
+      message.set_dtype(DataTypeMessage::kFloat);
     } else if (type == DataType::kHALF) {
       tensor_options = tensor_options.dtype(c10::kHalf);
+      message.set_dtype(DataTypeMessage::kHalf);
     }
-
+      
+    // set input sizes
     for (int i = 0; i < inputDims[0].nbDims; i++) {
-      input_sizes.push_back(inputDims[0].d[i]);
+      message.add_input_size(inputDims[0].d[i]);
     }
 
+    // set output sizes
     for (int i = 0; i < outputDims[0].nbDims; i++) {
-      output_sizes.push_back(outputDims[0].d[i]);
+      message.add_output_size(outputDims[0].d[i]);
     }
   }
 
   int initialize() override {
+    // set device
+    tensor_options = tensor_options.device(c10::kCUDA);
+      
+    // set data type
+    if (message.dtype() == DataTypeMessage::kFloat) {
+        tensor_options = tensor_options.dtype(c10::kFloat);
+    } else if (message.dtype() == DataTypeMessage::kHalf) {
+        tensor_options = tensor_options.dtype(c10::kHalf);
+    }
+      
+    input_sizes.resize(message.input_size_size());
+    output_sizes.resize(message.output_size_size());
+    
+    for (int i = 0; i < message.input_size_size(); i++) {
+        input_sizes[i] = message.input_size(i);
+    }
+    for (int i = 0; i < message.output_size_size(); i++) {
+        output_sizes[i] = message.output_size(i);
+    }
+      
     return 0;
   }
 
