@@ -4,6 +4,7 @@ import os
 from string import Template
 
 PLUGINS = [
+    'torch_plugin',
     'interpolate',
 ]
 
@@ -12,13 +13,13 @@ BASE_FOLDER = 'torch2trt/converters'
 NINJA_STR = Template(
 """
 rule link
-  command = g++ -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -lc10 -lc10_cuda -ltorch -lcudart -lcaffe2 -lcaffe2_gpu -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer
+  command = g++ -g -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -lc10 -lc10_cuda -ltorch -lcudart -lcaffe2 -lcaffe2_gpu -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer
 
 rule protoc
   command = protoc $$in --cpp_out=. --python_out=.
 
 rule cxx
-  command = g++ -c -fPIC $$in -I$cuda_dir/include -I$torch_dir/include -I$torch_dir/include/torch/csrc/api/include -I. 
+  command = g++ -g -c -fPIC $$in -I$cuda_dir/include -I$torch_dir/include -I$torch_dir/include/torch/csrc/api/include -I. 
 
 """
 ).substitute({
