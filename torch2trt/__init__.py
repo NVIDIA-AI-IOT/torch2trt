@@ -14,6 +14,7 @@ def load_plugins():
         registry.register_creator(c, 'torch2trt')
 
 
+# load_plugins()
 try:
     load_plugins()
     PLUGINS_LOADED = True

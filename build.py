@@ -20,6 +20,7 @@ def build():
         library_dirs=torch2trt.build_utils.torch2trt_dep_library_dirs(), 
         libraries=torch2trt.build_utils.torch2trt_dep_libraries()
     )
+    subprocess.call(['ninja'])
     
 if __name__ == '__main__':
     build()

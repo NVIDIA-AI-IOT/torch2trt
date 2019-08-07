@@ -6,6 +6,7 @@
 #include <cuda_runtime_api.h>
 #include "torch_plugin.h"
 #include "torch_plugin.pb.h"
+#include "interpolate_plugin.pb.h"
 
 
 using namespace nvinfer1;

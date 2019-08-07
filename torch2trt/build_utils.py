@@ -261,4 +261,3 @@ def build_library(name, srcs, protos, include_dirs=[], library_dirs=[], librarie
     with open('build.ninja', 'w') as f:
         ninja_str, _ = _ninja_build_library(name, srcs, protos, include_dirs, library_dirs, libraries)
         f.write(ninja_str)
-    subprocess.call(['ninja'])
