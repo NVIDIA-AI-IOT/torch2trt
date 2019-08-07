@@ -7,7 +7,7 @@ package_data = {}
 if '--plugins' in sys.argv:
     sys.argv.remove('--plugins')
     build()
-    package_data['torch2trt'] = ['libtorch2trt.so']
+    package_data['torch2trt'] = ['libtorch2trt_plugins.so']
 
 setup(
     name='torch2trt',
