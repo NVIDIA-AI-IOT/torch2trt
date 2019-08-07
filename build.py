@@ -21,6 +21,7 @@ def build():
         libraries=torch2trt.build_utils.torch2trt_dep_libraries()
     )
     subprocess.call(['ninja'])
+    subprocess.call(['cp', 'libtorch2trt_plugins.so', 'torch2trt/libtorch2trt_plugins.so'])
     
 if __name__ == '__main__':
     build()
