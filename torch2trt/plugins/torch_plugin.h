@@ -16,7 +16,7 @@ namespace torch2trt
 
 // assumes all tensors CUDA, all dtypes (inputs and outputs) are same
 class TorchPlugin : public IPluginV2 {
-private:
+protected:
   TorchPluginMsg msg;
   at::TensorOptions tensor_options;
   std::vector<std::vector<long>> input_sizes; // includes batch dim
@@ -143,20 +143,8 @@ public:
     // BEGIN TORCH METHOD
 
     // enqueue work
-    if (msg.method_case() == TorchPluginMsg::MethodCase::kInterpolate) {
-      auto method = msg.interpolate();
-      auto input = input_tensors[0];
-      auto output = output_tensors[0];
-      if (method.mode() == "bilinear") {
-        at::upsample_bilinear2d_out(output, input, {method.size(0), method.size(1)}, method.align_corners());
-      } else if (method.mode() == "nearest") {
-        at::upsample_nearest2d_out(output, input, {method.size(0), method.size(1)});
-      } else if (method.mode() == "area") {
-        at::adaptive_avg_pool2d_out(output, input, {method.size(0), method.size(1)});
-      } else if (method.mode() == "bicubic") {
-        at::upsample_bicubic2d_out(output, input, {method.size(0), method.size(1)}, method.align_corners());
-      }
-    }
+    forward(output_tensors, input_tensors);
+
 
     // END TORCH METHOD
       
@@ -193,6 +181,9 @@ public:
     return "torch2trt";
   }
 
+  // torch plugins must implement this forward method
+  virtual void forward(std::vector<torch::Tensor> outputs, std::vector<torch::Tensor> inputs) {};
+
 };
 
 class TorchPluginCreator : public IPluginCreator {
@@ -224,6 +215,5 @@ public:
 
 };
 
-REGISTER_TENSORRT_PLUGIN(TorchPluginCreator);
 
 }

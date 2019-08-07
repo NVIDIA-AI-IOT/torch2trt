@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "google/protobuf/any.proto";
 
 package torch2trt;
 
@@ -17,11 +18,6 @@ message TensorShapeMsg {
 
 // BEGIN TORCH METHODS
 
-message InterpolateMsg {
-  repeated int64 size = 1;
-  string mode = 2;
-  bool align_corners = 3;
-}
 
 // END TORCH METHODS
 
@@ -30,8 +26,5 @@ message TorchPluginMsg {
   repeated TensorShapeMsg input_shapes = 2;
   repeated TensorShapeMsg output_shapes = 3;
   
-  oneof method {
-    InterpolateMsg interpolate = 4;
-    // ADD TORCH METHOD HERE
-  }
+  google.protobuf.Any method = 4;
 }
