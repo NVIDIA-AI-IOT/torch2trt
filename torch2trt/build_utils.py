@@ -1,11 +1,7 @@
 import imp
-import subprocess
 import os
 from string import Template
-import subprocess
 
-PROTO_FILE_EXTENSIONS = ['proto']
-CXX_FILE_EXTENSIONS = ['cxx', 'cpp', 'cc']
 
 def find_torch_dir():
     return imp.find_module('torch')[1]
@@ -15,7 +11,7 @@ def find_cuda_dir():
     return '/usr/local/cuda'
 
 
-def torch2trt_dep_libraries():
+def libraries():
     libs = [
         'c10',
         'c10_cuda',
@@ -31,7 +27,7 @@ def torch2trt_dep_libraries():
     return libs
 
 
-def torch2trt_dep_include_dirs():
+def include_dirs():
     dirs = [
         os.path.join(find_torch_dir(), 'include'),
         os.path.join(find_torch_dir(), 'include/torch/csrc/api/include'),
@@ -40,7 +36,7 @@ def torch2trt_dep_include_dirs():
     return dirs
 
 
-def torch2trt_dep_library_dirs():
+def library_dirs():
     dirs = [
         os.path.join(find_torch_dir(), 'lib'),
         os.path.join(find_cuda_dir(), 'lib64')
@@ -48,216 +44,221 @@ def torch2trt_dep_library_dirs():
     return dirs
 
 
-def gcc_library_string(libs):
+def include_dir_string(include_dirs):
     s = ''
-    for lib in libs:
-        s += '-l' + lib + ' '
+    for d in include_dirs:
+        s += '-I' + d + ' '
     return s
 
 
-def gcc_library_dir_string(lib_dirs):
+def library_string(libraries):
     s = ''
-    for dir in lib_dirs:
-        s += '-L' + dir + ' '
+    for l in libraries:
+        s += '-l' + l + ' '
     return s
 
 
-def gcc_include_dir_string(include_dirs):
+def library_dir_string(library_dirs):
     s = ''
-    for dir in include_dirs:
-        s += '-I' + dir + ' '
+    for l in library_dirs:
+        s += '-L' + l + ' '
     return s
 
-def _abspath_all(paths):
+
+def abspath(paths):
+    if isinstance(paths, str):
+        return os.path.abspath(paths)
     return [os.path.abspath(p) for p in paths]
 
-NINJA_PROTOC_PYTHON_RULE = \
-"""
-rule protoc_python
-  command = cd $output_dir && protoc $in --python_out=. $proto_dirs
-"""
 
-def protoc_python_build(inputs, output_dir='.'):
-    output_dir = os.path.abspath(output_dir)
-    inputs = [input for input in inputs if input.split('.')[-1] in PROTO_FILE_EXTENSIONS]
-    if isinstance(inputs, str):
-        inputs = [inputs]
-    
-    outputs = []
-    proto_dirs = []
-    for input in inputs:
-        input_basename = '.'.join(os.path.basename(input).split('.')[:-1])
-        filename = input_basename + '_pb2.py'
-        outputs += [os.path.join(output_dir, filename)]
-        proto_dirs += [os.path.abspath(os.path.dirname(input))]
-        
-    inputs = _abspath_all(inputs)
-    outputs = _abspath_all(outputs)
-    
-    ninja_str = Template(
-"""
-build $outputs: protoc_python $inputs
-  output_dir = $output_dir
-  proto_dirs = $proto_dirs
-"""
-    ).substitute({
-        'inputs': ' '.join(inputs),
-        'outputs': ' '.join(outputs),
-        'output_dir': output_dir,
-        'proto_dirs': gcc_include_dir_string(proto_dirs)
-    })
-    
-    return ninja_str, outputs
-
-
-NINJA_PROTOC_CPP_RULE = \
+PROTOC_CPP = \
 """
 rule protoc_cpp
-  command = cd $output_dir && protoc $in --cpp_out=. $proto_dirs
+  command = protoc $in --cpp_out=. $flags
 """
 
-def protoc_cpp_build(inputs, output_dir='.'):
-    output_dir = os.path.abspath(output_dir)
-    inputs = [input for input in inputs if input.split('.')[-1] in PROTO_FILE_EXTENSIONS]
-    if isinstance(inputs, str):
-        inputs = [inputs]
-    
-    outputs = []
-    proto_dirs = []
-    for input in inputs:
-        input_basename = '.'.join(os.path.basename(input).split('.')[:-1])
-        cc_filename = input_basename + '.pb.cc'
-        h_filename = input_basename + '.pb.h'
-        outputs += [
-            os.path.join(output_dir, cc_filename),
-            os.path.join(output_dir, h_filename)
-        ]
-        proto_dirs += [os.path.abspath(os.path.dirname(input))]
-        
-    inputs = _abspath_all(inputs)
-    outputs = _abspath_all(outputs)
-    
-    ninja_str = Template(
+PROTOC_PYTHON = \
 """
-build $outputs: protoc_cpp $inputs
-  output_dir = $output_dir
-  proto_dirs = $proto_dirs
-"""
-    ).substitute({
-        'inputs': ' '.join(inputs),
-        'outputs': ' '.join(outputs),
-        'output_dir': output_dir,
-        'proto_dirs': gcc_include_dir_string(proto_dirs)
-    })
-    
-    return ninja_str, outputs
-
-
-NINJA_CPP_COMPILE_RULE = \
-"""
-compiler = g++
-rule cpp_compile
-  command = cd $output_dir && $compiler -c -fPIC $in $include_dirs
+rule protoc_python
+  command = protoc $in --python_out=. $flags
 """
 
-def cpp_compile_build(inputs, output_dir='.', include_dirs=[], compiler='g++'):
-    output_dir = os.path.abspath(output_dir)
-    inputs = [input for input in inputs if input.split('.')[-1] in CXX_FILE_EXTENSIONS]
-    if isinstance(inputs, str):
-        inputs = [inputs]
-        
-    outputs = []
-    for input in inputs:
-        input_basename = '.'.join(os.path.basename(input).split('.')[:-1])
-        o_filename = input_basename + '.o'
-        outputs += [
-            os.path.join(output_dir, o_filename),
-        ]
-        
-    inputs = _abspath_all(inputs)
-    outputs = _abspath_all(outputs)
-    include_dirs = _abspath_all(include_dirs)
-        
-    ninja_str = Template(
+CPP_OBJECT = \
 """
-build $outputs: cpp_compile $inputs
-  compiler = $compiler
-  output_dir = $output_dir
-  include_dirs = $include_dirs
-"""
-    ).substitute({
-        'inputs': ' '.join(inputs),
-        'outputs': ' '.join(outputs),
-        'compiler': compiler,
-        'output_dir': output_dir,
-        'include_dirs': gcc_include_dir_string(include_dirs)
-    })
-    
-    return ninja_str, outputs
-
-
-NINJA_CPP_LINK_RULE = \
-"""
-compiler = g++
-rule cpp_link
-  command = $compiler -shared -o $out $in $lib_dirs $libs
+rule cpp_object
+  command = g++ -c -fPIC -o $out $in $flags
 """
 
-def cpp_link_build(name, inputs, output_dir='.', libs=[], lib_dirs=[], compiler='g++'):
-    output_dir = os.path.abspath(output_dir)
-    inputs = [input for input in inputs if input.split('.')[-1] in ['o']]
-    if isinstance(inputs, str):
-        inputs = [inputs]
-    
-    inputs = _abspath_all(inputs)
-    output = os.path.abspath(os.path.join(output_dir, 'lib' + name + '.so'))
-    
-    ninja_str = Template(
+CPP_LIBRARY = \
 """
-build $output: cpp_link $inputs
-  compiler = $compiler
-  libs = $libs
-  lib_dirs = $lib_dirs
+rule cpp_library
+  command = g++ -shared -o $out $in $flags
 """
-    ).substitute({
-        'compiler': compiler,
-        'inputs': ' '.join(inputs),
-        'output': output,
-        'libs': gcc_library_string(libs),
-        'lib_dirs': gcc_library_dir_string(lib_dirs)
-    })
-    
-    return ninja_str, [output]
+
+CPP_EXECUTABLE = \
+"""
+rule cpp_executable
+  command = g++ -o $out $in $flags
+"""
 
 
-def _ninja_build_library(name, srcs, protos, include_dirs=[], library_dirs=[], libraries=[]):
-    NINJA_STR = ''
-    NINJA_STR += NINJA_PROTOC_PYTHON_RULE
-    NINJA_STR += NINJA_PROTOC_CPP_RULE
-    NINJA_STR += NINJA_CPP_COMPILE_RULE
-    NINJA_STR += NINJA_CPP_LINK_RULE
-    
-    objects = []
-    for proto in protos:
-        ninja_str, _ = protoc_python_build([proto], output_dir=os.path.dirname(proto))
-        NINJA_STR += ninja_str
-        ninja_str, outputs = protoc_cpp_build([proto], output_dir=os.path.dirname(proto))
-        NINJA_STR += ninja_str
-        ninja_str, outputs = cpp_compile_build(outputs, output_dir=os.path.dirname(proto), include_dirs=include_dirs)
-        NINJA_STR += ninja_str
-        objects += outputs
-        
+class Ninja(object):
+
+    active_ninja = None
+
+    def __init__(self):
+        self.str = ''
+        self.str += PROTOC_PYTHON
+        self.str += PROTOC_CPP
+        self.str += CPP_OBJECT
+        self.str += CPP_LIBRARY
+        self.str += CPP_EXECUTABLE
+
+    def __enter__(self, *args, **kwargs):
+        Ninja.active_ninja = self
+
+    def __exit__(self, *args, **kwargs):
+        Ninja.active_ninja = None
+
+    def save(self, path='build.ninja'):
+        with open(path, 'w') as f:
+            f.write(self.str)
+
+
+def filter_extensions(files, include_extensions=[], exclude_extensions=[]):
+    return [f for f in files if (f.split('.')[-1] in include_extensions) and (f.split('.')[-1] not in exclude_extensions)]
+
+
+def filter_cpp_sources(files):
+    return filter_extensions(files, ['cxx', 'cpp', 'cc', 'c'])
+
+
+def filter_cpp_headers(files):
+    return filter_extensions(files, ['hpp', 'h'])
+
+
+def filter_protos(files):
+    return filter_extensions(files, ['proto'])
+
+
+def protoc_cpp(srcs, include_dirs=[]):
+    if isinstance(srcs, str):
+        srcs = [srcs]
+    srcs = filter_protos(srcs)
+    outs = []
     for src in srcs:
-        ninja_str, outputs = cpp_compile_build([src], output_dir=os.path.dirname(src), include_dirs=include_dirs)
-        NINJA_STR += ninja_str
-        objects += outputs
-        
-    ninja_str, outputs = cpp_link_build(name, objects, libs=libraries, lib_dirs=library_dirs)
-    NINJA_STR += ninja_str
-    return NINJA_STR, outputs
+        base = '.'.join(src.split('.')[:-1])
+        cc = base + '.pb.cc'
+        h = base + '.pb.h'
+        outs += [cc, h]
+
+    flags = ''
+    flags += include_dir_string(include_dirs)
+
+    ninja = Template(
+"""
+build $outs: protoc_cpp $srcs
+  flags = $flags
+"""
+    ).substitute({
+        'outs': ' '.join(outs),
+        'srcs': ' '.join(srcs),
+        'flags': flags
+    })
+
+    if Ninja.active_ninja is not None:
+        Ninja.active_ninja.str += ninja
+
+    return outs
 
 
-def build_library(name, srcs, protos, include_dirs=[], library_dirs=[], libraries=[]):
-    with open('build.ninja', 'w') as f:
-        ninja_str, _ = _ninja_build_library(name, srcs, protos, include_dirs, library_dirs, libraries)
-        f.write(ninja_str)
+def protoc_python(srcs, include_dirs=[]):
+    if isinstance(srcs, str):
+        srcs = [srcs]
+    srcs = filter_protos(srcs)
+    outs = []
+    for src in srcs:
+        base = '.'.join(src.split('.')[:-1])
+        out = base + '_pb2.py'
+        outs += [out]
+
+    flags = ''
+    flags += include_dir_string(include_dirs)
+
+    ninja = Template(
+"""
+build $outs: protoc_python $srcs
+  flags = $flags
+"""
+    ).substitute({
+        'outs': ' '.join(outs),
+        'srcs': ' '.join(srcs),
+        'flags': flags
+    })
+
+    if Ninja.active_ninja is not None:
+        Ninja.active_ninja.str += ninja
+
+    return outs
+
+
+def cpp_object(srcs, include_dirs=[], cflags=[]):
+    if isinstance(srcs, str):
+        srcs = [srcs]
+    assert(len(srcs) == 1)
+    src = srcs[0]
+    base = '.'.join(src.split('.')[:-1])
+    outs = [base + '.o']
+
+    flags = ''
+    flags += include_dir_string(include_dirs)
+    flags += ' '.join(cflags)
+
+    ninja = Template(
+"""
+build $outs: cpp_object $srcs
+  flags = $flags
+"""
+    ).substitute({
+        'outs': ' '.join(outs),
+        'srcs': ' '.join(srcs),
+        'flags': flags
+    })
+
+    if Ninja.active_ninja is not None:
+        Ninja.active_ninja.str += ninja
+
+    return outs
+
+
+def cpp_library(out, srcs, include_dirs=[], library_dirs=[], libraries=[], cflags=[]):
+    if isinstance(srcs, str):
+        srcs = [srcs]
+    srcs = filter_cpp_sources(srcs)
+    assert(isinstance(out, str))
+    outs = [out]
+
+    objs = []
+    for src in srcs:
+        objs += cpp_object(src, include_dirs=include_dirs)
+
+    flags = ''
+    flags += library_dir_string(library_dirs)
+    flags += library_string(libraries)
+    flags += ' '.join(cflags)
+
+    ninja = Template(
+"""
+build $outs: cpp_library $srcs
+  flags = $flags
+"""
+    ).substitute({
+        'outs': ' '.join(outs),
+        'srcs': ' '.join(objs),
+        'flags': flags
+    })
+
+    if Ninja.active_ninja is not None:
+        Ninja.active_ninja.str += ninja
+
+    return outs

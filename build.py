@@ -1,27 +1,31 @@
-import imp
 import subprocess
-import os
-from string import Template
-import sys
-sys.path.append('torch2trt')
-import torch2trt.build_utils
+import torch2trt.build_utils as bt
+
 
 def build():
-    torch2trt.build_utils.build_library(
-        name='torch2trt_plugins', 
-        srcs=[
-            'torch2trt/plugins/interpolate_plugin.cpp',
-        ], 
-        protos=[
-            'torch2trt/plugins/torch_plugin.proto',
-            'torch2trt/plugins/interpolate_plugin.proto'
-        ], 
-        include_dirs=torch2trt.build_utils.torch2trt_dep_include_dirs(), 
-        library_dirs=torch2trt.build_utils.torch2trt_dep_library_dirs(), 
-        libraries=torch2trt.build_utils.torch2trt_dep_libraries()
-    )
+    ninja = bt.Ninja()
+
+    with ninja:
+
+        generated = bt.protoc_cpp(
+            srcs=[
+                'torch2trt/plugins/interpolate_plugin.proto',
+                'torch2trt/plugins/torch_plugin.proto',
+            ],
+            include_dirs=['.']
+        )
+
+        library = bt.cpp_library(
+            out='torch2trt/libtorch2trt_plugins.so',
+            srcs=generated + ['torch2trt/plugins/interpolate_plugin.cpp'],
+            include_dirs=['.'] + bt.include_dirs(),
+            library_dirs=bt.library_dirs(),
+            libraries=bt.libraries()
+        )
+
+    ninja.save()
     subprocess.call(['ninja'])
-    subprocess.call(['cp', 'libtorch2trt_plugins.so', 'torch2trt/libtorch2trt_plugins.so'])
-    
+
+
 if __name__ == '__main__':
     build()
