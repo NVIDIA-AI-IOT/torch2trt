@@ -7,6 +7,14 @@ def build():
 
     with ninja:
 
+        _ = bt.protoc_python(
+            srcs=[
+                'torch2trt/plugins/interpolate_plugin.proto',
+                'torch2trt/plugins/torch_plugin.proto',
+            ],
+            include_dirs=['.']
+        )
+        
         generated = bt.protoc_cpp(
             srcs=[
                 'torch2trt/plugins/interpolate_plugin.proto',
@@ -14,7 +22,7 @@ def build():
             ],
             include_dirs=['.']
         )
-
+        
         library = bt.cpp_library(
             out='torch2trt/libtorch2trt_plugins.so',
             srcs=generated + ['torch2trt/plugins/interpolate_plugin.cpp'],
