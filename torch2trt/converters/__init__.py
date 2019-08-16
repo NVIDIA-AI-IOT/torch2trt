@@ -29,6 +29,7 @@ from .mean import *
 from .softmax import *
 
 try:
+    from .Conv3d import *
     from .interpolate import *
 except:
     pass
