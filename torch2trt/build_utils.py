@@ -17,8 +17,6 @@ def libraries():
         'c10_cuda',
         'torch',
         'cudart',
-        'caffe2',
-        'caffe2_gpu',
         'protobuf',
         'protobuf-lite',
         'pthread',
