@@ -251,7 +251,7 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
 
         outputs = module(*inputs)
 
-        if not isinstance(outputs, tuple):
+        if not isinstance(outputs, tuple) and not isinstance(outputs, list):
             outputs = (outputs, )
         ctx.mark_outputs(outputs, output_names)
 
