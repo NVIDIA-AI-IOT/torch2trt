@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package torch2trt;
+
+message ConvNdPluginMsg {
+  int64 num_dim = 1;
+  repeated int64 kernel_size = 2;
+  repeated int64 stride = 3;
+  repeated int64 padding = 4;
+  repeated int64 dilation = 5;
+  int64 groups = 6;
+  bool transposed = 7;
+  bool has_bias = 8;
+}
