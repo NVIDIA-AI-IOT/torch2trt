@@ -12,7 +12,7 @@ BASE_FOLDER = 'torch2trt/converters'
 NINJA_STR = Template(
 """
 rule link
-  command = g++ -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -lc10 -lc10_cuda -ltorch -lcudart -lcaffe2 -lcaffe2_gpu -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer
+  command = g++ -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -lc10 -lc10_cuda -ltorch -lcudart -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer
 
 rule protoc
   command = protoc $$in --cpp_out=. --python_out=.
