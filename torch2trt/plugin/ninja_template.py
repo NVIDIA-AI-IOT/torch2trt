@@ -14,7 +14,7 @@ build ${PLUGIN_NAME}_pb2.py: protoc_python ${PLUGIN_NAME}.proto
 
 build ${PLUGIN_NAME}.pb.h ${PLUGIN_NAME}.pb.cc: protoc_cpp ${PLUGIN_NAME}.proto
 
-build torch2trt_plugin_${PLUGIN_NAME}.so: cuda_library ${PLUGIN_NAME}.cu ${PLUGIN_NAME}.pb.cc
+build ${PLUGIN_LIB_NAME}: cuda_library ${PLUGIN_NAME}.cu ${PLUGIN_NAME}.pb.cc
   flags = ${FLAGS}
 
 """

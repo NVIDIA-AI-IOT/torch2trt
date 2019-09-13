@@ -85,84 +85,122 @@ def refresh_plugin_registry():
 def load_plugin_library(path):
     ctypes.CDLL(path)
     refresh_plugin_registry()
-         
-        
-def create_add_plugin_method(plugin_name, output_dir='.'):
-    TEMPLATE = \
-"""
-import torch
-import os
-import tensorrt as trt
-from torch2trt.plugin import load_plugin_library
+    
 
+class Plugin(object):
+    
+    def __init__(self, name, members='', setup='', forward='', extra_src='', proto='', directory='~/.torch2trt', extra_include_dirs=[], extra_library_dirs=[], extra_libraries=[], cflags=[]):
+        self.name = name
+        self.members = members
+        self.setup = setup
+        self.forward = forward
+        self.extra_src = extra_src
+        self.proto = proto
+        self.directory = os.path.abspath(os.path.expanduser(directory))
+        self.include_dirs = include_dirs() + extra_include_dirs
+        self.library_dirs = library_dirs() + extra_library_dirs
+        self.libraries = libraries() + extra_libraries
+        self.cflags = cflags
+        
+    def _src_str(self):
+        src = Template(PLUGIN_SRC_TEMPLATE).substitute({
+            'EXTRA_SRC': self.extra_src,
+            'PLUGIN_NAME': self.name,
+            'PLUGIN_MEMBERS': self.members,
+            'PLUGIN_SETUP': self.setup,
+            'PLUGIN_FORWARD': self.forward,
+        })
+        return src
+    
+    def _proto_str(self):
+        proto = Template(PLUGIN_PROTO_TEMPLATE).substitute({
+            'PLUGIN_NAME': self.name,
+            'PLUGIN_PROTO': self.proto
+        })
+        return proto
+    
+    def _ninja_str(self):
+        flags = ''
+        flags += include_dir_string(self.include_dirs)
+        flags += library_dir_string(self.library_dirs)
+        flags += library_string(self.libraries)
+        flags += ' '.join(self.cflags)
+
+        ninja = Template(PLUGIN_NINJA_TEMPLATE).substitute({
+            'PLUGIN_NAME': self.name,
+            'PLUGIN_LIB_NAME': self._lib_name(),
+            'FLAGS': flags
+        })
+        return ninja
+    
+    def _lib_name(self):
+        return 'libtorch2trt_plugin_' + self.name + '.so'
+    
+    def _lib_path(self):
+        return os.path.join(self.directory, self._lib_name())
+    
+    def _load(self):
+        load_plugin_library(self._lib_path())
+        
+    def build(self):
+        try:
+            self._load()
+        except:
+            print('%s plugin not built, building it now...' % self.name)
+            self.rebuild()
+            self._load()
+        
+    def rebuild(self):
+        if not os.path.exists(self.directory):
+            os.mkdir(self.directory)
+            
+        src_path = os.path.join(self.directory, self.name + '.cu')
+        proto_path = os.path.join(self.directory, self.name + '.proto')
+        ninja_path = os.path.join(self.directory, 'build.ninja')
+        
+        with open(src_path, 'w') as f:
+            f.write(self._src_str())
+            
+        with open(proto_path, 'w') as f:
+            f.write(self._proto_str())
+        
+        with open(ninja_path, 'w') as f:
+            f.write(self._ninja_str())
+            
+        subprocess.call(['ninja'], cwd=self.directory)
+        
+    def add_to_network(self, network, inputs, outputs, **kwargs):
+        import sys
+        sys.path.append(self.directory)
+        _locals = locals()
+        TEMPLATE = \
+"""
 try:
     from .${PLUGIN_NAME}_pb2 import ${PLUGIN_NAME}_Msg
 except:
     from ${PLUGIN_NAME}_pb2 import ${PLUGIN_NAME}_Msg
 
-library_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'torch2trt_plugin_${PLUGIN_NAME}.so')
+library_path = "${PLUGIN_LIB_PATH}"
 load_plugin_library(library_path)
-
-def add_${PLUGIN_NAME}(network, inputs, outputs, **kwargs):
     
-    msg = ${PLUGIN_NAME}_Msg(**kwargs)
+msg = ${PLUGIN_NAME}_Msg(**kwargs)
     
-    for input in inputs:
-        msg.input_shapes.add(size=tuple(input.shape[1:]))
-    for output in outputs:
-        msg.output_shapes.add(size=tuple(output.shape[1:]))
+for input in inputs:
+    msg.input_shapes.add(size=tuple(input.shape[1:]))
+for output in outputs:
+    msg.output_shapes.add(size=tuple(output.shape[1:]))
     
-    registry = trt.get_plugin_registry()
-    creator = registry.get_plugin_creator("${PLUGIN_NAME}", '1', 'torch2trt')
-    plugin = creator.deserialize_plugin("${PLUGIN_NAME}", msg.SerializeToString())
+registry = trt.get_plugin_registry()
+creator = registry.get_plugin_creator("${PLUGIN_NAME}", '1', 'torch2trt')
+plugin = creator.deserialize_plugin("${PLUGIN_NAME}", msg.SerializeToString())
     
-    layer = network.add_plugin_v2([input._trt for input in inputs], plugin)
-    for i in range(len(outputs)):
-        outputs[i]._trt = layer.get_output(i)
+layer = network.add_plugin_v2([input._trt for input in inputs], plugin)
+for i in range(len(outputs)):
+    outputs[i]._trt = layer.get_output(i)
 """
-    tmp = Template(TEMPLATE).substitute({'PLUGIN_NAME': plugin_name})
-    with open(os.path.join(output_dir, 'add_' + plugin_name + '.py'), 'w') as f:
-        f.write(tmp)
+        tmp = Template(TEMPLATE).substitute({
+            'PLUGIN_NAME': self.name,
+            'PLUGIN_LIB_PATH': self._lib_path()
+        })
 
-        
-def plugin(plugin_name, plugin_members="", plugin_setup="", plugin_forward="", plugin_proto="", extra_src="", output_dir='.'):
-    
-    library_name = 'torch2trt_plugin_' + plugin_name + '.so'
-    library_path = os.path.join(output_dir, library_name)
-
-    src = Template(PLUGIN_SRC_TEMPLATE).substitute({
-        'EXTRA_SRC': extra_src,
-        'PLUGIN_NAME': plugin_name,
-        'PLUGIN_MEMBERS': plugin_members,
-        'PLUGIN_SETUP': plugin_setup,
-        'PLUGIN_FORWARD': plugin_forward,
-    })
-
-    proto = Template(PLUGIN_PROTO_TEMPLATE).substitute({
-        'PLUGIN_NAME': plugin_name,
-        'PLUGIN_PROTO': plugin_proto
-    })
-
-    flags = ''
-    flags += include_dir_string(include_dirs())
-    flags += library_dir_string(library_dirs())
-    flags += library_string(libraries())
-
-    ninja = Template(PLUGIN_NINJA_TEMPLATE).substitute({
-        'PLUGIN_NAME': plugin_name,
-        'FLAGS': flags
-    })
-    
-    plugin_output_dir = os.path.join(output_dir, )
-        
-    with open(os.path.join(output_dir, plugin_name + '.cu'), 'w') as f:
-        f.write(src)
-    
-    with open(os.path.join(output_dir, plugin_name + '.proto'), 'w') as f:
-        f.write(proto)
-        
-    with open(os.path.join(output_dir, 'build.ninja'), 'w') as f:
-        f.write(ninja)
-        
-    create_add_plugin_method(plugin_name, output_dir=output_dir)
-    subprocess.call(['ninja'], cwd=output_dir)
+        exec(tmp, globals(), _locals)
