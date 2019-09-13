@@ -23,5 +23,7 @@ def convert_MaxPool2d(ctx):
         input=input._trt, type=trt.PoolingType.MAX, window_size=kernel_size)
     layer.stride = stride
     layer.padding = padding
+    if module.ceil_mode:
+        layer.padding_mode = trt.PaddingMode.EXPLICIT_ROUND_UP
 
     output._trt = layer.get_output(0)
