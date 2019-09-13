@@ -28,7 +28,6 @@ from .transpose import *
 from .mean import *
 from .softmax import *
 
-try:
-    from .interpolate import *
-except:
-    pass
+# BELOW REQUIRE PLUGINS
+
+from .interpolate import *

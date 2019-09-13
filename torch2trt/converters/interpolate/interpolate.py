@@ -2,11 +2,11 @@ import tensorrt as trt
 import torch.nn.functional as F
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
+from .interpolate_plugin import *
 
 
 @tensorrt_converter('torch.nn.functional.interpolate')
 def convert_interpolate(ctx):
-    from .add_interpolate import add_interpolate
     input = ctx.method_args[0]
     output = ctx.method_return
 
@@ -23,7 +23,7 @@ def convert_interpolate(ctx):
     # currently only works for NCHW
     size = list(output.shape[2:])
 
-    add_interpolate(ctx.network, [input], [output], size=size, mode=mode, align_corners=align_corners)
+    interpolate_plugin.add_to_network(ctx.network, [input], [output], size=size, mode=mode, align_corners=align_corners)
 
 
 class Interpolate(torch.nn.Module):

@@ -86,6 +86,21 @@ def load_plugin_library(path):
     ctypes.CDLL(path)
     refresh_plugin_registry()
     
+    
+PLUGINS = {}
+
+
+def build_plugins():
+    for p in PLUGINS.values():
+        p.build()
+        
+def rebuild_plugins():
+    for p in PLUGINS.values():
+        p.rebuild()
+        
+def register_plugin(plugin):
+    PLUGINS[plugin.name] = plugin
+    
 
 class Plugin(object):
     
@@ -168,6 +183,7 @@ class Plugin(object):
             f.write(self._ninja_str())
             
         subprocess.call(['ninja'], cwd=self.directory)
+        self._load()
         
     def add_to_network(self, network, inputs, outputs, **kwargs):
         import sys
@@ -175,6 +191,8 @@ class Plugin(object):
         _locals = locals()
         TEMPLATE = \
 """
+self.build()
+
 try:
     from .${PLUGIN_NAME}_pb2 import ${PLUGIN_NAME}_Msg
 except:

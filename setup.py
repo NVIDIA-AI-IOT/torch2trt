@@ -1,13 +1,12 @@
 import sys
 from setuptools import setup, find_packages
-from build import build
+from torch2trt.plugin import build_plugins
 
 package_data = {}
 
 if '--plugins' in sys.argv:
     sys.argv.remove('--plugins')
-    build()
-    package_data['torch2trt'] = ['libtorch2trt.so']
+    build_plugins()
 
 setup(
     name='torch2trt',
