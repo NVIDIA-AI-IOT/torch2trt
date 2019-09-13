@@ -1,6 +1,6 @@
 import torch
 import os
-from torch2trt.plugin import create_plugin
+from torch2trt.plugin import plugin
 
 
 plugin(
