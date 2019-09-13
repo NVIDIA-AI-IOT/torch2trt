@@ -94,7 +94,11 @@ import torch
 import os
 import tensorrt as trt
 from torch2trt.plugin import load_plugin_library
-from ${PLUGIN_NAME}_pb2 import ${PLUGIN_NAME}_Msg
+
+try:
+    from .${PLUGIN_NAME}_pb2 import ${PLUGIN_NAME}_Msg
+except:
+    from ${PLUGIN_NAME}_pb2 import ${PLUGIN_NAME}_Msg
 
 library_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'torch2trt_plugin_${PLUGIN_NAME}.so')
 load_plugin_library(library_path)

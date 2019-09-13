@@ -2,19 +2,11 @@ import tensorrt as trt
 import torch.nn.functional as F
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
-from .interpolate_pb2 import interpolate_Message
-
-
-def get_interpolate_plugin(size, mode, align_corners):
-    PLUGIN_NAME = 'interpolate'
-    registry = trt.get_plugin_registry()
-    creator = [c for c in registry.plugin_creator_list if c.name == PLUGIN_NAME and c.plugin_namespace == 'torch2trt'][0]
-    message = interpolate_Message(size=size, mode=mode, align_corners=align_corners)
-    return creator.deserialize_plugin(PLUGIN_NAME, message.SerializeToString())
 
 
 @tensorrt_converter('torch.nn.functional.interpolate')
 def convert_interpolate(ctx):
+    from .add_interpolate import add_interpolate
     input = ctx.method_args[0]
     output = ctx.method_return
 
@@ -31,11 +23,7 @@ def convert_interpolate(ctx):
     # currently only works for NCHW
     size = list(output.shape[2:])
 
-    plugin = get_interpolate_plugin(size=size, mode=mode, align_corners=align_corners)
-
-    layer = ctx.network.add_plugin_v2([input._trt], plugin)
-
-    output._trt = layer.get_output(0)
+    add_interpolate(ctx.network, [input], [output], size=size, mode=mode, align_corners=align_corners)
 
 
 class Interpolate(torch.nn.Module):
