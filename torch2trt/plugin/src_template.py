@@ -191,9 +191,9 @@ public:
 
 };
 
-class TorchPluginCreator : public IPluginCreator {
+class ${PLUGIN_NAME}_PluginCreator : public IPluginCreator {
 public:
-  TorchPluginCreator() {}
+  ${PLUGIN_NAME}_PluginCreator() {}
 
   const char *getPluginNamespace() const override {
     return "torch2trt";
@@ -220,6 +220,8 @@ public:
 
 };
 
+
+REGISTER_TENSORRT_PLUGIN(${PLUGIN_NAME}_PluginCreator);
 
 } //namespace ${PLUGIN_NAME}
 } //namespace torch2trt
