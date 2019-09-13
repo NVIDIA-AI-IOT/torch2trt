@@ -125,7 +125,7 @@ def add_${PLUGIN_NAME}(network, inputs, outputs, **kwargs):
         f.write(tmp)
 
         
-def create_plugin(plugin_name, plugin_members="", plugin_setup="", plugin_forward="", plugin_proto="", extra_src="", output_dir='.'):
+def plugin(plugin_name, plugin_members="", plugin_setup="", plugin_forward="", plugin_proto="", extra_src="", output_dir='.'):
     
     library_name = 'torch2trt_plugin_' + plugin_name + '.so'
     library_path = os.path.join(output_dir, library_name)

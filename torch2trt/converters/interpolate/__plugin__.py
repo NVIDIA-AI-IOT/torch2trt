@@ -3,7 +3,7 @@ import os
 from torch2trt.plugin import create_plugin
 
 
-create_plugin(
+plugin(
     'interpolate',
     plugin_forward=
 """
