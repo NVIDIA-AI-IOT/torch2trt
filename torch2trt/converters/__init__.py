@@ -7,6 +7,7 @@ from .AvgPool2d import *
 from .BatchNorm1d import *
 from .BatchNorm2d import *
 from .cat import *
+from .clamp import *
 from .Conv1d import *
 from .Conv2d import *
 from .ConvTranspose2d import *
