@@ -7,6 +7,7 @@ from .AvgPool2d import *
 from .BatchNorm1d import *
 from .BatchNorm2d import *
 from .cat import *
+from .clamp import *
 from .Conv1d import *
 from .Conv2d import *
 from .ConvTranspose2d import *
@@ -15,6 +16,7 @@ from .Identity import *
 from .Linear import *
 from .LogSoftmax import *
 from .MaxPool2d import *
+from .normalize import *
 from .pad import *
 from .relu import *
 from .ReLU import *
