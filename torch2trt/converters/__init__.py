@@ -16,6 +16,7 @@ from .Identity import *
 from .Linear import *
 from .LogSoftmax import *
 from .MaxPool2d import *
+from .normalize import *
 from .pad import *
 from .relu import *
 from .ReLU import *
