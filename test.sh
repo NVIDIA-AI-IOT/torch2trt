@@ -27,3 +27,4 @@ python3 -m torch2trt.test -o $OUTPUT_FILE --name vgg11_bn
 python3 -m torch2trt.test -o $OUTPUT_FILE --name vgg13_bn
 python3 -m torch2trt.test -o $OUTPUT_FILE --name vgg16_bn
 python3 -m torch2trt.test -o $OUTPUT_FILE --name vgg19_bn
+python3 -m torch2trt.test -o $OUTPUT_FILE --name mobilenet_v2
