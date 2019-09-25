@@ -35,6 +35,7 @@ MODULE_TESTS = [
     ModuleTest(torchvision.models.vgg13_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
     ModuleTest(torchvision.models.vgg16_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
     ModuleTest(torchvision.models.vgg19_bn, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
+    ModuleTest(torchvision.models.mobilenet_v2, torch.float16, torch.device('cuda'), [(1, 3, 224, 224)], fp16_mode=True),
 ]
 
 
