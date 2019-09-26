@@ -151,10 +151,14 @@ This will perform the following steps
 
 TODO: Registering plugins is necessary to know which shared objects must be loaded when reading a serialized network.
 
-# Limitations
+## Dynamic shapes
 
-1. To make it easier to define plugins, we assume the input / output shape tensors are constant, and we infer them from the PyTorch tensors provided to ``Plugin.add_to_network``.  For this reason, dynamic shapes are not supported.
+To make it easier to define plugins, we assume the input / output shape tensors are constant, and we infer them from the PyTorch tensors provided to ``Plugin.add_to_network``.  For this reason, dynamic shapes are not supported.
 
-2. For simplicity, we assume all plugins implement support for ``half`` and ``float`` data types.  Perhaps this can be parameterized in future.  But for now, any custom code / kernels must handle both of these data types.  This is done implicitly for most Torch C++ API calls.
+## Data types
 
-3. All plugins are defined under the ``torch2trt`` namespace as such, plugins must implement a globally unique name.  
+For simplicity, we assume all plugins implement support for ``half`` and ``float`` data types.  Perhaps this can be parameterized in future.  But for now, any custom code / kernels must handle both of these data types.  This is done implicitly for most Torch C++ API calls.
+
+## Naming plugins
+
+All plugins are defined under the ``torch2trt`` namespace.  Because of this, plugins must implement a globally unique name.  
