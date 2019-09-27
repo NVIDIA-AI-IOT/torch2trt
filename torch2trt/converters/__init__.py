@@ -27,8 +27,8 @@ from .view import *
 from .tanh import *
 from .transpose import *
 from .mean import *
-from .softmax import *
-
+from .pad import *
+from .slice import *
 try:
     from .interpolate import *
 except:
