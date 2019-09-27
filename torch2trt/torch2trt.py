@@ -68,6 +68,33 @@ def trt_num_outputs(engine):
     return count
 
 
+def torch_dim_to_trt_axes(dim):
+    """Converts torch dim, or tuple of dims to a tensorrt axes bitmask"""
+    if not isinstance(dim, tuple):
+        dim = (dim, )
+        
+    # create axes bitmask for reduce layer
+    axes = 0
+    for d in dim:
+        axes |= 1 << (d - 1) # -1 to remove batch dimension
+        
+    return axes
+
+
+def get_or_create_trt_tensor(network, tensor):
+    """Adds tensor as constant to network and sets _trt attribute.  Returns _trt attribute"""
+    
+    # only add if not already done
+    if not hasattr(tensor, '_trt'):
+        shape = tuple(tensor.shape[1:]) # exclude batch dimension
+        array = tensor[0].detach().cpu().numpy()
+        
+        layer = network.add_constant(shape, array)
+        tensor._trt = layer.get_output(0)
+        
+    return tensor._trt
+    
+
 # CONVERSION REGISTRY AND HOOKS
 
 
