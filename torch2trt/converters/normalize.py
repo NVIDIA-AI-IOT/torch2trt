@@ -4,14 +4,14 @@ from torch2trt.module_test import add_module_test
 
 @tensorrt_converter('torch.nn.functional.normalize')
 def convert_normalize(ctx):
-    input = ctx.method_args[0]
+    # get args
+    input = get_arg(ctx, 'input', pos=0, default=None)
+    p = get_arg(ctx, 'p', pos=1, default=2)
+    dim = get_arg(ctx, 'dim', pos=2, default=1)
+    eps = get_arg(ctx, 'eps', pos=3, default=1e-12)
+    
     input_trt = get_or_create_trt_tensor(ctx.network, input)
     output = ctx.method_return
-    
-    # get power
-    p = ctx.parsed_args['p']
-    dim = ctx.parsed_args['dim']
-    eps = ctx.parsed_args['eps']
     
     # add broadcastable scalar constants to network
     scalar_shape = (1,) * len(input.shape)
