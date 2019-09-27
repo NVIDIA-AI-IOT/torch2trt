@@ -9,7 +9,8 @@ def convert_max_pool2d(ctx):
     kernel_size = get_arg(ctx, 'kernel_size', pos=1, default=None)
     stride = get_arg(ctx, 'stride', pos=2, default=None)
     padding = get_arg(ctx, 'padding', pos=3, default=0)
-    ceil_mode = get_arg(ctx, 'ceil_mode', pos=4, default=True)
+    dilation = get_arg(ctx, 'dilation', pos=4, default=1)
+    ceil_mode = get_arg(ctx, 'ceil_mode', pos=5, default=False)
     
     # get input trt tensor (or create constant if it doesn't exist)
     input_trt = get_or_create_trt_tensor(ctx.network, input)

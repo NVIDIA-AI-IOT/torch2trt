@@ -9,7 +9,7 @@ def convert_avg_pool2d(ctx):
     kernel_size = get_arg(ctx, 'kernel_size', pos=1, default=None)
     stride = get_arg(ctx, 'stride', pos=2, default=None)
     padding = get_arg(ctx, 'padding', pos=3, default=0)
-    ceil_mode = get_arg(ctx, 'ceil_mode', pos=4, default=True)
+    ceil_mode = get_arg(ctx, 'ceil_mode', pos=4, default=False)
     count_include_pad = get_arg(ctx, 'count_include_pad', pos=5, default=True)
     
     # get input trt tensor (or create constant if it doesn't exist)
