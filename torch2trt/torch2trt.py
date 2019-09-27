@@ -2,7 +2,6 @@ import torch
 import tensorrt as trt
 from copy import copy
 import numpy as np
-import inspect
 
 
 # UTILITY FUNCTIONS
@@ -99,29 +98,15 @@ def get_or_create_trt_tensor(network, tensor):
 
 
 CONVERTERS = {}
-
-        
-def parse_method_args(method, args, kwargs):
-    """Returns dictionary of arguments w. defaults given function, args, and kwargs"""
     
-    argspec = inspect.getfullargspec(method)
     
-    named_args = {}
-    
-    # fill from default
-    offset = len(argspec.args) - len(argspec.defaults)
-    for i in range(len(argspec.defaults)):
-        named_args[argspec.args[i + offset]] = argspec.defaults[i]
-    
-    # fill from args
-    for i, value in enumerate(args):
-        named_args[argspec.args[i]] = value
-        
-    # fill from kwargs
-    for key, value in kwargs.items():
-        named_args[key] = value
-    
-    return named_args 
+def get_arg(ctx, name, pos, default):
+    if name in ctx.method_kwargs:
+        return ctx.method_kwargs[name]
+    elif len(ctx.method_args) > pos:
+        return ctx.method_args[pos]
+    else:
+        return default
     
 
 def attach_converter(ctx, method, converter):
@@ -143,9 +128,6 @@ def attach_converter(ctx, method, converter):
             ctx.method_args = args
             ctx.method_kwargs = kwargs
             ctx.method_return = outputs
-            
-            # parse args, kwargs to get dictionary with defaults filled in
-            ctx.parsed_args = parse_method_args(method, ctx.method_args, ctx.method_kwargs)
 
             #print('%s : %s' % (method.__qualname__, converter.__name__))
             converter(ctx)
