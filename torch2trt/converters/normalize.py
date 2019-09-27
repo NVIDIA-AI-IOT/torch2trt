@@ -15,9 +15,9 @@ def convert_normalize(ctx):
     
     # add broadcastable scalar constants to network
     scalar_shape = (1,) * len(input.shape)
-    eps_trt = get_or_create_trt_tensor(ctx.network, eps * torch.ones(scalar_shape))
-    p_trt = get_or_create_trt_tensor(ctx.network, p * torch.ones(scalar_shape))
-    p_inv_trt = get_or_create_trt_tensor(ctx.network, torch.ones(scalar_shape) / p)
+    eps_trt = get_or_create_trt_tensor(ctx.network, eps * torch.ones(scalar_shape, dtype=input.dtype))
+    p_trt = get_or_create_trt_tensor(ctx.network, p * torch.ones(scalar_shape, dtype=input.dtype))
+    p_inv_trt = get_or_create_trt_tensor(ctx.network, torch.ones(scalar_shape, dtype=input.dtype) / p)
     
     # compute norm = sum(abs(x)**p, dim=dim)**(1./p)
     norm = ctx.network.add_unary(input_trt, trt.UnaryOperation.ABS).get_output(0)
