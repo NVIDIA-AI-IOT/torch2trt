@@ -78,21 +78,14 @@ def torch_dim_to_trt_axes(dim):
         axes |= 1 << (d - 1) # -1 to remove batch dimension
         
     return axes
-
-
-def get_or_create_trt_tensor(network, tensor):
-    """Adds tensor as constant to network and sets _trt attribute.  Returns _trt attribute"""
     
-    # only add if not already done
-    if not hasattr(tensor, '_trt'):
-        shape = tuple(tensor.shape[1:]) # exclude batch dimension
-        array = tensor[0].detach().cpu().numpy()
-        
-        layer = network.add_constant(shape, array)
-        tensor._trt = layer.get_output(0)
-        
-    return tensor._trt
     
+def add_trt_constant(network, tensor):
+    shape = tuple(tensor.shape[1:])
+    array = tensor[0].detach().cpu().numpy()
+    layer = network.add_constant(shape, array)
+    return layer.get_output(0)
+
 
 # CONVERSION REGISTRY AND HOOKS
 
@@ -122,13 +115,12 @@ def attach_converter(ctx, method, converter):
 
         # run original method
         outputs = method(*args, **kwargs)
-
+        
         if not skip:
-            # call conversion hook
             ctx.method_args = args
             ctx.method_kwargs = kwargs
             ctx.method_return = outputs
-
+                
             #print('%s : %s' % (method.__qualname__, converter.__name__))
             converter(ctx)
 
