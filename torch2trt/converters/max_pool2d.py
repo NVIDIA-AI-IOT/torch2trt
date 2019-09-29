@@ -13,7 +13,7 @@ def convert_max_pool2d(ctx):
     ceil_mode = get_arg(ctx, 'ceil_mode', pos=5, default=False)
     
     # get input trt tensor (or create constant if it doesn't exist)
-    input_trt = get_or_create_trt_tensor(ctx.network, input)
+    input_trt = input._trt
     
     output = ctx.method_return
 

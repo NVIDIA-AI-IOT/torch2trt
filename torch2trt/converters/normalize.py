@@ -10,14 +10,14 @@ def convert_normalize(ctx):
     dim = get_arg(ctx, 'dim', pos=2, default=1)
     eps = get_arg(ctx, 'eps', pos=3, default=1e-12)
     
-    input_trt = get_or_create_trt_tensor(ctx.network, input)
+    input_trt = input._trt
     output = ctx.method_return
     
     # add broadcastable scalar constants to network
     scalar_shape = (1,) * len(input.shape)
-    eps_trt = get_or_create_trt_tensor(ctx.network, eps * torch.ones(scalar_shape, dtype=input.dtype))
-    p_trt = get_or_create_trt_tensor(ctx.network, p * torch.ones(scalar_shape, dtype=input.dtype))
-    p_inv_trt = get_or_create_trt_tensor(ctx.network, torch.ones(scalar_shape, dtype=input.dtype) / p)
+    eps_trt = add_trt_constant(ctx.network, eps * torch.ones(scalar_shape, dtype=input.dtype))
+    p_trt = add_trt_constant(ctx.network, p * torch.ones(scalar_shape, dtype=input.dtype))
+    p_inv_trt = add_trt_constant(ctx.network, torch.ones(scalar_shape, dtype=input.dtype) / p)
     
     # compute norm = sum(abs(x)**p, dim=dim)**(1./p)
     norm = ctx.network.add_unary(input_trt, trt.UnaryOperation.ABS).get_output(0)
