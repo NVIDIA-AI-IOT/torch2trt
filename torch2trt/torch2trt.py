@@ -67,11 +67,40 @@ def trt_num_outputs(engine):
     return count
 
 
+def torch_dim_to_trt_axes(dim):
+    """Converts torch dim, or tuple of dims to a tensorrt axes bitmask"""
+    if not isinstance(dim, tuple):
+        dim = (dim, )
+        
+    # create axes bitmask for reduce layer
+    axes = 0
+    for d in dim:
+        axes |= 1 << (d - 1) # -1 to remove batch dimension
+        
+    return axes
+    
+    
+def add_trt_constant(network, tensor):
+    shape = tuple(tensor.shape[1:])
+    array = tensor[0].detach().cpu().numpy()
+    layer = network.add_constant(shape, array)
+    return layer.get_output(0)
+
+
 # CONVERSION REGISTRY AND HOOKS
 
 
 CONVERTERS = {}
-
+    
+    
+def get_arg(ctx, name, pos, default):
+    if name in ctx.method_kwargs:
+        return ctx.method_kwargs[name]
+    elif len(ctx.method_args) > pos:
+        return ctx.method_args[pos]
+    else:
+        return default
+    
 
 def attach_converter(ctx, method, converter):
     """Gets a function that executes PyTorch method and TensorRT converter"""
@@ -86,13 +115,12 @@ def attach_converter(ctx, method, converter):
 
         # run original method
         outputs = method(*args, **kwargs)
-
+        
         if not skip:
-            # call conversion hook
             ctx.method_args = args
             ctx.method_kwargs = kwargs
             ctx.method_return = outputs
-
+                
             #print('%s : %s' % (method.__qualname__, converter.__name__))
             converter(ctx)
 

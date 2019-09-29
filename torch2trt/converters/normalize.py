@@ -2,58 +2,34 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-def __get_arg(ctx, name, pos, default):
-    if name in ctx.method_kwargs:
-        return ctx.method_kwargs[name]
-    elif len(ctx.method_args) > pos:
-        return ctx.method_args[pos]
-    else:
-        return default
-    
-
-def __trt_add_scalar_constant_like(network, tensor, value):
-    shape = (1, ) * len(tensor.shape)  # broadcast all dimensions
-    array = value * torch.ones(shape, dtype=torch_dtype_from_trt(tensor.dtype)).cpu().numpy()
-    return network.add_constant(shape, array).get_output(0)
-
-
-def __torch_dim_to_trt_bitmask(dim):
-    if not isinstance(dim, tuple):
-        dim = (dim, )
-        
-    # create axes bitmask for reduce layer
-    axes = 0
-    for d in dim:
-        axes |= 1 << (d - 1) # -1 to remove batch dimension
-        
-    return axes
-
-
 @tensorrt_converter('torch.nn.functional.normalize')
 def convert_normalize(ctx):
-    input = ctx.method_args[0]
+    # get args
+    input = get_arg(ctx, 'input', pos=0, default=None)
+    p = get_arg(ctx, 'p', pos=1, default=2)
+    dim = get_arg(ctx, 'dim', pos=2, default=1)
+    eps = get_arg(ctx, 'eps', pos=3, default=1e-12)
+    
+    input_trt = input._trt
     output = ctx.method_return
     
-    # get power
-    p = __get_arg(ctx, name='p', pos=1, default=2)
-    dim = __get_arg(ctx, name='dim', pos=2, default=1)
-    eps = __get_arg(ctx, name='eps', pos=3, default=1e-12)
-    
-    eps_trt = __trt_add_scalar_constant_like(ctx.network, input._trt, eps)
-    p_trt = __trt_add_scalar_constant_like(ctx.network, input._trt, p)
-    p_inv_trt = __trt_add_scalar_constant_like(ctx.network, input._trt, 1.0 / p)
+    # add broadcastable scalar constants to network
+    scalar_shape = (1,) * len(input.shape)
+    eps_trt = add_trt_constant(ctx.network, eps * torch.ones(scalar_shape, dtype=input.dtype))
+    p_trt = add_trt_constant(ctx.network, p * torch.ones(scalar_shape, dtype=input.dtype))
+    p_inv_trt = add_trt_constant(ctx.network, torch.ones(scalar_shape, dtype=input.dtype) / p)
     
     # compute norm = sum(abs(x)**p, dim=dim)**(1./p)
-    norm = ctx.network.add_unary(input._trt, trt.UnaryOperation.ABS).get_output(0)
+    norm = ctx.network.add_unary(input_trt, trt.UnaryOperation.ABS).get_output(0)
     norm = ctx.network.add_elementwise(norm, p_trt, trt.ElementWiseOperation.POW).get_output(0)
-    norm = ctx.network.add_reduce(norm, trt.ReduceOperation.SUM, __torch_dim_to_trt_bitmask(dim), keep_dims=True).get_output(0)
+    norm = ctx.network.add_reduce(norm, trt.ReduceOperation.SUM, torch_dim_to_trt_axes(dim), keep_dims=True).get_output(0)
     norm = ctx.network.add_elementwise(norm, p_inv_trt, trt.ElementWiseOperation.POW).get_output(0)
     
     # clamp norm = max(norm, eps)
     norm = ctx.network.add_elementwise(norm, eps_trt, trt.ElementWiseOperation.MAX).get_output(0)
     
     # divide input by norm
-    output._trt = ctx.network.add_elementwise(input._trt, norm, trt.ElementWiseOperation.DIV).get_output(0)
+    output._trt = ctx.network.add_elementwise(input_trt, norm, trt.ElementWiseOperation.DIV).get_output(0)
     
 
 class Normalize(torch.nn.Module):
