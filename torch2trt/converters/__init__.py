@@ -18,6 +18,7 @@ from .LogSoftmax import *
 from .max_pool2d import *
 from .normalize import *
 from .pad import *
+from .permute import *
 from .relu import *
 from .ReLU import *
 from .relu6 import *
