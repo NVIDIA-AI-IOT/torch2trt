@@ -28,6 +28,9 @@ from .tanh import *
 from .transpose import *
 from .mean import *
 from .softmax import *
+from .split import *
+from .chunk import *
+
 
 try:
     from .interpolate import *
