@@ -3,7 +3,7 @@ from torch2trt.module_test import add_module_test
 
 
 @tensorrt_converter('torch.Tensor.permute')
-def convert_transpose(ctx):
+def convert_permute(ctx):
     input = ctx.method_args[0]
     output = ctx.method_return
     
