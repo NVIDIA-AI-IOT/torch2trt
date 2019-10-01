@@ -5,6 +5,7 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.nn.functional.pad')
 def convert_pad(ctx):
     input = ctx.method_args[0]
+    input_trt = trt_(ctx.network, input)
     output = ctx.method_return
     
     pad = ctx.method_args[1]
@@ -13,7 +14,7 @@ def convert_pad(ctx):
     
     # mode / value are ignored since not supported by TensorRT
     
-    layer = ctx.network.add_padding(input._trt, pre_padding, post_padding)
+    layer = ctx.network.add_padding(input_trt, pre_padding, post_padding)
     output._trt = layer.get_output(0)
     
 

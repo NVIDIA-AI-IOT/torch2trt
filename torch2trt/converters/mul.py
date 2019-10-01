@@ -8,8 +8,9 @@ from torch2trt.module_test import add_module_test
 def convert_mul(ctx):
     input_a = ctx.method_args[0]
     input_b = ctx.method_args[1]
+    input_a_trt, input_b_trt = trt_(ctx.network, input_a, input_b)
     output = ctx.method_return
-    layer = ctx.network.add_elementwise(input_a._trt, input_b._trt, trt.ElementWiseOperation.PROD)
+    layer = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.PROD)
     output._trt = layer.get_output(0)
 
 
