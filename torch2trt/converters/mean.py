@@ -6,6 +6,7 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.Tensor.mean')
 def convert_mean(ctx):
     input = ctx.method_args[0]
+    input_trt = trt_(ctx.network, input)
     output = ctx.method_return
     
     # get dims from args or kwargs
@@ -34,7 +35,7 @@ def convert_mean(ctx):
     else:
         keep_dims = False
         
-    layer = ctx.network.add_reduce(input._trt, trt.ReduceOperation.AVG, axes, keep_dims)
+    layer = ctx.network.add_reduce(input_trt, trt.ReduceOperation.AVG, axes, keep_dims)
     output._trt = layer.get_output(0)
 
     

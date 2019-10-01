@@ -8,10 +8,21 @@ from torch2trt.module_test import add_module_test
 def convert_div(ctx):
     input_a = ctx.method_args[0]
     input_b = ctx.method_args[1]
+    input_a_trt, input_b_trt = trt_(ctx.network, input_a, input_b)
     output = ctx.method_return
-    layer = ctx.network.add_elementwise(input_a._trt, input_b._trt, trt.ElementWiseOperation.DIV)
+    layer = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.DIV)
     output._trt = layer.get_output(0)
 
+
+@tensorrt_converter('torch.Tensor.__rtruediv__')
+def convert_rdiv(ctx):
+    input_a = ctx.method_args[1]  # inputs switched for rdiv
+    input_b = ctx.method_args[0]
+    input_a_trt, input_b_trt = trt_(ctx.network, input_a, input_b)
+    output = ctx.method_return
+    layer = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.DIV)
+    output._trt = layer.get_output(0)
+    
 
 class Div(torch.nn.Module):
     def __init__(self):
@@ -51,3 +62,29 @@ class TorchDiv(torch.nn.Module):
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224), (1, 3, 224, 224)])
 def test_div_torchdiv():
     return TorchDiv()
+
+
+class RDivInt(torch.nn.Module):
+    def __init__(self):
+        super(RDivInt, self).__init__()
+
+    def forward(self, x):
+        return 100 / x
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+def test_rdiv_int():
+    return RDivInt()
+
+
+class RDivFloat(torch.nn.Module):
+    def __init__(self):
+        super(RDivFloat, self).__init__()
+
+    def forward(self, x):
+        return 100.0 / x
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+def test_rdiv_float():
+    return RDivFloat()
