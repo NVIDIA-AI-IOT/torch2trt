@@ -6,6 +6,7 @@ from torch2trt.module_test import add_module_test
 def convert_BatchNorm2d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
+    input_trt = trt_(ctx.network, input)
     output = ctx.method_return
     
     scale = module.weight.detach().cpu().numpy() / np.sqrt(module.running_var.detach().cpu().numpy() + module.eps)
@@ -13,7 +14,7 @@ def convert_BatchNorm2d(ctx):
     power = np.ones_like(scale)
     
     # reshape to 2D
-    layer = ctx.network.add_shuffle(input._trt)
+    layer = ctx.network.add_shuffle(input_trt)
     
     if len(input.shape) == 2:
         layer.reshape_dims = (input.shape[1], 1, 1)

@@ -87,6 +87,76 @@ def add_trt_constant(network, tensor):
     return layer.get_output(0)
 
 
+def check_torch_dtype(*tensors):
+    dtype = None
+    for t in tensors:
+        if isinstance(t, torch.Tensor):
+            if dtype is None:
+                dtype = t.dtype
+            else:
+                assert(dtype == t.dtype)#, 'Tensor data types must match')
+    assert(dtype is not None)#, 'Data type could not be inferred from any item in list')
+    return dtype
+    
+
+def trt_(network, *tensors):
+    """Creates missing TensorRT tensors and adds shuffle layers to make tensors broadcastable"""
+    trt_tensors = [None] * len(tensors)
+    
+    dtype = check_torch_dtype(*tensors)
+    
+    # get broadcast dimension
+    broadcast_num_dim = 0
+    for t in tensors:
+        if isinstance(t, torch.Tensor):
+            num_dim = len(t.shape[1:]) # exclude batch
+            if num_dim > broadcast_num_dim:
+                broadcast_num_dim = num_dim
+    
+    
+    for i, t in enumerate(tensors):
+        trt_tensor = None
+        
+        # GET TRT TENSOR (OR CREATE TRT CONSTANT)
+        
+        # get tensor w/ _trt
+        if isinstance(t, torch.Tensor) and hasattr(t, '_trt'):
+            trt_tensor = t._trt
+            
+        # or... add constant for leaf tensor w/o _trt
+        elif isinstance(t, torch.Tensor) and t.is_leaf and not hasattr(t, '_trt'):
+            # add leaf tensor
+            shape = tuple(t.shape[1:])
+            weight = t[0].detach().cpu().numpy()
+            t._trt = network.add_constant(shape, weight).get_output(0)
+            trt_tensor = t._trt
+        
+        # or... add constant for scalar primitive
+        elif isinstance(t, float) or isinstance(t, int):
+            shape = (1,) * broadcast_num_dim
+            scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
+            trt_tensor = network.add_constant(shape, scalar).get_output(0)
+            
+        assert(trt_tensor is not None)#, 'TensorRT tensor could not be created')
+            
+        # MAKE TRT TENSOR BROADCASTABLE IF IT IS NOT ALREADY
+        
+        if len(trt_tensor.shape) != broadcast_num_dim:
+            # append 1 size dims to front
+            diff = broadcast_num_dim - len(trt_tensor.shape)
+            shape = tuple([1] * diff + list(trt_tensor.shape))
+            layer = network.add_shuffle(trt_tensor)
+            layer.reshape_dims = shape
+            trt_tensor = layer.get_output(0)
+            
+        trt_tensors[i] = trt_tensor
+    
+    if len(trt_tensors) == 1:
+        return trt_tensors[0]
+    else:
+        return tuple(trt_tensors)
+        
+
 # CONVERSION REGISTRY AND HOOKS
 
 
