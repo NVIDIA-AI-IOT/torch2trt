@@ -31,7 +31,7 @@ from .mean import *
 from .softmax import *
 from .split import *
 from .chunk import *
-
+from .permute import *
 
 try:
     from .interpolate import *
