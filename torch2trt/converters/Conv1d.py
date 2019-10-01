@@ -6,6 +6,7 @@ from torch2trt.module_test import add_module_test
 def convert_Conv1d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
+    input_trt = trt_(ctx.network, input)
     output = ctx.method_return
 
     kernel_size = (module.kernel_size[0], 1)
@@ -20,7 +21,7 @@ def convert_Conv1d(ctx):
         bias = module.bias.detach().cpu().numpy()
         
     # reshape to 2D
-    layer = ctx.network.add_shuffle(input._trt)
+    layer = ctx.network.add_shuffle(input_trt)
     layer.reshape_dims = (-1, input.shape[-1], 1)
     
     layer = ctx.network.add_convolution(

@@ -5,6 +5,7 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.Tensor.permute')
 def convert_permute(ctx):
     input = ctx.method_args[0]
+    input_trt = trt_(ctx.network, input)
     output = ctx.method_return
     
     # permutation -1 because TRT does not include batch dim
@@ -13,7 +14,7 @@ def convert_permute(ctx):
     
     trt_permutation = tuple([p - 1 for p in permutation])[1:]
     
-    layer = ctx.network.add_shuffle(input._trt)
+    layer = ctx.network.add_shuffle(input_trt)
     layer.second_transpose = tuple(trt_permutation)
     
     output._trt = layer.get_output(0)
