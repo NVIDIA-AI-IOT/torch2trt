@@ -151,7 +151,10 @@ def trt_(network, *tensors):
             
         trt_tensors[i] = trt_tensor
     
-    return tuple(trt_tensors)
+    if len(trt_tensors) == 1:
+        return trt_tensors[0]
+    else:
+        return tuple(trt_tensors)
         
 
 # CONVERSION REGISTRY AND HOOKS
