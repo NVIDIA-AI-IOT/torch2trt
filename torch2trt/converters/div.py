@@ -16,7 +16,7 @@ def convert_div(ctx):
 
 @tensorrt_converter('torch.Tensor.__rtruediv__')
 def convert_rdiv(ctx):
-    input_a = ctx.method_args[1]
+    input_a = ctx.method_args[1]  # inputs switched for rdiv
     input_b = ctx.method_args[0]
     input_a_trt, input_b_trt = trt_(ctx.network, input_a, input_b)
     output = ctx.method_return
@@ -73,7 +73,7 @@ class RDivInt(torch.nn.Module):
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
-def test_add_rdiv_int():
+def test_rdiv_int():
     return RDivInt()
 
 
@@ -86,5 +86,5 @@ class RDivFloat(torch.nn.Module):
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
-def test_add_rdiv_float():
+def test_rdiv_float():
     return RDivFloat()

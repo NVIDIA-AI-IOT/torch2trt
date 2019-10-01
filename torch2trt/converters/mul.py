@@ -5,6 +5,7 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.mul')
 @tensorrt_converter('torch.Tensor.__imul__')
 @tensorrt_converter('torch.Tensor.__mul__')
+@tensorrt_converter('torch.Tensor.__rmul__')
 def convert_mul(ctx):
     input_a = ctx.method_args[0]
     input_b = ctx.method_args[1]
@@ -51,3 +52,29 @@ class TorchMul(torch.nn.Module):
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224), (1, 3, 224, 224)])
 def test_mul_torchmul():
     return TorchMul()
+
+
+class RMulInt(torch.nn.Module):
+    def __init__(self):
+        super(RMulInt, self).__init__()
+
+    def forward(self, x):
+        return 10 * x
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+def test_rmul_int():
+    return RMulInt()
+
+
+class RMulFloat(torch.nn.Module):
+    def __init__(self):
+        super(RMulFloat, self).__init__()
+
+    def forward(self, x):
+        return 10.0 * x
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+def test_rmul_float():
+    return RMulFloat()
