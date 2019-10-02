@@ -11,7 +11,7 @@ BASE_FOLDER = 'torch2trt/converters'
 
 NINJA_TEMPLATE = Template((
     "rule link\n"
-    "  command = g++ -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -L$trt_lib_dir -lc10 -lc10_cuda -ltorch -lcudart -lcaffe2 -lcaffe2_gpu -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer\n"
+    "  command = g++ -shared -o $$out $$in -L$torch_dir/lib -L$cuda_dir/lib64 -L$trt_lib_dir -lc10 -lc10_cuda -ltorch -lcudart -lprotobuf -lprotobuf-lite -pthread -lpthread -lnvinfer\n"
     "rule protoc\n"
     "  command = protoc $$in --cpp_out=. --python_out=.\n"
     "rule cxx\n"
