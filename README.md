@@ -19,6 +19,7 @@ Below are some usage examples, for more check out the [notebooks](notebooks).
 ### Convert
 
 ```python
+import torch
 from torch2trt import torch2trt
 from torchvision.models.alexnet import alexnet
 
