@@ -2,12 +2,14 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
+@tensorrt_converter('torch.flatten')
 @tensorrt_converter('torch.Tensor.reshape')
 @tensorrt_converter('torch.Tensor.view')
 def convert_view(ctx):
     input = ctx.method_args[0]
+    input_trt = trt_(ctx.network, input)
     output = ctx.method_return
-    layer = ctx.network.add_shuffle(input._trt)
+    layer = ctx.network.add_shuffle(input_trt)
     layer.reshape_dims = tuple(output.shape[1:])
     output._trt = layer.get_output(0)
 

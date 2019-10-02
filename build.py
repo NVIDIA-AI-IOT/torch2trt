@@ -39,6 +39,7 @@ def build(cuda_dir="/usr/local/cuda",
         'trt_lib_dir': trt_lib_dir,
     })
 
+
     plugin_o_files = []
     for plugin in PLUGINS:
         NINJA_STR += \

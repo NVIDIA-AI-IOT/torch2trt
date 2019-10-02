@@ -67,11 +67,110 @@ def trt_num_outputs(engine):
     return count
 
 
+def torch_dim_to_trt_axes(dim):
+    """Converts torch dim, or tuple of dims to a tensorrt axes bitmask"""
+    if not isinstance(dim, tuple):
+        dim = (dim, )
+        
+    # create axes bitmask for reduce layer
+    axes = 0
+    for d in dim:
+        axes |= 1 << (d - 1) # -1 to remove batch dimension
+        
+    return axes
+    
+    
+def add_trt_constant(network, tensor):
+    shape = tuple(tensor.shape[1:])
+    array = tensor[0].detach().cpu().numpy()
+    layer = network.add_constant(shape, array)
+    return layer.get_output(0)
+
+
+def check_torch_dtype(*tensors):
+    dtype = None
+    for t in tensors:
+        if isinstance(t, torch.Tensor):
+            if dtype is None:
+                dtype = t.dtype
+            else:
+                assert(dtype == t.dtype)#, 'Tensor data types must match')
+    assert(dtype is not None)#, 'Data type could not be inferred from any item in list')
+    return dtype
+    
+
+def trt_(network, *tensors):
+    """Creates missing TensorRT tensors and adds shuffle layers to make tensors broadcastable"""
+    trt_tensors = [None] * len(tensors)
+    
+    dtype = check_torch_dtype(*tensors)
+    
+    # get broadcast dimension
+    broadcast_num_dim = 0
+    for t in tensors:
+        if isinstance(t, torch.Tensor):
+            num_dim = len(t.shape[1:]) # exclude batch
+            if num_dim > broadcast_num_dim:
+                broadcast_num_dim = num_dim
+    
+    
+    for i, t in enumerate(tensors):
+        trt_tensor = None
+        
+        # GET TRT TENSOR (OR CREATE TRT CONSTANT)
+        
+        # get tensor w/ _trt
+        if isinstance(t, torch.Tensor) and hasattr(t, '_trt'):
+            trt_tensor = t._trt
+            
+        # or... add constant for leaf tensor w/o _trt
+        elif isinstance(t, torch.Tensor) and t.is_leaf and not hasattr(t, '_trt'):
+            # add leaf tensor
+            shape = tuple(t.shape[1:])
+            weight = t[0].detach().cpu().numpy()
+            t._trt = network.add_constant(shape, weight).get_output(0)
+            trt_tensor = t._trt
+        
+        # or... add constant for scalar primitive
+        elif isinstance(t, float) or isinstance(t, int):
+            shape = (1,) * broadcast_num_dim
+            scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
+            trt_tensor = network.add_constant(shape, scalar).get_output(0)
+            
+        assert(trt_tensor is not None)#, 'TensorRT tensor could not be created')
+            
+        # MAKE TRT TENSOR BROADCASTABLE IF IT IS NOT ALREADY
+        
+        if len(trt_tensor.shape) != broadcast_num_dim:
+            # append 1 size dims to front
+            diff = broadcast_num_dim - len(trt_tensor.shape)
+            shape = tuple([1] * diff + list(trt_tensor.shape))
+            layer = network.add_shuffle(trt_tensor)
+            layer.reshape_dims = shape
+            trt_tensor = layer.get_output(0)
+            
+        trt_tensors[i] = trt_tensor
+    
+    if len(trt_tensors) == 1:
+        return trt_tensors[0]
+    else:
+        return tuple(trt_tensors)
+        
+
 # CONVERSION REGISTRY AND HOOKS
 
 
 CONVERTERS = {}
-
+    
+    
+def get_arg(ctx, name, pos, default):
+    if name in ctx.method_kwargs:
+        return ctx.method_kwargs[name]
+    elif len(ctx.method_args) > pos:
+        return ctx.method_args[pos]
+    else:
+        return default
+    
 
 def attach_converter(ctx, method, converter):
     """Gets a function that executes PyTorch method and TensorRT converter"""
@@ -86,13 +185,12 @@ def attach_converter(ctx, method, converter):
 
         # run original method
         outputs = method(*args, **kwargs)
-
+        
         if not skip:
-            # call conversion hook
             ctx.method_args = args
             ctx.method_kwargs = kwargs
             ctx.method_return = outputs
-
+                
             #print('%s : %s' % (method.__qualname__, converter.__name__))
             converter(ctx)
 
@@ -113,7 +211,7 @@ class ConversionHook(object):
     def __init__(self, ctx, method, converter):
         self.ctx = ctx
         self.method_str = method
-        self.method_impl = copy(eval(method))
+        self.method_impl = eval(method)
         self.converter = converter
 
     def _set_method(self, method):
@@ -235,7 +333,7 @@ class TRTModule(torch.nn.Module):
 
 
 def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt.Logger.ERROR, max_batch_size=1,
-        fp16_mode=False, max_workspace_size=0):
+        fp16_mode=False, max_workspace_size=0, strict_type_constraints=False):
 
     # copy inputs to avoid modifications to source data
     inputs = [tensor.clone() for tensor in inputs]
@@ -251,7 +349,7 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
 
         outputs = module(*inputs)
 
-        if not isinstance(outputs, tuple):
+        if not isinstance(outputs, tuple) and not isinstance(outputs, list):
             outputs = (outputs, )
         ctx.mark_outputs(outputs, output_names)
 
@@ -260,6 +358,7 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
         builder.max_workspace_size = max_workspace_size
         builder.fp16_mode = fp16_mode
         builder.max_batch_size = max_batch_size
+        builder.strict_type_constraints = strict_type_constraints
 
         engine = builder.build_cuda_engine(network)
     
