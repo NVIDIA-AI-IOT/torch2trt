@@ -124,7 +124,7 @@ def trt_(network, *tensors):
             trt_tensor = t._trt
             
         # or... add constant for leaf tensor w/o _trt
-        elif isinstance(t, torch.Tensor) and t.is_leaf and not hasattr(t, '_trt'):
+        elif isinstance(t, torch.Tensor) and not hasattr(t, '_trt'):
             # add leaf tensor
             shape = tuple(t.shape[1:])
             weight = t[0].detach().cpu().numpy()
@@ -136,7 +136,7 @@ def trt_(network, *tensors):
             shape = (1,) * broadcast_num_dim
             scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
             trt_tensor = network.add_constant(shape, scalar).get_output(0)
-            
+         
         assert(trt_tensor is not None)#, 'TensorRT tensor could not be created')
             
         # MAKE TRT TENSOR BROADCASTABLE IF IT IS NOT ALREADY
