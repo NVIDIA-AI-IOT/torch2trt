@@ -211,7 +211,7 @@ class ConversionHook(object):
     def __init__(self, ctx, method, converter):
         self.ctx = ctx
         self.method_str = method
-        self.method_impl = copy(eval(method))
+        self.method_impl = eval(method)
         self.converter = converter
 
     def _set_method(self, method):
