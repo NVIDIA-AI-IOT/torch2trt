@@ -11,7 +11,7 @@ def convert_cat(ctx):
         dim = ctx.method_args[1]
 
     output = ctx.method_return
-    trt_inputs = [i._trt for i in inputs]
+    trt_inputs = [trt_(ctx.network, i) for i in inputs]
 
     layer = ctx.network.add_concatenation(inputs=trt_inputs)
     layer.axis = dim - 1

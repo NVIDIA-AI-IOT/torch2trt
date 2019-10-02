@@ -12,33 +12,6 @@ If you find an issue, please [let us know](../..//issues)!
 > Please note, this converter has limited coverage of TensorRT / PyTorch.  We created it primarily
 > to easily optimize the models used in the [JetBot](https://github.com/NVIDIA-AI-IOT/jetbot) project.  If you find the converter helpful with other models, please [let us know](../..//issues).
 
-## Setup
-
-### Option 1 - Without plugins
-
-To install without compiling plugins, call the following
-
-```bash
-git clone https://github.com/NVIDIA-AI-IOT/torch2trt
-cd torch2trt
-sudo python setup.py install
-```
-
-### Option 2 - With plugins (experimental)
-
-To install with plugins to support some operations in PyTorch that are not natviely supported with TensorRT, call the following
-
-> This currently only includes a plugin for ``torch.nn.functional.interpolate``
-
-```bash
-sudo apt-get install libprotobuf* protobuf-compiler ninja-build
-git clone https://github.com/NVIDIA-AI-IOT/torch2trt
-cd torch2trt
-sudo python setup.py install --plugins
-```
-
-> torch2trt is tested against a system configured with the [JetCard](http://github.com/NVIDIA-AI-IOT/jetcard) setup.  Different system configurations may require additional steps.
-
 ## Usage
 
 Below are some usage examples, for more check out the [notebooks](notebooks).
@@ -46,6 +19,7 @@ Below are some usage examples, for more check out the [notebooks](notebooks).
 ### Convert
 
 ```python
+import torch
 from torch2trt import torch2trt
 from torchvision.models.alexnet import alexnet
 
@@ -121,6 +95,34 @@ We tested the converter against these models using the [test.sh](test.sh) script
 | vgg13_bn | 6.31 | 14.8 | 68.0 | 166 |
 | vgg16_bn | 4.96 | 12.0 | 58.5 | 140 |
 | vgg19_bn |  |  | 51.4 | 121 |
+
+
+## Setup
+
+### Option 1 - Without plugins
+
+To install without compiling plugins, call the following
+
+```bash
+git clone https://github.com/NVIDIA-AI-IOT/torch2trt
+cd torch2trt
+sudo python setup.py install
+```
+
+### Option 2 - With plugins (experimental)
+
+To install with plugins to support some operations in PyTorch that are not natviely supported with TensorRT, call the following
+
+> This currently only includes a plugin for ``torch.nn.functional.interpolate``
+
+```bash
+sudo apt-get install libprotobuf* protobuf-compiler ninja-build
+git clone https://github.com/NVIDIA-AI-IOT/torch2trt
+cd torch2trt
+sudo python setup.py install --plugins
+```
+
+> torch2trt is tested against a system configured with the [JetCard](http://github.com/NVIDIA-AI-IOT/jetcard) setup.  Different system configurations may require additional steps.
 
 
 ## How does it work?
