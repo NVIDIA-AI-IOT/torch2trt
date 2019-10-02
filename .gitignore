@@ -1,0 +1,13 @@
+.ninja_deps
+.ninja_log
+build.ninja
+*.o
+*.pb.o
+torch2trt.egg-info
+build/
+dist/
+__pycache__/
+*.so
+*.pb.h
+*.pb.cc
+*_pb2.py
