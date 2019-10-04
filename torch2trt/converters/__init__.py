@@ -17,6 +17,7 @@ from .Linear import *
 from .LogSoftmax import *
 from .max_pool2d import *
 from .max import *
+from .min import *
 from .normalize import *
 from .pad import *
 from .permute import *
