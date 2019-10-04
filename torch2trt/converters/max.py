@@ -31,12 +31,6 @@ def convert_max(ctx):
     else:
         __convert_max_reduce(ctx)
         
-      
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3)])
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
-def test_max_reduce_all():
-    return UnaryModule(lambda x: torch.max(x, 1)[0])
-
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
