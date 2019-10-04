@@ -21,6 +21,7 @@ from .min import *
 from .normalize import *
 from .pad import *
 from .permute import *
+from .pow import *
 from .prelu import *
 from .relu import *
 from .ReLU import *
