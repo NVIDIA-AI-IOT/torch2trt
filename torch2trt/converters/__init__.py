@@ -27,6 +27,7 @@ from .ReLU import *
 from .relu6 import *
 from .ReLU6 import *
 from .sigmoid import *
+from .sub import *
 from .view import *
 from .tanh import *
 from .transpose import *
