@@ -1,15 +1,15 @@
-
-from torch2trt.torch2trt import torch2trt, TRTModule
+from torch2trt import *
+import torchvision
+import torch
+from .segmentation import deeplabv3_resnet50
 
 
 if __name__ == '__main__':
-    import torchvision
-    import torch
-    model = torchvision.models.resnet18(pretrained=True).cuda().eval()
-    data = torch.randn((1, 3, 224, 224)).cuda()
-
+    model = deeplabv3_resnet50().cuda().eval().half()
+    data = torch.randn((1, 3, 224, 224)).cuda().half()
+    
     print('Running torch2trt...')
-    model_trt = torch2trt(model, [data])
+    model_trt = torch2trt(model, [data], fp16_mode=True, max_workspace_size=1<<25)
 
     print('Saving model...')
     torch.save(model_trt.state_dict(), '.test_model.pth')
