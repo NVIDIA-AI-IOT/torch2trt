@@ -30,6 +30,7 @@ from .relu6 import *
 from .ReLU6 import *
 from .sigmoid import *
 from .sub import *
+from .sum import *
 from .view import *
 from .tanh import *
 from .transpose import *
