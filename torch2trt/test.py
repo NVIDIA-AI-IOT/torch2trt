@@ -14,16 +14,20 @@ def run(self):
     module = module.type(self.dtype)
     module = module.eval()
     
-    # create inputs
+    # create inputs for conversion
+    inputs_conversion = ()
+    for shape in self.input_shapes:
+        inputs_conversion += (torch.zeros(shape).to(self.device).type(self.dtype), )
+        
+    # convert module
+    module_trt = torch2trt(module, inputs_conversion, **self.torch2trt_kwargs)
+
+    # create inputs for torch/trt.. copy of inputs to handle inplace ops
     inputs = ()
     for shape in self.input_shapes:
         inputs += (torch.randn(shape).to(self.device).type(self.dtype), )
-
-    # create copy of inputs to handle inplace ops
     inputs_trt = tuple([tensor.clone() for tensor in inputs])
 
-    # convert module
-    module_trt = torch2trt(module, inputs, **self.torch2trt_kwargs)
 
     # test output against original
     outputs = module(*inputs)
