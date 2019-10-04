@@ -1,6 +1,7 @@
 .ninja_deps
 .ninja_log
 build.ninja
+tags
 *.o
 *.pb.o
 torch2trt.egg-info
@@ -11,3 +12,6 @@ __pycache__/
 *.pb.h
 *.pb.cc
 *_pb2.py
+*.pyc
+*.ipynb_checkpoints
+*.pth
