@@ -14,7 +14,7 @@ def __convert_min_elementwise(ctx):
 
 def __convert_min_reduce(ctx):
     input = ctx.method_args[0]
-    dim = get_arg(ctx, 'dim', pos=1, default=tuple(range(input.ndim)))
+    dim = get_arg(ctx, 'dim', pos=1, default=tuple(range(1,input.ndim)))
     keepdim = get_arg(ctx, 'keepdim', pos=2, default=False)
     input_trt= trt_(ctx.network, input)
     output_val = ctx.method_return[0]
@@ -32,6 +32,12 @@ def convert_min(ctx):
         __convert_min_reduce(ctx)
         
         
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
+def test_min_reduce_all():
+    return UnaryModule(lambda x: torch.min(x, 1)[0])
+
+
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 def test_min_reduce_dim1():
