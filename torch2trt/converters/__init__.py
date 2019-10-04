@@ -32,6 +32,7 @@ from .mean import *
 from .softmax import *
 from .split import *
 from .chunk import *
+from .unary import *
 
 
 try:
