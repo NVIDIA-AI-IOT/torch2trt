@@ -109,7 +109,7 @@ def trt_(network, *tensors):
     broadcast_num_dim = 0
     for t in tensors:
         if isinstance(t, torch.Tensor):
-            if t.is_leaf:
+            if not hasattr(t, '_trt'):
                 num_dim = len(t.shape) # don't exclude batch for constants
             else:
                 num_dim = len(t._trt.shape) # non-leaf tensors must already have _trt, get shape from that
@@ -127,7 +127,7 @@ def trt_(network, *tensors):
             trt_tensor = t._trt
             
         # or... add constant for leaf tensor w/o _trt
-        elif isinstance(t, torch.Tensor) and t.is_leaf and not hasattr(t, '_trt'):
+        elif isinstance(t, torch.Tensor) and not hasattr(t, '_trt'):
             # add leaf tensor
             shape = tuple(t.shape) #  don't exclude batch when adding constants...?
             weight = t.detach().cpu().numpy()
@@ -140,7 +140,7 @@ def trt_(network, *tensors):
             scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
             trt_tensor = network.add_constant(shape, scalar).get_output(0)
             
-        assert(trt_tensor is not None)#, 'TensorRT tensor could not be created')
+        assert(trt_tensor is not None)
             
         # MAKE TRT TENSOR BROADCASTABLE IF IT IS NOT ALREADY
         
@@ -333,9 +333,6 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
         fp16_mode=False, max_workspace_size=0, strict_type_constraints=False):
 
     # copy inputs to avoid modifications to source data
-    for t in inputs:
-        t.requires_grad = True
-        
     inputs = [tensor.clone() for tensor in inputs]
 
     with trt.Logger(log_level) as logger, trt.Builder(logger) as builder,\
