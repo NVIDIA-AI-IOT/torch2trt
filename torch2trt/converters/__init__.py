@@ -23,6 +23,7 @@ from .pad import *
 from .permute import *
 from .pow import *
 from .prelu import *
+from .prod import *
 from .relu import *
 from .ReLU import *
 from .relu6 import *
