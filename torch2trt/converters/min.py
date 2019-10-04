@@ -31,12 +31,6 @@ def convert_min(ctx):
     else:
         __convert_min_reduce(ctx)
         
-        
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3)])
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
-def test_min_reduce_all():
-    return UnaryModule(lambda x: torch.min(x, 1)[0])
-
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
