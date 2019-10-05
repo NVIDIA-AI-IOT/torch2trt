@@ -96,7 +96,24 @@ def test_softsign():
 
 
 #  |    SOFTPLUS : Softplus activation: f(x) = alpha * log(exp(beta * x) + 1)
-#  |  
+
+
+@tensorrt_converter('torch.nn.functional.softplus')
+def convert_softplus(ctx):
+    input = get_arg(ctx, 'input', pos=0, default=None)
+    output = ctx.method_return
+    
+    input_trt = trt_(ctx.network, input)
+    layer = ctx.network.add_activation(input_trt, trt.ActivationType.SOFTPLUS)
+    
+    output._trt = layer.get_output(0)
+    
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 5, 3)])
+def test_softplus():
+    return UnaryModule(lambda x: torch.nn.functional.softplus(x))
+
+
 #  |    CLIP : Clip activation: f(x) = max(alpha, min(beta, x))  (impl in clamp.py)
 #  |  
 #  |    HARD_SIGMOID : Hard sigmoid activation: f(x) = max(0, min(1, alpha * x + beta))
