@@ -115,9 +115,7 @@ def test_softplus():
 
 
 #  |    CLIP : Clip activation: f(x) = max(alpha, min(beta, x))  (impl in clamp.py)
-#  |  
-#  |    HARD_SIGMOID : Hard sigmoid activation: f(x) = max(0, min(1, alpha * x + beta))
-#  |  
-#  |    SCALED_TANH : Scaled Tanh activation: f(x) = alpha * tanh(beta * x)
-#  |  
-#  |    THRESHOLDED_RELU : Thresholded Relu activation: f(x) = x if x > alpha, f(x) = 0 if x <= alpha
+
+#  |    HARD_SIGMOID : Hard sigmoid activation: f(x) = max(0, min(1, alpha * x + beta)) (not sure if there is this in Pytorch?)
+#  |    SCALED_TANH : Scaled Tanh activation: f(x) = alpha * tanh(beta * x) (not sure if there is this in Pytorch?)
+#  |    THRESHOLDED_RELU : Thresholded Relu activation: f(x) = x if x > alpha, f(x) = 0 if x <= alpha (not sure if there is this in Pytorch?)
