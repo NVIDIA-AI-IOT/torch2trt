@@ -53,9 +53,48 @@ def test_elu():
 
 
 #  |    SELU : Selu activation: f(x) = beta * x if x > 0, f(x) = beta * (alpha * exp(x) - alpha) if x <= 0
-#  |  
+
+@tensorrt_converter('torch.selu')
+@tensorrt_converter('torch.selu_')
+@tensorrt_converter('torch.nn.functional.selu')
+@tensorrt_converter('torch.nn.functional.selu_')
+def convert_selu(ctx):
+    input = get_arg(ctx, 'input', pos=0, default=None)
+    alpha = get_arg(ctx, 'alpha', pos=1, default=1.0)
+    output = ctx.method_return
+    
+    input_trt = trt_(ctx.network, input)
+    layer = ctx.network.add_activation(input_trt, trt.ActivationType.SELU)
+    layer.alpha = 1.6732632423543772848170429916717
+    layer.beta = 1.0507009873554804934193349852946
+    
+    output._trt = layer.get_output(0)
+    
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 5, 3)])
+def test_selu():
+    return UnaryModule(lambda x: torch.nn.functional.selu(x))
+
+
 #  |    SOFTSIGN : Softsign activation: f(x) = x / (1 + \|x\|)
-#  |  
+
+
+@tensorrt_converter('torch.nn.functional.softsign')
+def convert_softsign(ctx):
+    input = get_arg(ctx, 'input', pos=0, default=None)
+    output = ctx.method_return
+    
+    input_trt = trt_(ctx.network, input)
+    layer = ctx.network.add_activation(input_trt, trt.ActivationType.SOFTSIGN)
+    
+    output._trt = layer.get_output(0)
+    
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 5, 3)])
+def test_softsign():
+    return UnaryModule(lambda x: torch.nn.functional.softsign(x))
+
+
 #  |    SOFTPLUS : Softplus activation: f(x) = alpha * log(exp(beta * x) + 1)
 #  |  
 #  |    CLIP : Clip activation: f(x) = max(alpha, min(beta, x))  (impl in clamp.py)
