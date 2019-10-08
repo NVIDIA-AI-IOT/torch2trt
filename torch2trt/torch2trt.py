@@ -362,7 +362,7 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
     
         module_trt = TRTModule(engine, ctx.input_names, ctx.output_names)
         
-        if keep_network=True:
+        if keep_network:
             module_trt.network = network
             
     return module_trt
