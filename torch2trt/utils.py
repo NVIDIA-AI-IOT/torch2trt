@@ -2,7 +2,7 @@ import graphviz
 
 
 def trt_network_to_dot_graph(network):
-    dot = Digraph(comment='Network')
+    dot = graphviz.Digraph(comment='Network')
     
     # add nodes (layers)
     for i in range(network.num_layers):
