@@ -3,8 +3,10 @@ from torch2trt.module_test import add_module_test
 
 
 @tensorrt_converter('torch.div')
-@tensorrt_converter('torch.Tensor.__itruediv__')
-@tensorrt_converter('torch.Tensor.__truediv__')
+@tensorrt_converter('torch.Tensor.__div__') # py2
+@tensorrt_converter('torch.Tensor.__idiv__') # py2
+@tensorrt_converter('torch.Tensor.__truediv__') # py3
+@tensorrt_converter('torch.Tensor.__itruediv__') # py3
 def convert_div(ctx):
     input_a = ctx.method_args[0]
     input_b = ctx.method_args[1]
@@ -14,7 +16,8 @@ def convert_div(ctx):
     output._trt = layer.get_output(0)
 
 
-@tensorrt_converter('torch.Tensor.__rtruediv__')
+@tensorrt_converter('torch.Tensor.__rdiv__') # py2
+@tensorrt_converter('torch.Tensor.__rtruediv__') # py3
 def convert_rdiv(ctx):
     input_a = ctx.method_args[1]  # inputs switched for rdiv
     input_b = ctx.method_args[0]

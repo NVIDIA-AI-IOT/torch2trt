@@ -109,7 +109,10 @@ def trt_(network, *tensors):
     broadcast_num_dim = 0
     for t in tensors:
         if isinstance(t, torch.Tensor):
-            num_dim = len(t.shape[1:]) # exclude batch
+            if not hasattr(t, '_trt'):
+                num_dim = len(t.shape) # don't exclude batch for constants
+            else:
+                num_dim = len(t._trt.shape) # non-leaf tensors must already have _trt, get shape from that
             if num_dim > broadcast_num_dim:
                 broadcast_num_dim = num_dim
     
@@ -126,8 +129,8 @@ def trt_(network, *tensors):
         # or... add constant for leaf tensor w/o _trt
         elif isinstance(t, torch.Tensor) and not hasattr(t, '_trt'):
             # add leaf tensor
-            shape = tuple(t.shape[1:])
-            weight = t[0].detach().cpu().numpy()
+            shape = tuple(t.shape) #  don't exclude batch when adding constants...?
+            weight = t.detach().cpu().numpy()
             t._trt = network.add_constant(shape, weight).get_output(0)
             trt_tensor = t._trt
         
@@ -141,7 +144,7 @@ def trt_(network, *tensors):
             
         # MAKE TRT TENSOR BROADCASTABLE IF IT IS NOT ALREADY
         
-        if len(trt_tensor.shape) != broadcast_num_dim:
+        if len(trt_tensor.shape) < broadcast_num_dim:
             # append 1 size dims to front
             diff = broadcast_num_dim - len(trt_tensor.shape)
             shape = tuple([1] * diff + list(trt_tensor.shape))
@@ -211,7 +214,7 @@ class ConversionHook(object):
     def __init__(self, ctx, method, converter):
         self.ctx = ctx
         self.method_str = method
-        self.method_impl = copy(eval(method))
+        self.method_impl = eval(method)
         self.converter = converter
 
     def _set_method(self, method):
@@ -274,7 +277,7 @@ class ConversionContext(object):
 
 
 class TRTModule(torch.nn.Module):
-    def __init__(self, engine=None, input_names=None, output_names=None, final_shapes=None):
+    def __init__(self, engine=None, input_names=None, output_names=None):
         super(TRTModule, self).__init__()
         self._register_state_dict_hook(TRTModule._on_state_dict)
         self.engine = engine
@@ -282,13 +285,11 @@ class TRTModule(torch.nn.Module):
             self.context = self.engine.create_execution_context()
         self.input_names = input_names
         self.output_names = output_names
-        self.final_shapes = final_shapes
     
     def _on_state_dict(self, state_dict, prefix, local_metadata):
-        state_dict[prefix + 'engine'] = bytes(self.engine.serialize())
+        state_dict[prefix + 'engine'] = bytearray(self.engine.serialize())
         state_dict[prefix + 'input_names'] = self.input_names
         state_dict[prefix + 'output_names'] = self.output_names
-        state_dict[prefix + 'final_shapes'] = self.final_shapes
     
     def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs):
         engine_bytes = state_dict[prefix + 'engine']
@@ -299,7 +300,6 @@ class TRTModule(torch.nn.Module):
             
         self.input_names = state_dict[prefix + 'input_names']
         self.output_names = state_dict[prefix + 'output_names']
-        self.final_shapes = state_dict[prefix + 'final_shapes']
         
     def forward(self, *inputs):
         batch_size = inputs[0].shape[0]
@@ -310,10 +310,7 @@ class TRTModule(torch.nn.Module):
         for i, output_name in enumerate(self.output_names):
             idx = self.engine.get_binding_index(output_name)
             dtype = torch_dtype_from_trt(self.engine.get_binding_dtype(idx))
-            if self.final_shapes is not None:
-                shape = (batch_size, ) + self.final_shapes[i]
-            else:
-                shape = (batch_size, ) + tuple(self.engine.get_binding_shape(idx))
+            shape = (batch_size, ) + tuple(self.engine.get_binding_shape(idx))
             device = torch_device_from_trt(self.engine.get_location(idx))
             output = torch.empty(size=shape, dtype=dtype, device=device)
             outputs[i] = output
@@ -353,8 +350,6 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
             outputs = (outputs, )
         ctx.mark_outputs(outputs, output_names)
 
-        final_shapes = [tuple(output.shape)[1:] for output in list(outputs)]
-
         builder.max_workspace_size = max_workspace_size
         builder.fp16_mode = fp16_mode
         builder.max_batch_size = max_batch_size
@@ -362,7 +357,7 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
 
         engine = builder.build_cuda_engine(network)
     
-    return TRTModule(engine, ctx.input_names, ctx.output_names, final_shapes)
+    return TRTModule(engine, ctx.input_names, ctx.output_names)
 
 
 # DEFINE ALL CONVERSION FUNCTIONS

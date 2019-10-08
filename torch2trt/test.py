@@ -3,6 +3,7 @@ from .module_test import ModuleTest, MODULE_TESTS
 import time
 import argparse
 import re
+import runpy
 from termcolor import colored
 
 
@@ -13,16 +14,20 @@ def run(self):
     module = module.type(self.dtype)
     module = module.eval()
     
-    # create inputs
+    # create inputs for conversion
+    inputs_conversion = ()
+    for shape in self.input_shapes:
+        inputs_conversion += (torch.zeros(shape).to(self.device).type(self.dtype), )
+        
+    # convert module
+    module_trt = torch2trt(module, inputs_conversion, **self.torch2trt_kwargs)
+
+    # create inputs for torch/trt.. copy of inputs to handle inplace ops
     inputs = ()
     for shape in self.input_shapes:
         inputs += (torch.randn(shape).to(self.device).type(self.dtype), )
-
-    # create copy of inputs to handle inplace ops
     inputs_trt = tuple([tensor.clone() for tensor in inputs])
 
-    # convert module
-    module_trt = torch2trt(module, inputs, **self.torch2trt_kwargs)
 
     # test output against original
     outputs = module(*inputs)
@@ -87,7 +92,11 @@ if __name__ == '__main__':
     parser.add_argument('--output', '-o', help='Test output file path', type=str, default='torch2trt_test.md')
     parser.add_argument('--name', help='Regular expression to filter modules to test by name', type=str, default='.*')
     parser.add_argument('--tolerance', help='Maximum error to print warning for entry', type=float, default='-1')
+    parser.add_argument('--include', help='Addition python file to include defining additional tests', action='append', default=[])
     args = parser.parse_args()
+    
+    for include in args.include:
+        runpy.run_module(include)
         
     for test in MODULE_TESTS:
         
