@@ -110,7 +110,7 @@ def trt_(network, *tensors):
     for t in tensors:
         if isinstance(t, torch.Tensor):
             if not hasattr(t, '_trt'):
-                num_dim = len(t.shape) # don't exclude batch for constants
+                num_dim = len(t.shape[1:]) # don't exclude batch for constants
             else:
                 num_dim = len(t._trt.shape) # non-leaf tensors must already have _trt, get shape from that
             if num_dim > broadcast_num_dim:
@@ -129,8 +129,8 @@ def trt_(network, *tensors):
         # or... add constant for leaf tensor w/o _trt
         elif isinstance(t, torch.Tensor) and not hasattr(t, '_trt'):
             # add leaf tensor
-            shape = tuple(t.shape) #  don't exclude batch when adding constants...?
-            weight = t.detach().cpu().numpy()
+            shape = tuple(t.shape[1:]) #  don't exclude batch when adding constants...?
+            weight = t[0].detach().cpu().numpy()
             t._trt = network.add_constant(shape, weight).get_output(0)
             trt_tensor = t._trt
         
@@ -144,7 +144,7 @@ def trt_(network, *tensors):
             
         # MAKE TRT TENSOR BROADCASTABLE IF IT IS NOT ALREADY
         
-        if len(trt_tensor.shape) < broadcast_num_dim:
+        if len(trt_tensor.shape) != broadcast_num_dim:
             # append 1 size dims to front
             diff = broadcast_num_dim - len(trt_tensor.shape)
             shape = tuple([1] * diff + list(trt_tensor.shape))
