@@ -60,5 +60,5 @@ The other things are same with ../../README.md
 
 ### Samples
 
-![Float inference]('./samples/Float_inference')
-![Int8 inference]('./samples/Float_inference')
+![Float inference]('https://github.com/jtlee90/res-model-torch2trt/blob/master/torch2trt/calibration/samples/Float_inference')
+![Int8 inference]('https://github.com/jtlee90/res-model-torch2trt/blob/master/torch2trt/calibration/samples/Int8_inference')
