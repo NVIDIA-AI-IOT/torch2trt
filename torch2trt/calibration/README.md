@@ -57,3 +57,8 @@ print(torch.max(torch.abs(y - y_trt)))
 
 The other things are same with ../../README.md
 
+
+### Samples
+
+![Float inference]('samples/Float_inference')
+![Int8 inference]('samples/Float_inference')
