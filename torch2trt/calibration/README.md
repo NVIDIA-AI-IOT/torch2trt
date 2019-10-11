@@ -1,6 +1,6 @@
 # Int8 inference
 
-This is code will support Int8 inference with TensorRT, but still experimental.  
+This code will support Int8 inference with TensorRT, but still experimental.  
 
 
 ## Usage
