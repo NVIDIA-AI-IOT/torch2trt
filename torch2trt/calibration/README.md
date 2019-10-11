@@ -60,5 +60,4 @@ The other things are same with ../../README.md
 
 ### Samples
 
-<img src="https://github.com/jtlee90/res-model-torch2trt/blob/master/torch2trt/calibration/samples/Float_inference", width=290>
-<img src="https://github.com/jtlee90/res-model-torch2trt/blob/master/torch2trt/calibration/samples/Int8_inference", width=290>
+<img src="https://github.com/jtlee90/res-model-torch2trt/blob/master/torch2trt/calibration/samples/Float_inference" alt="Float inference" width=350><img src="https://github.com/jtlee90/res-model-torch2trt/blob/master/torch2trt/calibration/samples/Int8_inference" alt="Int8 inference" width=350>
