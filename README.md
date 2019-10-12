@@ -1,3 +1,4 @@
+
 # torch2trt
 
 torch2trt is a PyTorch to TensorRT converter which utilizes the 
@@ -111,7 +112,7 @@ sudo python setup.py install
 
 ### Option 2 - With plugins (experimental)
 
-To install with plugins to support some operations in PyTorch that are not natviely supported with TensorRT, call the following
+To install with plugins to support some operations in PyTorch that are not natively supported with TensorRT, call the following
 
 > This currently only includes a plugin for ``torch.nn.functional.interpolate``
 
@@ -130,12 +131,12 @@ sudo python setup.py install --plugins
 This converter works by attaching conversion functions (like ``convert_ReLU``) to the original 
 PyTorch functional calls (like ``torch.nn.ReLU.forward``).  The sample input data is passed
 through the network, just as before, except now whenever a registered function (``torch.nn.ReLU.forward``)
-is encountered, the corresponding converter (``convert_ReLU``) is also called afterwards.  The converter
+is encountered, the corresponding converter (``convert_ReLU``) is also called afterward.  The converter
 is passed the arguments and return statement of the original PyTorch function, as well as the TensorRT
 network that is being constructed.  The input tensors to the original PyTorch function are modified to
 have an attribute ``_trt``, which is the TensorRT counterpart to the PyTorch tensor.  The conversion function
 uses this ``_trt`` to add layers to the TensorRT network, and then sets the ``_trt`` attribute for
-relevant output tensors.  Once the model is fully executed, the final tensors returns are marked as outputs
+relevant output tensors.  Once the model is fully executed, the final tensor returns are marked as outputs
 of the TensorRT network, and the optimized TensorRT engine is built.
 
 ## How to add (or override) a converter
