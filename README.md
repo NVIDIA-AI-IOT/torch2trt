@@ -111,7 +111,7 @@ sudo python setup.py install
 
 ### Option 2 - With plugins (experimental)
 
-To install with plugins to support some operations in PyTorch that are not natviely supported with TensorRT, call the following
+To install with plugins to support some operations in PyTorch that are not natively supported with TensorRT, call the following
 
 > This currently only includes a plugin for ``torch.nn.functional.interpolate``
 
