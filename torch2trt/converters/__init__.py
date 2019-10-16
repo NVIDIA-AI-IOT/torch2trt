@@ -11,6 +11,7 @@ from .cat import *
 from .clamp import *
 from .Conv1d import *
 from .Conv2d import *
+from .Conv3d import *
 from .ConvTranspose2d import *
 from .identity import *
 from .Identity import *
