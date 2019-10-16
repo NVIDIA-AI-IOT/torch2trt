@@ -1,3 +1,5 @@
+import warnings
+
 from .torch2trt import *
 from .converters import *
 import tensorrt as trt
@@ -17,5 +19,6 @@ def load_plugins():
 try:
     load_plugins()
     PLUGINS_LOADED = True
-except OSError:
+except OSError as e:
+    warnings.warn("load_plugins OSError: {}, set PLUGINS_LOADED to False".format(e), RuntimeWarning)
     PLUGINS_LOADED = False
