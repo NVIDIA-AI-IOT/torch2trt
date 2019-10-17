@@ -41,6 +41,7 @@ from .softmax import *
 from .split import *
 from .chunk import *
 from .unary import *
+from .batch_norm import *
 
 
 try:
