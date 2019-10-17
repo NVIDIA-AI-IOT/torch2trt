@@ -1,4 +1,5 @@
 from torch2trt.torch2trt import *
+from torch2trt.module_test import add_module_test
 
 
 @tensorrt_converter('torch.nn.BatchNorm2d.forward')
@@ -15,3 +16,8 @@ def convert_BatchNorm2d(ctx):
     layer = ctx.network.add_scale(input_trt, trt.ScaleMode.CHANNEL, bias, scale, power)
 
     output._trt = layer.get_output(0)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 10, 10)])
+def test_BatchNorm2d_basic():
+    return torch.nn.BatchNorm2d(10)
