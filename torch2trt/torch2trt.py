@@ -333,6 +333,10 @@ class TRTModule(torch.nn.Module):
             outputs = outputs[0]
 
         return outputs
+    
+    def enable_profiling(self):
+        if not self.context.profiler:
+            self.context.profiler = trt.Profiler()
 
 
 def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt.Logger.ERROR, max_batch_size=1,
