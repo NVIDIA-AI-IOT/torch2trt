@@ -3,6 +3,8 @@ from torch2trt.module_test import add_module_test
 
 
 @tensorrt_converter('torch.add')
+@tensorrt_converter('torch.Tensor.add')
+@tensorrt_converter('torch.Tensor.add_')
 @tensorrt_converter('torch.Tensor.__iadd__')
 @tensorrt_converter('torch.Tensor.__add__')
 @tensorrt_converter('torch.Tensor.__radd__')
@@ -13,7 +15,33 @@ def convert_add(ctx):
     output = ctx.method_return
     layer = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.SUM)
     output._trt = layer.get_output(0)
-    
+
+
+class TensorAdd(torch.nn.Module):
+    def __init__(self):
+        super(TensorAdd, self).__init__()
+
+    def forward(self, x, y):
+        return x.add(y)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224), (1, 3, 224, 224)])
+def test_tensor_add():
+    return TensorAdd()
+
+
+class TensorAdd_(torch.nn.Module):
+    def __init__(self):
+        super(TensorAdd_, self).__init__()
+
+    def forward(self, x, y):
+        return x.add_(y)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224), (1, 3, 224, 224)])
+def test_tensor_add_():
+    return TensorAdd()
+
 
 class Add(torch.nn.Module):
     def __init__(self):
@@ -21,6 +49,7 @@ class Add(torch.nn.Module):
 
     def forward(self, x, y):
         return x + y
+
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224), (1, 3, 224, 224)])
 def test_add_basic():
