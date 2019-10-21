@@ -214,17 +214,23 @@ class ConversionHook(object):
     def __init__(self, ctx, method, converter):
         self.ctx = ctx
         self.method_str = method
-        self.method_impl = eval(method)
         self.converter = converter
 
     def _set_method(self, method):
         exec('%s = method' % self.method_str)
 
     def __enter__(self):
-        self._set_method(attach_converter(self.ctx, self.method_impl, self.converter))
+        try:
+            self.method_impl = eval(self.method_str)
+        except AttributeError:
+            self.method_impl = None
+        
+        if self.method_impl:
+            self._set_method(attach_converter(self.ctx, self.method_impl, self.converter))
 
     def __exit__(self, type, val, tb):
-        self._set_method(self.method_impl)
+        if self.method_impl:
+            self._set_method(self.method_impl)
 
 
 class ConversionContext(object):
