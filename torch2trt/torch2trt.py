@@ -175,15 +175,17 @@ def get_arg(ctx, name, pos, default):
         return default
     
 
-def attach_converter(ctx, method, converter):
+def attach_converter(ctx, method, converter, method_str):
     """Gets a function that executes PyTorch method and TensorRT converter"""
-
+    global DUMMY_CONVERTERS
+    
     def wrapper(*args, **kwargs):
         skip = True
-
+            
         # check if another (parent) converter has lock
         if not ctx.lock:
-            ctx.lock = True
+            if converter['is_real']:
+                ctx.lock = True  # only real converters can acquire lock
             skip = False
 
         # run original method
@@ -193,9 +195,10 @@ def attach_converter(ctx, method, converter):
             ctx.method_args = args
             ctx.method_kwargs = kwargs
             ctx.method_return = outputs
+            ctx.method_str = method_str
                 
 #             print('%s' % (converter.__name__,))
-            converter(ctx)
+            converter['converter'](ctx)
 
             # convert to None so conversion will fail for unsupported layers
             ctx.method_args = None
@@ -226,7 +229,7 @@ class ConversionHook(object):
             self.method_impl = None
         
         if self.method_impl:
-            self._set_method(attach_converter(self.ctx, self.method_impl, self.converter))
+            self._set_method(attach_converter(self.ctx, self.method_impl, self.converter, self.method_str))
 
     def __exit__(self, type, val, tb):
         if self.method_impl:
@@ -381,8 +384,8 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
 # DEFINE ALL CONVERSION FUNCTIONS
 
 
-def tensorrt_converter(method):
+def tensorrt_converter(method, is_real=True):
     def register_converter(converter):
-        CONVERTERS[method] = converter
+        CONVERTERS[method] = {'converter': converter, 'is_real': is_real}
         return converter
     return register_converter
