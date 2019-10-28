@@ -1,3 +1,9 @@
+# dummy converters throw warnings method encountered
+
+from .dummy_converters import *
+
+# supported converters will override dummy converters
+
 from .activation import *
 from .adaptive_avg_pool2d import *
 from .AdaptiveAvgPool2d import *
