@@ -104,7 +104,7 @@ We tested the converter against these models using the [test.sh](test.sh) script
 To install without compiling plugins, call the following
 
 ```bash
-git clone https://github.com/NVIDIA-AI-IOT/torch2trt
+git clone https://github.com/NVIDIA-AI-IOT/torch2trt.git
 cd torch2trt
 sudo python setup.py install
 ```
