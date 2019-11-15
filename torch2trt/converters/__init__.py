@@ -41,7 +41,6 @@ from .sum import *
 from .view import *
 from .tanh import *
 from .transpose import *
-from .UPSAMPLE import * 
 from .upsample import * 
 from .mean import *
 from .softmax import *
