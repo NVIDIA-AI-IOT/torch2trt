@@ -9,11 +9,11 @@ def convert_upsample(ctx):
     output = ctx.method_return
 
     shape = module.size
-    if not instance(shape, tuple):
+    if not isinstance(shape, tuple):
         shape = (shape, ) * 2
 
     scales = module.scale_factor
-    if not instance(scales, tuple):
+    if not isinstance(scales, tuple):
         scales = (scales, ) * 2
 
     resize_mode = module.mode
