@@ -1,5 +1,5 @@
 # dummy converters throw warnings method encountered
-
+import tensorrt as trt
 from .dummy_converters import *
 
 # supported converters will override dummy converters
@@ -44,13 +44,18 @@ from .sum import *
 from .view import *
 from .tanh import *
 from .transpose import *
-from .upsample import * 
 from .mean import *
 from .softmax import *
 from .split import *
 from .chunk import *
 from .unary import *
 
-# PLUGINS
-
-from .interpolate import *
+if int(trt.__version__.split(".")[0]) >= 6:
+    print("using tensorrt version {}".format(trt.__version__.split(".")[0]))
+    from .upsample import *
+else:
+    print("using tensorrt version {}".format(trt.__version__.split(".")[0]))
+    try:
+        from .interpolate import *
+    except:
+        pass
