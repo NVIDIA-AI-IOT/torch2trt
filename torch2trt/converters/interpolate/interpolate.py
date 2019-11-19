@@ -40,18 +40,14 @@ def convert_interpolate(ctx):
 
 
 class Interpolate(torch.nn.Module):
-    def __init__(self, size, mode, align_corners,scale_factor=None):
+    def __init__(self, size, mode, align_corners):
         super(Interpolate, self).__init__()
         self.size = size
         self.mode = mode
         self.align_corners = align_corners
-        self.scale_factor=scale_factor
 
     def forward(self, x):
-        if self.scale_factor == None:
-            return F.interpolate(x, self.size, mode=self.mode, align_corners=self.align_corners)
-        else:
-            return F.interpolate(x, scale_factor = self.scale_factor, mode = self.mode, align_corners = self.align_corners)
+        return F.interpolate(x, self.size, mode=self.mode, align_corners=self.align_corners)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)])
@@ -72,10 +68,6 @@ def test_interpolate_bicubic():
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)])
 def test_interpolate_area():
     return Interpolate((56, 56), 'area', None)
-
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 256, 192, 512)])
-def test_scale():
-    return Interpolate(None,'bilinear',False,scale_factor=2)
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 256, 192, 512)])
 def test_nn_scale():
