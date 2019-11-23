@@ -69,6 +69,6 @@ def test_interpolate_bicubic():
 def test_interpolate_area():
     return Interpolate((56, 56), 'area', None)
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 256, 192, 512)])
-def test_nn_scale():
-    return nn.Upsample(scale_factor = 2, mode='bilinear',align_corners=False)
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)])
+def test_upsample_scale_factor2():
+    return nn.Upsample(scale_factor=2, mode='bilinear',align_corners=False)
