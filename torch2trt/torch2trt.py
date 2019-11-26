@@ -357,6 +357,8 @@ def torch2trt(module,
               int8_calib_dataset=None,
               int8_calib_algorithm=trt.CalibrationAlgoType.ENTROPY_CALIBRATION_2):
 
+    inputs_in = inputs
+    
     # copy inputs to avoid modifications to source data
     inputs = [tensor.clone()[0:1] for tensor in inputs]  # only run single entry
     
@@ -387,12 +389,12 @@ def torch2trt(module,
         
         # default to use input tensors for calibration
         if int8_calib_dataset is None:
-            int8_calib_dataset = TensorBatchDataset(inputs)
+            int8_calib_dataset = TensorBatchDataset(inputs_in)
         
         builder.int8_mode = True
         
         # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
-        builder.int8_calibrator = DatasetCalibrator(int8_calib_dataset, batch_size=1, algorithm=int8_calib_algorithm)
+        builder.int8_calibrator = DatasetCalibrator(inputs, int8_calib_dataset, batch_size=1, algorithm=int8_calib_algorithm)
 
     engine = builder.build_cuda_engine(network)
     
