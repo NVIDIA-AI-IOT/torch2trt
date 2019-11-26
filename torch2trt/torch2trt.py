@@ -2,6 +2,7 @@ import torch
 import tensorrt as trt
 from copy import copy
 import numpy as np
+from .calibration import TensorBatchDataset, DatasetCalibrator
 
 
 # UTILITY FUNCTIONS
@@ -342,11 +343,22 @@ class TRTModule(torch.nn.Module):
             self.context.profiler = trt.Profiler()
 
 
-def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt.Logger.ERROR, max_batch_size=1,
-        fp16_mode=False, max_workspace_size=0, strict_type_constraints=False, keep_network=True):
+def torch2trt(module, 
+              inputs, 
+              input_names=None, 
+              output_names=None, 
+              log_level=trt.Logger.ERROR, 
+              max_batch_size=1,
+              fp16_mode=False, 
+              max_workspace_size=0, 
+              strict_type_constraints=False, 
+              keep_network=True, 
+              int8_mode=False, 
+              int8_calib_dataset=None,
+              int8_calib_algorithm=trt.CalibrationAlgoType.ENTROPY_CALIBRATION_2):
 
     # copy inputs to avoid modifications to source data
-    inputs = [tensor.clone() for tensor in inputs]
+    inputs = [tensor.clone()[0:1] for tensor in inputs]  # only run single entry
     
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
@@ -366,17 +378,28 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
             outputs = (outputs, )
         ctx.mark_outputs(outputs, output_names)
 
-        builder.max_workspace_size = max_workspace_size
-        builder.fp16_mode = fp16_mode
-        builder.max_batch_size = max_batch_size
-        builder.strict_type_constraints = strict_type_constraints
-
-        engine = builder.build_cuda_engine(network)
+    builder.max_workspace_size = max_workspace_size
+    builder.fp16_mode = fp16_mode
+    builder.max_batch_size = max_batch_size
+    builder.strict_type_constraints = strict_type_constraints
     
-        module_trt = TRTModule(engine, ctx.input_names, ctx.output_names)
+    if int8_mode:
         
-        if keep_network:
-            module_trt.network = network
+        # default to use input tensors for calibration
+        if int8_calib_dataset is None:
+            int8_calib_dataset = TensorBatchDataset(inputs)
+        
+        builder.int8_mode = True
+        
+        # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
+        builder.int8_calibrator = DatasetCalibrator(int8_calib_dataset, batch_size=1, algorithm=int8_calib_algorithm)
+
+    engine = builder.build_cuda_engine(network)
+    
+    module_trt = TRTModule(engine, ctx.input_names, ctx.output_names)
+        
+    if keep_network:
+        module_trt.network = network
             
     return module_trt
 
