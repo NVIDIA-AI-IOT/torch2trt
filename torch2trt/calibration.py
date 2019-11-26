@@ -16,20 +16,17 @@ class TensorBatchDataset():
     
 class DatasetCalibrator(trt.IInt8Calibrator):
     
-    def __init__(self, dataset, batch_size=1, algorithm=trt.CalibrationAlgoType.ENTROPY_CALIBRATION_2):
+    def __init__(self, inputs, dataset, batch_size=1, algorithm=trt.CalibrationAlgoType.ENTROPY_CALIBRATION_2):
         super().__init__()
         
         self.dataset = dataset
         self.batch_size = batch_size
         self.algorithm = algorithm
         
-        # pull sample, should not include batch dimension
-        inputs = dataset[0] 
-        
         # create buffers that will hold data batches
         self.buffers = []
         for tensor in inputs:
-            size = (batch_size,) + tuple(tensor.shape)
+            size = (batch_size,) + tuple(tensor.shape[1:])
             buf = torch.zeros(size=size, dtype=tensor.dtype, device=tensor.device).contiguous()
             self.buffers.append(buf)
             
