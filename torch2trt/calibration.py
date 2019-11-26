@@ -26,11 +26,11 @@ class DatasetCalibrator(trt.IInt8Calibrator):
         # pull sample, should not include batch dimension
         inputs = dataset[0] 
         
-        # create buffers that will hold random data batches
+        # create buffers that will hold data batches
         self.buffers = []
         for tensor in inputs:
             size = (batch_size,) + tuple(tensor.shape)
-            buf = torch.randn(size=size, dtype=tensor.dtype, device=tensor.device).contiguous()
+            buf = torch.zeros(size=size, dtype=tensor.dtype, device=tensor.device).contiguous()
             self.buffers.append(buf)
             
         self.count = 0
@@ -43,6 +43,7 @@ class DatasetCalibrator(trt.IInt8Calibrator):
                 idx = self.count % len(self.dataset) # roll around if not multiple of dataset
                 inputs = self.dataset[idx]
                 
+                # copy data for (input_idx, dataset_idx) into buffer
                 for j, tensor in enumerate(inputs):
                     self.buffers[j][i].copy_(tensor)
                 
