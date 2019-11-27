@@ -23,7 +23,7 @@ class TensorBatchDataset():
 class DatasetCalibrator(trt.IInt8Calibrator):
     
     def __init__(self, inputs, dataset, batch_size=1, algorithm=DEFAULT_CALIBRATION_ALGORITHM):
-        super().__init__()
+        super(DatasetCalibrator, self).__init__()
         
         self.dataset = dataset
         self.batch_size = batch_size
