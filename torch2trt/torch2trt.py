@@ -2,7 +2,7 @@ import torch
 import tensorrt as trt
 from copy import copy
 import numpy as np
-from .calibration import TensorBatchDataset, DatasetCalibrator
+from .calibration import TensorBatchDataset, DatasetCalibrator, DEFAULT_CALIBRATION_ALGORITHM
 
 
 # UTILITY FUNCTIONS
@@ -355,7 +355,7 @@ def torch2trt(module,
               keep_network=True, 
               int8_mode=False, 
               int8_calib_dataset=None,
-              int8_calib_algorithm=trt.CalibrationAlgoType.ENTROPY_CALIBRATION_2):
+              int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM):
 
     inputs_in = inputs
     

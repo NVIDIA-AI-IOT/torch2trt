@@ -2,6 +2,12 @@ import torch
 import tensorrt as trt
 
 
+if trt.__version__ >= '5.1':
+    DEFAULT_CALIBRATION_ALGORITHM = trt.CalibrationAlgoType.ENTROPY_CALIBRATION_2
+else:
+    DEFAULT_CALIBRATION_ALGORITHM = trt.CalibrationAlgoType.ENTROPY_CALIBRATION
+    
+
 class TensorBatchDataset():
     
     def __init__(self, tensors):
@@ -16,7 +22,7 @@ class TensorBatchDataset():
     
 class DatasetCalibrator(trt.IInt8Calibrator):
     
-    def __init__(self, inputs, dataset, batch_size=1, algorithm=trt.CalibrationAlgoType.ENTROPY_CALIBRATION_2):
+    def __init__(self, inputs, dataset, batch_size=1, algorithm=DEFAULT_CALIBRATION_ALGORITHM):
         super().__init__()
         
         self.dataset = dataset
@@ -56,8 +62,8 @@ class DatasetCalibrator(trt.IInt8Calibrator):
     def get_batch_size(self):
         return self.batch_size
     
-    def read_calibration_cache(self):
+    def read_calibration_cache(self, *args, **kwargs):
         return None
     
-    def write_calibration_cache(self, cache):
+    def write_calibration_cache(self, cache, *args, **kwargs):
         pass
