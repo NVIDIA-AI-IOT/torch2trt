@@ -196,7 +196,8 @@ def attach_converter(ctx, method, converter, method_str):
             ctx.method_kwargs = kwargs
             ctx.method_return = outputs
             ctx.method_str = method_str
-                
+            
+#             print(ctx.module_stack[-1][0] + '(' + ctx.method_str + ')')
 #             print('%s' % (converter.__name__,))
             converter['converter'](ctx)
 
@@ -235,9 +236,39 @@ class ConversionHook(object):
         if self.method_impl:
             self._set_method(self.method_impl)
 
+            
+def all_named_children(module, scope=''):
+    children = []
+    for name, child in module.named_children():
+        name = scope + name
+        children += [(name, child)]
+        children += all_named_children(child, name + '.')
+    return children
+
+
+class ModuleHook(object):
+    
+    def __init__(self, ctx, named_module):
+        self.ctx = ctx
+        self.named_module = named_module
+        
+    def pre_hook(self, *args):
+        self.ctx.module_stack.append(self.named_module)
+
+    def post_hook(self, *args):
+        self.ctx.module_stack.pop()
+        
+    def __enter__(self, *args):
+        self.pre_handle = self.named_module[1].register_forward_pre_hook(self.pre_hook)
+        self.post_handle = self.named_module[1].register_forward_hook(self.post_hook)
+        
+    def __exit__(self, *args):
+        self.pre_handle.remove()
+        self.post_handle.remove()
+        
 
 class ConversionContext(object):
-    def __init__(self, network, converters=CONVERTERS):
+    def __init__(self, module, network, converters=CONVERTERS, root_scope='module'):
         self.network = network
         self.lock = False
         self.method_args = None
@@ -247,14 +278,22 @@ class ConversionContext(object):
             ConversionHook(self, method, converter)
             for method, converter in converters.items()
         ]
-
+        
+        self.module_hooks = [ModuleHook(self, nm) for nm in all_named_children(module, scope=root_scope + '.')]
+        self.module_hooks += [ModuleHook(self, (root_scope, module))]  # add root
+        self.module_stack = []
+            
     def __enter__(self):
         for hook in self.hooks:
+            hook.__enter__()
+        for hook in self.module_hooks:
             hook.__enter__()
         return self
 
     def __exit__(self, type, val, tb):
         for hook in self.hooks:
+            hook.__exit__(type, val, tb)
+        for hook in self.module_hooks:
             hook.__exit__(type, val, tb)
 
     def add_inputs(self, torch_inputs, names=None):
@@ -352,7 +391,7 @@ def torch2trt(module, inputs, input_names=None, output_names=None, log_level=trt
     builder = trt.Builder(logger)
     network = builder.create_network()
     
-    with ConversionContext(network) as ctx:
+    with ConversionContext(module, network) as ctx:
 
         if isinstance(inputs, list):
             inputs = tuple(inputs)
