@@ -47,8 +47,8 @@ class DatasetCalibrator(trt.IInt8Calibrator):
                 inputs = self.dataset[idx]
                 
                 # copy data for (input_idx, dataset_idx) into buffer
-                for j, tensor in enumerate(inputs):
-                    self.buffers[j][i].copy_(tensor)
+                for buffer, tensor in zip(self.buffers, inputs):
+                    buffer[i].copy_(tensor)
                 
                 self.count += 1
                 
