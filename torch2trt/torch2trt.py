@@ -164,6 +164,14 @@ def trt_(network, *tensors):
 # CONVERSION REGISTRY AND HOOKS
 
 
+_ACTIVE_CONTEXT = None
+
+
+def active_context():
+    global _ACTIVE_CONTEXT
+    return _ACTIVE_CONTEXT
+
+
 CONVERTERS = {}
     
     
@@ -176,17 +184,23 @@ def get_arg(ctx, name, pos, default):
         return default
     
 
-def attach_converter(ctx, method, converter, method_str):
+def attach_converter(method, converter):
     """Gets a function that executes PyTorch method and TensorRT converter"""
-    global DUMMY_CONVERTERS
+    
     
     def wrapper(*args, **kwargs):
+        
+        ctx = active_context()
+        
+        # only run original method if no context
+        if not ctx:
+            return method(*args, **kwargs)
+        
         skip = True
             
         # check if another (parent) converter has lock
         if not ctx.lock:
-            if converter['is_real']:
-                ctx.lock = True  # only real converters can acquire lock
+            ctx.lock = True
             skip = False
 
         # run original method
@@ -196,10 +210,8 @@ def attach_converter(ctx, method, converter, method_str):
             ctx.method_args = args
             ctx.method_kwargs = kwargs
             ctx.method_return = outputs
-            ctx.method_str = method_str
                 
-#             print('%s' % (converter.__name__,))
-            converter['converter'](ctx)
+            converter(ctx)
 
             # convert to None so conversion will fail for unsupported layers
             ctx.method_args = None
@@ -230,14 +242,15 @@ class ConversionHook(object):
             self.method_impl = None
         
         if self.method_impl:
-            self._set_method(attach_converter(self.ctx, self.method_impl, self.converter, self.method_str))
+            self._set_method(attach_converter(self.method_impl, self.converter))
 
     def __exit__(self, type, val, tb):
         if self.method_impl:
             self._set_method(self.method_impl)
-
-
+    
+    
 class ConversionContext(object):
+    
     def __init__(self, network, converters=CONVERTERS):
         self.network = network
         self.lock = False
@@ -250,13 +263,22 @@ class ConversionContext(object):
         ]
 
     def __enter__(self):
+        
         for hook in self.hooks:
             hook.__enter__()
+            
+        global _ACTIVE_CONTEXT
+        _ACTIVE_CONTEXT = self
+        
         return self
 
     def __exit__(self, type, val, tb):
+        
         for hook in self.hooks:
             hook.__exit__(type, val, tb)
+            
+        global _ACTIVE_CONTEXT
+        _ACTIVE_CONTEXT = None
 
     def add_inputs(self, torch_inputs, names=None):
         if names is None:
@@ -409,8 +431,18 @@ def torch2trt(module,
 # DEFINE ALL CONVERSION FUNCTIONS
 
 
-def tensorrt_converter(method, is_real=True):
+def tensorrt_converter(method):
+    
     def register_converter(converter):
-        CONVERTERS[method] = {'converter': converter, 'is_real': is_real}
+        CONVERTERS[method] = converter
         return converter
+    
     return register_converter
+
+
+def tensorrt_method(converter):
+    
+    def _attach_converter(method):
+        return attach_converter(method, converter)
+        
+    return _attach_converter
