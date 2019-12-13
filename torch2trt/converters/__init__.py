@@ -20,6 +20,7 @@ from .Conv2d import *
 from .ConvTranspose2d import *
 from .identity import *
 from .Identity import *
+from .instance_norm import *
 from .Linear import *
 from .LogSoftmax import *
 from .max_pool2d import *
