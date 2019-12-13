@@ -69,8 +69,7 @@ def convert_instance_norm(ctx):
         var_trt = ctx.network.add_reduce(var_trt, trt.ReduceOperation.AVG, reduce_axes, keep_dims).get_output(0)
         
         # compute sqrt(var + eps)
-        var_trt = ctx.network.add_scale(var_trt, trt.ScaleMode.UNIFORM, eps_np, np.ones_like(eps_np), np.ones_like(eps_np)).get_output(0)
-        var_trt = ctx.network.add_unary(var_trt, trt.UnaryOperation.SQRT).get_output(0)
+        var_trt = ctx.network.add_scale(var_trt, trt.ScaleMode.UNIFORM, eps_np, np.ones_like(eps_np), 0.5 * np.ones_like(eps_np)).get_output(0)
         
         # compute final result
         result_trt = ctx.network.add_elementwise(delta_trt, var_trt, trt.ElementWiseOperation.DIV).get_output(0)
