@@ -2,6 +2,27 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
+def _add_scale_1d2d3d(network, x_trt, mode, offset, scale, power):
+    ndim = len(x_trt.shape)
+    
+    y_trt = x_trt
+    
+    # shape to 2D
+    if ndim != 3:
+        layer = network.add_shuffle(y_trt)
+        layer.reshape_dims = (x_trt.shape[0], x_trt.shape[1], -1)  # NCH -> NCHW
+        y_trt = layer.get_output(0)
+        
+    y_trt = network.add_scale(y_trt, mode, offset, scale, power).get_output(0)
+
+    # shape to original dimension
+    if ndim != 3:    
+        layer = network.add_shuffle(layer.get_output(0))
+        layer.reshape_dims = tuple(x_trt.shape)
+        y_trt = layer.get_output(0)
+    
+    return y_trt
+        
 @tensorrt_converter('torch.instance_norm')
 @tensorrt_converter('torch.nn.functional.instance_norm')
 def convert_instance_norm(ctx):
@@ -26,66 +47,105 @@ def convert_instance_norm(ctx):
         
         if weight is not None:
             scale *= weight.detach().cpu().numpy()
-            
-        if bias is not None:
             offset += bias.detach().cpu().numpy()
             
-        input_trt = input._trt
-        
-        # force input to be NCHW if it is not
-        if input.ndim != 4:
-            
-            layer = ctx.network.add_shuffle(input_trt)
-            
-            if input.ndim == 2:
-                layer.reshape_dims = (input.shape[1], 1, 1)  # NC -> NCHW
-            elif input.ndim == 3:
-                layer.reshape_dims = (input.shape[1], input.shape[2], 1)  # NCH -> NCHW
-            elif input.ndim == 5:
-                layer.reshape_dims = (input.shape[1], input.shape[2], input.shape[3] * input.shape[4])  # NCHWD -> NCHW
-                
-            input_trt = layer.get_output(0)
-        
-        layer = ctx.network.add_scale(input_trt, trt.ScaleMode.CHANNEL, offset, scale, power)
-        
-        if input.ndim != 4:
-            
-            layer = ctx.network.add_shuffle(layer.get_output(0))
-            layer.reshape_dims = tuple(output.shape[1:])
+        result_trt = _add_scale_1d2d3d(ctx.network, input._trt, trt.ScaleMode.CHANNEL, offset, scale, power)
     
-        output._trt = layer.get_output(0)
+        output._trt = result_trt
         
     # CASE 2 - USING INPUT STATS
     else:
         
-        raise NotImplementedError
+        eps_np = np.array([eps], dtype=np.float32)
+        keep_dims = True
+        reduce_axes = torch_dim_to_trt_axes(tuple(range(2, input.ndim)))
+        
+        # compute mean over spatial
+        mean_trt = ctx.network.add_reduce(input._trt, trt.ReduceOperation.AVG, reduce_axes, keep_dims).get_output(0)
+        
+        # compute variance over spatial (include eps, to reduce layer count)
+        delta_trt = ctx.network.add_elementwise(input._trt, mean_trt, trt.ElementWiseOperation.SUB).get_output(0)
+        var_trt = ctx.network.add_scale(delta_trt, trt.ScaleMode.UNIFORM, np.zeros_like(eps_np), np.ones_like(eps_np), 2 * np.ones_like(eps_np)).get_output(0)
+        var_trt = ctx.network.add_reduce(var_trt, trt.ReduceOperation.AVG, reduce_axes, keep_dims).get_output(0)
+        
+        # compute sqrt(var + eps)
+        var_trt = ctx.network.add_scale(var_trt, trt.ScaleMode.UNIFORM, eps_np, np.ones_like(eps_np), np.ones_like(eps_np)).get_output(0)
+        var_trt = ctx.network.add_unary(var_trt, trt.UnaryOperation.SQRT).get_output(0)
+        
+        # compute final result
+        result_trt = ctx.network.add_elementwise(delta_trt, var_trt, trt.ElementWiseOperation.DIV).get_output(0)
+        
+        # compute affine (if applicable)
+        if weight is not None:
+            
+            weight_np = weight.detach().cpu().numpy()
+            bias_np = bias.detach().cpu().numpy()
+            
+            result_trt = _add_scale_1d2d3d(ctx.network, result_trt, trt.ScaleMode.CHANNEL, bias_np, weight_np, np.ones_like(bias_np))
+        
+        output._trt = result_trt
         
         
+# STATIC
+
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3)])
-def test_instance_norm_1d_track_stats():
+def test_instance_norm_1d_static():
     return torch.nn.InstanceNorm1d(10, track_running_stats=True)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)])
-def test_instance_norm_2d_track_stats():
+def test_instance_norm_2d_static():
     return torch.nn.InstanceNorm2d(10, track_running_stats=True)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3, 3)])
-def test_instance_norm_3d_track_stats():
+def test_instance_norm_3d_static():
     return torch.nn.InstanceNorm3d(10, track_running_stats=True)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3)])
-def test_instance_norm_1d_track_stats_affine():
+def test_instance_norm_1d_static_affine():
     return torch.nn.InstanceNorm1d(10, affine=True, track_running_stats=True)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)])
-def test_instance_norm_2d_track_stats_affine():
+def test_instance_norm_2d_static_affine():
     return torch.nn.InstanceNorm2d(10, affine=True, track_running_stats=True)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3, 3)])
-def test_instance_norm_3d_track_stats_affine():
+def test_instance_norm_3d_static_affine():
     return torch.nn.InstanceNorm3d(10, affine=True, track_running_stats=True)
+
+# DYNAMIC
+
+# @TODO(jwelsh): 1D dynamic test failing
+# @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3)])
+# def test_instance_norm_1d_dynamic():
+#     return torch.nn.InstanceNorm1d(10, track_running_stats=False)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)])
+def test_instance_norm_2d_dynamic():
+    return torch.nn.InstanceNorm2d(10, track_running_stats=False)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3, 3)])
+def test_instance_norm_3d_dynamic():
+    return torch.nn.InstanceNorm3d(10, track_running_stats=False)
+
+
+# @TODO(jwelsh): 1D dynamic test failing
+# @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3)])
+# def test_instance_norm_1d_dynamic_affine():
+#     return torch.nn.InstanceNorm1d(10, affine=True, track_running_stats=False)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)])
+def test_instance_norm_2d_dynamic_affine():
+    return torch.nn.InstanceNorm2d(10, affine=True, track_running_stats=False)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3, 3)])
+def test_instance_norm_3d_dynamic_affine():
+    return torch.nn.InstanceNorm3d(10, affine=True, track_running_stats=False)
