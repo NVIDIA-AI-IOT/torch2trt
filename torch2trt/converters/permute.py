@@ -9,7 +9,11 @@ def convert_permute(ctx):
     output = ctx.method_return
     
     # permutation -1 because TRT does not include batch dim
-    permutation = ctx.method_args[1:]
+    if isinstance(ctx.method_args[1], int):
+        permutation = tuple(ctx.method_args[1:])  # handle permute(a, b, c)
+    else:
+        permutation = tuple(ctx.method_args[1])   # handle permute([a, b, c])
+        
     assert(permutation[0] == 0)  # cannot move batch dim
     
     trt_permutation = tuple([p - 1 for p in permutation])[1:]
@@ -41,7 +45,14 @@ def test_permute_2d_0312():
 def test_permute_3d_01234():
     return Permute(0, 1, 2, 3, 4)
 
-
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5, 6)])
 def test_permute_3d_04132():
     return Permute(0, 4, 1, 3, 2)
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5, 6)])
+def test_permute_list():
+    return Permute([0, 4, 1, 3, 2])
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5, 6)])
+def test_permute_tuple():
+    return Permute((0, 4, 1, 3, 2))
