@@ -6,6 +6,7 @@ from .dummy_converters import *
 
 from .activation import *
 from .adaptive_avg_pool2d import *
+from .adaptive_max_pool2d import *
 from .AdaptiveAvgPool2d import *
 from .add import *
 from .avg_pool2d import *
