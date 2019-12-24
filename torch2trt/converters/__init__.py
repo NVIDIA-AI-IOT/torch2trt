@@ -6,6 +6,7 @@ from .dummy_converters import *
 
 from .activation import *
 from .adaptive_avg_pool2d import *
+from .adaptive_max_pool2d import *
 from .AdaptiveAvgPool2d import *
 from .add import *
 from .avg_pool2d import *
@@ -18,8 +19,10 @@ from .clamp import *
 from .Conv1d import *
 from .Conv2d import *
 from .ConvTranspose2d import *
+from .getitem import *
 from .identity import *
 from .Identity import *
+from .instance_norm import *
 from .Linear import *
 from .LogSoftmax import *
 from .max_pool2d import *
