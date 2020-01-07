@@ -355,7 +355,8 @@ def torch2trt(module,
               keep_network=True, 
               int8_mode=False, 
               int8_calib_dataset=None,
-              int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM):
+              int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
+              flags=0):
 
     inputs_in = inputs
     
@@ -364,7 +365,7 @@ def torch2trt(module,
     
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
-    network = builder.create_network()
+    network = builder.create_network(flags=flags)
     
     with ConversionContext(network) as ctx:
 
