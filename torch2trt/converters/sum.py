@@ -1,7 +1,7 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 from .unary import UnaryModule
-    
+from torch import nn
 
 @tensorrt_converter('torch.sum')
 @tensorrt_converter('torch.Tensor.sum')
@@ -36,3 +36,17 @@ def test_sum_reduce_dim22():
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 def test_sum_reduce_dim1_keepdim():
     return UnaryModule(lambda x: torch.sum(x, 1, keepdim=True))
+
+
+class DisparityRegression(nn.Module):
+    def __init__(self, maxdisp):
+        super(DisparityRegression, self).__init__()
+        self.register_buffer('disp', torch.arange(maxdisp, dtype=torch.float32).view(maxdisp, 1, 1))
+
+    def forward(self, x):      
+        return torch.sum(x * self.disp, 1) 
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 23, 23)])
+def test_disparity_reg():
+    return DisparityRegression(10)    
