@@ -1,6 +1,7 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
+from tools import shape
 
 @tensorrt_converter('torch.mul')
 @tensorrt_converter('torch.Tensor.__imul__')
@@ -13,7 +14,6 @@ def convert_mul(ctx):
     output = ctx.method_return
     layer = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.PROD)
     output._trt = layer.get_output(0)
-
 
 class Mul(torch.nn.Module):
     def __init__(self):

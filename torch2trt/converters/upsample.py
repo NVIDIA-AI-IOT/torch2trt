@@ -33,8 +33,6 @@ def convert_interpolate(ctx):
             scales = [scales] * input_dim
         layer.scales = [1] + list(scales)
 
-    print(input.shape, output.shape, scales, shape)
-
     resize_mode = mode
     if resize_mode.lower() in ["linear","bilinear","trilinear"]:
         layer.resize_mode = trt.ResizeMode.LINEAR
