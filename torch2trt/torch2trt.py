@@ -9,6 +9,8 @@ from .calibration import TensorBatchDataset, DatasetCalibrator, DEFAULT_CALIBRAT
 
 
 def torch_dtype_to_trt(dtype):
+    if dtype == torch.bool:
+        return trt.bool
     if dtype == torch.int8:
         return trt.int8
     elif dtype == torch.int32:
@@ -24,6 +26,8 @@ def torch_dtype_to_trt(dtype):
 def torch_dtype_from_trt(dtype):
     if dtype == trt.int8:
         return torch.int8
+    if dtype == trt.bool:
+        return torch.bool        
     elif dtype == trt.int32:
         return torch.int32
     elif dtype == trt.float16:
@@ -223,12 +227,12 @@ class ConversionHook(object):
     def _set_method(self, method):
         exec('%s = method' % self.method_str)
 
-    def __enter__(self):
+    def __enter__(self):      
         try:
             self.method_impl = eval(self.method_str)
         except AttributeError:
             self.method_impl = None
-        
+       
         if self.method_impl:
             self._set_method(attach_converter(self.ctx, self.method_impl, self.converter, self.method_str))
 
