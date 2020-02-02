@@ -20,7 +20,7 @@ def run(self):
         inputs_conversion += (torch.zeros(shape).to(self.device).type(self.dtype), )
         
     # convert module
-    module_trt = torch2trt(module, inputs_conversion, **self.torch2trt_kwargs)
+    module_trt = torch2trt(module, inputs_conversion, max_workspace_size=1 << 20,  **self.torch2trt_kwargs)
 
     # create inputs for torch/trt.. copy of inputs to handle inplace ops
     inputs = ()
@@ -39,7 +39,12 @@ def run(self):
     # compute max error
     max_error = 0
     for i in range(len(outputs)):
-        max_error_i = torch.max(torch.abs(outputs[i] - outputs_trt[i]))
+        max_error_i = 0
+        if outputs[i].dtype == torch.bool:
+            max_error_i = torch.sum(outputs[i] ^ outputs_trt[i])
+        else:
+            max_error_i = torch.max(torch.abs(outputs[i] - outputs_trt[i]))
+
         if max_error_i > max_error:
             max_error = max_error_i
     
