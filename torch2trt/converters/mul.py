@@ -14,7 +14,6 @@ def convert_mul(ctx):
     layer = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.PROD)
     output._trt = layer.get_output(0)
 
-
 class Mul(torch.nn.Module):
     def __init__(self):
         super(Mul, self).__init__()

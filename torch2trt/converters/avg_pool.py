@@ -3,7 +3,8 @@ from torch2trt.module_test import add_module_test
 
 
 @tensorrt_converter('torch.nn.functional.avg_pool2d')
-def convert_avg_pool2d(ctx):
+@tensorrt_converter('torch.nn.functional.avg_pool3d')
+def convert_avg_pool(ctx):
     # parse args
     input = get_arg(ctx, 'input', pos=0, default=None)
     kernel_size = get_arg(ctx, 'kernel_size', pos=1, default=None)
@@ -14,26 +15,27 @@ def convert_avg_pool2d(ctx):
     
     # get input trt tensor (or create constant if it doesn't exist)
     input_trt = trt_(ctx.network, input)
-    
     output = ctx.method_return
+
+    input_dim = input.dim() - 2
 
     # get kernel size
     if not isinstance(kernel_size, tuple):
-        kernel_size = (kernel_size, ) * 2
+        kernel_size = (kernel_size, ) * input_dim
 
     # get stride
     if not isinstance(stride, tuple):
-        stride = (stride, ) * 2
+        stride = (stride, ) * input_dim
 
     # get padding
     if not isinstance(padding, tuple):
-        padding = (padding, ) * 2
+        padding = (padding, ) * input_dim
 
-    layer = ctx.network.add_pooling(
+    layer = ctx.network.add_pooling_nd(
         input=input_trt, type=trt.PoolingType.AVERAGE, window_size=kernel_size)
     
-    layer.stride = stride
-    layer.padding = padding
+    layer.stride_nd = stride
+    layer.padding_nd = padding
     layer.average_count_excludes_padding = not count_include_pad
     
     if ceil_mode:
@@ -52,3 +54,15 @@ def test_avg_pool2d_without_ceil_mode():
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 5, 7)])
 def test_avg_pool2d_with_ceil_mode():
     return torch.nn.AvgPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True, count_include_pad=False) # TRT does not support ceil_mode=True && count_include_pad=True
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 4, 6)])
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 5, 7)])
+def test_avg_pool3d_without_ceil_mode():
+    return torch.nn.AvgPool3d(kernel_size=3, stride=2, padding=1, ceil_mode=False)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 4, 6)])
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 5, 7)])
+def test_avg_pool3d_with_ceil_mode():
+    return torch.nn.AvgPool3d(kernel_size=3, stride=2, padding=1, ceil_mode=True, count_include_pad=False) # TRT does not support ceil_mode=True && count_include_pad=True
