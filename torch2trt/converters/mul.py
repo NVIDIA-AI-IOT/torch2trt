@@ -1,7 +1,6 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
-from tools import shape
 
 @tensorrt_converter('torch.mul')
 @tensorrt_converter('torch.Tensor.__imul__')
