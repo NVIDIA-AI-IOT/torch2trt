@@ -14,6 +14,9 @@ def run(self):
     module = module.type(self.dtype)
     module = module.eval()
     
+    # infer runtime batch size from first input
+    batch_size = self.input_shapes[0][0]
+
     # create inputs for conversion
     inputs_conversion = ()
     for shape in self.input_shapes:
@@ -51,7 +54,7 @@ def run(self):
     torch.cuda.current_stream().synchronize()
     t1 = time.time()
     
-    fps = 50.0 / (t1 - t0)
+    fps = (batch_size * 50.0) / (t1 - t0)
     
     # benchmark tensorrt throughput
     torch.cuda.current_stream().synchronize()
@@ -61,7 +64,7 @@ def run(self):
     torch.cuda.current_stream().synchronize()
     t1 = time.time()
     
-    fps_trt = 50.0 / (t1 - t0)
+    fps_trt = (batch_size * 50.0) / (t1 - t0)
     
     # benchmark pytorch latency
     torch.cuda.current_stream().synchronize()
