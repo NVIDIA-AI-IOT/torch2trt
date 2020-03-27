@@ -4,6 +4,7 @@ import time
 import argparse
 import re
 import runpy
+import json
 from termcolor import colored
 
 
@@ -96,6 +97,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', help='Regular expression to filter modules to test by name', type=str, default='.*')
     parser.add_argument('--tolerance', help='Maximum error to print warning for entry', type=float, default='-1')
     parser.add_argument('--include', help='Addition python file to include defining additional tests', action='append', default=[])
+    parser.add_argument('--torch2trt_kwargs', help='Filter tests by torch2trt_kwargs', default={})
     args = parser.parse_args()
     
     for include in args.include:
@@ -107,7 +109,16 @@ if __name__ == '__main__':
         name = test.module_name()
         if not re.search(args.name, name):
             continue
-            
+
+        # filter by torch2trt kwargs
+        torch2trt_kwargs = json.loads(args.torch2trt_kwargs)
+        skip_test = False
+        for key, value in torch2trt_kwargs.items():
+            if key not in test.torch2trt_kwargs or test.torch2trt_kwargs[key] != value:
+                skip_test = True
+        if skip_test:
+            continue
+
         # run test
         max_error, fps, fps_trt, ms, ms_trt = run(test)
         
