@@ -21,8 +21,7 @@ def convert_conv2d(ctx):
         padding=padding,
         dilation=dilation,
         groups=groups,
-        bias=bias,
-        padding_mode='zeros')
+        bias=bias)
     module.weight = ctx.method_args[1]
     module.bias = ctx.method_args[2]
 
