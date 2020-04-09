@@ -34,6 +34,9 @@ def convert_ConvTranspose2d(ctx):
         bias=bias)
     layer.stride = stride
     layer.padding = padding
+    padding_mode = getattr(module, "trt_padding_mode", None)
+    if padding_mode is not None:
+        layer.padding_mode = padding_mode
     
     if module.groups is not None:
         layer.num_groups = module.groups
