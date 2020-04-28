@@ -24,7 +24,7 @@ ext_modules = [
             'nvinfer'
         ],
         extra_compile_args={
-            'cxx': ['],
+            'cxx': [],
             'nvcc': []
         }
     )
