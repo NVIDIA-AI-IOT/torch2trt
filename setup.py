@@ -9,7 +9,7 @@ def trt_lib_dir():
 
 
 ext_modules = [
-    CppExtension(
+    CUDAExtension(
         name='plugins', 
         sources=[
             'torch2trt/plugins/interpolate.cpp'
@@ -22,9 +22,14 @@ ext_modules = [
         ],
         libraries=[
             'nvinfer'
-        ]
+        ],
+        extra_compile_args={
+            'cxx': ['],
+            'nvcc': []
+        }
     )
 ]
+
 
 setup(
     name='torch2trt',
