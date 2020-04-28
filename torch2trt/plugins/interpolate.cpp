@@ -13,7 +13,7 @@ using namespace nvinfer1;
 
 namespace torch2trt {
 
-
+    
 class InterpolatePlugin : public IPluginV2 {
 private:
     
@@ -41,69 +41,54 @@ public:
   InterpolatePlugin(const std::string &data) {
       deserializeFromString(data);
   }
-    
-  void testPackContainer() {
-      packContainer();
-  }
-    
-  // packs data into container for serialization
-  torch::jit::script::Module packContainer() const {
-      
-      torch::jit::script::Module container;
-      
-      auto i_size = torch::IValue(size);
-      auto i_mode = torch::IValue(mode);
-      auto i_align_corners = torch::IValue(align_corners);
-      auto i_dtype = torch::IValue((int) dtype);
-      auto i_input_sizes = torch::IValue(input_sizes);
-      auto i_output_sizes = torch::IValue(output_sizes);
-      
-      // set by user
-//       container.register_attribute("size", i_size.type(), i_size);
-//       container.register_attribute("mode", i_mode.type(), i_mode);
-//       container.register_attribute("align_corners", i_align_corners.type(), i_align_corners);
-      
-//       // configured by TRT
-//       container.register_attribute("dtype", i_dtype.type(), i_dtype);
-//       container.register_attribute("input_sizes", i_input_sizes.type(), i_input_sizes);
-//       container.register_attribute("output_sizes", i_output_sizes.type(), i_output_sizes);
-  }
-    
-  // unpacks data from container into class attributes
-  void unpackContainer(const torch::jit::script::Module& container) {
-      for (auto a : container.named_attributes()) {
-          if (a.name == "size") {
-              // TODO(jwelsh) toIntListRef().vec() is removed 1.5+, use toIntVector() instead... need to handle with preproc
-              size = a.value.toIntListRef().vec();
-          } else if (a.name == "mode") {
-              mode = a.value.toStringRef();
-          } else if (a.name == "align_corners") {
-              align_corners = a.value.toBool();
-          } else if (a.name == "dtype") {
-              dtype = (DataType) a.value.toInt();
-          } else if (a.name == "input_sizes") {
-              input_sizes = a.value.toIntListRef().vec();
-          } else if (a.name == "output_sizes") {
-              output_sizes = a.value.toIntListRef().vec();
-          }
-      }
-  }
    
   void deserializeFromString(const std::string &data) {
-//       char *data_ptr = data.c_str();
-//       size_t size = data.size();
-      torch::jit::script::Module container;
       std::istringstream data_stream(data);
-      container = torch::jit::load(data_stream);
-      unpackContainer(container);
+      torch::serialize::InputArchive input_archive;
+      input_archive.load_from(data_stream);
+      {
+          torch::IValue value;
+          input_archive.read("size", value);
+          size = value.toIntListRef().vec();
+      }
+      {
+          torch::IValue value;
+          input_archive.read("mode", value);
+          mode = value.toStringRef();
+      }
+      {
+          torch::IValue value;
+          input_archive.read("align_corners", value);
+          align_corners = value.toBool();
+      }
+      {
+          torch::IValue value;
+          input_archive.read("dtype", value);
+          dtype = (DataType) value.toInt();
+      }
+      {
+          torch::IValue value;
+          input_archive.read("input_sizes", value);
+          input_sizes = value.toIntListRef().vec();
+      }
+      {
+          torch::IValue value;
+          input_archive.read("output_sizes", value);
+          output_sizes = value.toIntListRef().vec();
+      }
   }
     
   std::string serializeToString() const {
-//       torch::jit::script::Module container = packContainer();
-//       std::ostringstream data_str;
-//       container.save(data_str);
-//       return data_str.str();
-      return "hello";
+      torch::serialize::OutputArchive output_archive;
+      output_archive.write("size", torch::IValue(size));
+      output_archive.write("mode", torch::IValue(mode));
+      output_archive.write("align_corners", torch::IValue(align_corners));
+      output_archive.write("dtype", torch::IValue((int) dtype));
+      output_archive.write("input_sizes", torch::IValue(input_sizes));
+      output_archive.write("output_sizes", torch::IValue(output_sizes));
+      std::ostringstream data_str;
+      output_archive.save_to(data_str);
+      return data_str.str();
   }
 
   const char* getPluginType() const override {
@@ -175,16 +160,6 @@ public:
     } else if (dtype == DataType::kHALF) {
         tensor_options = tensor_options.dtype(c10::kHalf);
     }
-      
-//     input_sizes.resize(message.input_size_size());
-//     output_sizes.resize(message.output_size_size());
-    
-//     for (int i = 0; i < message.input_size_size(); i++) {
-//         input_sizes[i] = message.input_size(i);
-//     }
-//     for (int i = 0; i < message.output_size_size(); i++) {
-//         output_sizes[i] = message.output_size(i);
-//     }
       
     return 0;
   }
@@ -291,15 +266,20 @@ public:
 
 };
 
+
 REGISTER_TENSORRT_PLUGIN(InterpolatePluginCreator);
     
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     py::class_<InterpolatePlugin>(m, "InterpolatePlugin")
         .def(py::init<std::vector<int64_t>, std::string, bool>(), py::arg("size"), py::arg("mode"), py::arg("align_corners"))
-        .def("testPackContainer", &InterpolatePlugin::testPackContainer)
+        .def(py::init<const std::string &>(), py::arg("data"))
         .def("getSerializationSize", &InterpolatePlugin::getSerializationSize)
-        .def("serializeToString", &InterpolatePlugin::serializeToString);
+        .def("deserializeFromString", &InterpolatePlugin::deserializeFromString)
+        .def("serializeToString", [](const InterpolatePlugin& plugin) {
+            std::string data = plugin.serializeToString();
+            return py::bytes(data);
+        });
 }
     
 } // namespace torch2trt
