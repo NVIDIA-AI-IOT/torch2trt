@@ -49,7 +49,11 @@ public:
       {
           torch::IValue value;
           input_archive.read("size", value);
+#ifdef USE_DEPRECATED_INTLIST
           size = value.toIntListRef().vec();
+#else
+          size = value.toIntVector();
+#endif
       }
       {
           torch::IValue value;
@@ -69,12 +73,20 @@ public:
       {
           torch::IValue value;
           input_archive.read("input_sizes", value);
+#ifdef USE_DEPRECATED_INTLIST
           input_sizes = value.toIntListRef().vec();
+#else
+          input_sizes = value.toIntVector();
+#endif
       }
       {
           torch::IValue value;
           input_archive.read("output_sizes", value);
+#ifdef USE_DEPRECATED_INTLIST
           output_sizes = value.toIntListRef().vec();
+#else
+          output_sizes = value.toIntVector();
+#endif
       }
   }
     
