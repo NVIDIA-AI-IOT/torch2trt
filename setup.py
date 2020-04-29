@@ -1,3 +1,4 @@
+import torch
 from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
 
@@ -6,7 +7,6 @@ def trt_inc_dir():
 
 def trt_lib_dir():
     return "/usr/lib/aarch64-linux-gnu"
-
 
 ext_modules = [
     CUDAExtension(
@@ -24,7 +24,7 @@ ext_modules = [
             'nvinfer'
         ],
         extra_compile_args={
-            'cxx': [],
+            'cxx': ['-DUSE_DEPRECATED_INTLIST'] if torch.__version__ < "1.5" else [],
             'nvcc': []
         }
     )
