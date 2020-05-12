@@ -41,3 +41,18 @@ def convert_ConvTranspose1d(ctx):
     layer.reshape_dims = (-1, output.shape[-1])
 
     output._trt = layer.get_output(0)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 224)])
+def test_ConvTranspose1d_basic():
+    return torch.nn.ConvTranspose1d(10, 5, kernel_size=1, stride=1, padding=0)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 224)])
+def test_ConvTranspose1d_stride2():
+    return torch.nn.ConvTranspose1d(10, 5, kernel_size=1, stride=2, padding=0)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 224)])
+def test_ConvTranspose1d_kernel3():
+    return torch.nn.ConvTranspose1d(10, 5, kernel_size=3, stride=2, padding=1)
