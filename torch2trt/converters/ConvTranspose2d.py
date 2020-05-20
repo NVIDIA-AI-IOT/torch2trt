@@ -33,6 +33,13 @@ def convert_ConvTranspose2d(ctx):
         kernel=kernel,
         bias=bias)
     layer.stride = stride
+
+    # if output_padding in original pytorch layer is not 0, pre_padding and post_padding should be set respectively. Otherwise the output dimension of pytorch and tensorrt may be different.
+    output_padding = module.output_padding
+    if output_padding[0] + output_padding[1] > 0:
+        layer.pre_padding = padding
+        layer.post_padding = trt.tensorrt.DimsHW(padding[0] - output_padding[0], padding[1] - output_padding[1])
+    else:
     layer.padding = padding
     
     if module.groups is not None:
