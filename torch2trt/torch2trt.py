@@ -14,7 +14,7 @@ trt_version = get_trt_version()
 
 
 def torch_dtype_to_trt(dtype):
-    if trt_version >= 7.0 and dtype == torch.bool:
+    if trt_version >= 7 and dtype == torch.bool:
         return trt.bool
     if dtype == torch.int8:
         return trt.int8
