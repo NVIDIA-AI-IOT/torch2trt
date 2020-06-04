@@ -370,21 +370,19 @@ class TRTModule(torch.nn.Module):
             self.context.profiler = trt.Profiler()
 
 
-def torch2trt(
-    module,
-    inputs,
-    input_names=None,
-    output_names=None,
-    log_level=trt.Logger.ERROR,
-    max_batch_size=1,
-    fp16_mode=False,
-    max_workspace_size=0,
-    strict_type_constraints=False,
-    keep_network=True,
-    int8_mode=False,
-    int8_calib_dataset=None,
-    int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
-):
+def torch2trt(module, 
+              inputs, 
+              input_names=None, 
+              output_names=None, 
+              log_level=trt.Logger.ERROR, 
+              max_batch_size=1,
+              fp16_mode=False, 
+              max_workspace_size=1<<25, 
+              strict_type_constraints=False, 
+              keep_network=True, 
+              int8_mode=False, 
+              int8_calib_dataset=None,
+              int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM):
 
     inputs_in = inputs
 
