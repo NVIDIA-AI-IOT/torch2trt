@@ -59,5 +59,7 @@ def test_square_kernel_equal_stride_mode_unequal_op_size():
 def test_unequal_stride_mode():
     return torch.nn.ConvTranspose2d(3,3,3, stride=(2,1), padding=(4,2))
 
-
-
+@add_module_test(torch.float32, torch.device("cuda"), [(1,3,112,112)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1,3,7,7)])
+def test_kernelsize_4():
+    return torch.nn.ConvTranspose2d(3,3,4, stride=2, padding=1)
