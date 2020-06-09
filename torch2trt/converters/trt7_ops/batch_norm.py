@@ -1,8 +1,8 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
-@tensorrt_converter('torch.nn.functional.batch_norm')
-def convert_batch_norm(ctx):
+@tensorrt_converter('torch.nn.functional.batch_norm', enabled=trt_version() >= '7.0')
+def convert_batch_norm_trt7(ctx):
 
     input = get_arg(ctx, 'input', pos=0, default=None) 
     running_mean = get_arg(ctx, 'running_mean', pos=1, default=None) 
@@ -24,17 +24,17 @@ def convert_batch_norm(ctx):
 
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)])
-def test_batch_norm_2d():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)], enabled=trt_version() >= '7.0')
+def test_batch_norm_2d_trt7():
     return torch.nn.BatchNorm2d(10)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3, 3)])
-def test_batch_norm_3d_2():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3, 3)], enabled=trt_version() >= '7.0')
+def test_batch_norm_3d_2_trt7():
     return torch.nn.BatchNorm3d(10)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 32, 2, 36, 47)])
-def test_batch_norm_3d():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 32, 2, 36, 47)], enabled=trt_version() >= '7.0')
+def test_batch_norm_3d_trt7():
     return torch.nn.BatchNorm3d(32)
     

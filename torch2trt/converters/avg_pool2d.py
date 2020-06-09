@@ -2,7 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter("torch.nn.functional.avg_pool2d")
+@tensorrt_converter("torch.nn.functional.avg_pool2d", enabled=trt_version() < '7.0')
 def convert_avg_pool2d(ctx):
     # parse args
     input = get_arg(ctx, "input", pos=0, default=None)
@@ -43,14 +43,14 @@ def convert_avg_pool2d(ctx):
     output._trt = layer.get_output(0)
 
 
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 4, 6)])
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 5, 7)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 4, 6)], enabled=trt_version() < '7.0')
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 5, 7)], enabled=trt_version() < '7.0')
 def test_avg_pool2d_without_ceil_mode():
     return torch.nn.AvgPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=False)
 
 
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 4, 6)])
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 5, 7)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 4, 6)], enabled=trt_version() < '7.0')
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 5, 7)], enabled=trt_version() < '7.0')
 def test_avg_pool2d_with_ceil_mode():
     return torch.nn.AvgPool2d(
         kernel_size=3, stride=2, padding=1, ceil_mode=True, count_include_pad=False

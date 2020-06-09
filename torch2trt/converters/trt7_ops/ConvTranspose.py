@@ -2,9 +2,9 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter('torch.nn.ConvTranspose2d.forward')
-@tensorrt_converter('torch.nn.ConvTranspose3d.forward')
-def convert_ConvTranspose2d(ctx):
+@tensorrt_converter('torch.nn.ConvTranspose2d.forward', enabled=trt_version() >= '7.0')
+@tensorrt_converter('torch.nn.ConvTranspose3d.forward', enabled=trt_version() >= '7.0')
+def convert_ConvTranspose2d_trt7(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     input_trt = trt_(ctx.network, input)
@@ -48,32 +48,32 @@ def convert_ConvTranspose2d(ctx):
     output._trt = layer.get_output(0)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 7, 7)])
-def test_ConvTranspose2d_basic():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 7, 7)], enabled=trt_version() >= '7.0')
+def test_ConvTranspose2d_basic_trt7():
     return torch.nn.ConvTranspose2d(10, 5, kernel_size=1, stride=1, padding=0)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 8, 8)])
-def test_ConvTranspose2d_stride2():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 8, 8)], enabled=trt_version() >= '7.0')
+def test_ConvTranspose2d_stride2_trt7():
     return torch.nn.ConvTranspose2d(10, 5, kernel_size=1, stride=2, padding=0)
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 9, 9)])
-def test_ConvTranspose2d_kernel3():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 9, 9)], enabled=trt_version() >= '7.0')
+def test_ConvTranspose2d_kernel3_trt7():
     return torch.nn.ConvTranspose2d(10, 5, kernel_size=3, stride=2, padding=1)
 
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 7, 7, 7)])
-def test_ConvTranspose3d_basic():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 7, 7, 7)], enabled=trt_version() >= '7.0')
+def test_ConvTranspose3d_basic_trt7():
     return torch.nn.ConvTranspose3d(10, 5, kernel_size=1, stride=1, padding=0)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 7, 7, 7)])
-def test_ConvTranspose3d_stride2():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 7, 7, 7)], enabled=trt_version() >= '7.0')
+def test_ConvTranspose3d_stride2_trt7():
     return torch.nn.ConvTranspose3d(10, 5, kernel_size=1, stride=2, padding=0)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 6, 6, 6)])
-def test_ConvTranspose3d_kernel3():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 6, 6, 6)], enabled=trt_version() >= '7.0')
+def test_ConvTranspose3d_kernel3_trt7():
     return torch.nn.ConvTranspose3d(10, 5, kernel_size=3, stride=2, padding=1)
 

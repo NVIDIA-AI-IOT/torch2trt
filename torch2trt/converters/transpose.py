@@ -2,7 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter("torch.transpose")
+@tensorrt_converter("torch.transpose", enabled=trt_version() < '7.0')
 def convert_transpose(ctx):
     input = ctx.method_args[0]
     input_trt = trt_(ctx.network, input)
@@ -28,7 +28,7 @@ class Transpose(torch.nn.Module):
         return torch.transpose(x, self.dim0, self.dim1).contiguous()
 
 
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 3)])
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 3)], enabled=trt_version() < '7.0')
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 3, 3)], enabled=trt_version() < '7.0')
 def test_transpose_12():
     return Transpose(1, 2)

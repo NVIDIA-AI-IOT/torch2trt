@@ -61,7 +61,3 @@ def trt_network_to_dot_graph(network):
                     dot.edge(layer_b.name, input_i.name, label=str(input_j.shape))
 
     return dot
-
-
-def get_trt_version():
-    return float(trt.__version__[:3])

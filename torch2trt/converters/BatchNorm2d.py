@@ -2,7 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter("torch.nn.BatchNorm2d.forward")
+@tensorrt_converter("torch.nn.BatchNorm2d.forward", enabled=trt_version() < '7.0')
 def convert_BatchNorm2d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
