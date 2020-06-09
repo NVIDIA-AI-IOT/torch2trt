@@ -46,20 +46,18 @@ from .chunk import *
 from .unary import *
 
 # trt < 7.0
-from .avg_pool2d import *
+from .avg_pool import *
 from .BatchNorm2d import *
 from .Conv2d import *
 from .ConvTranspose2d import *
 from .transpose import *
 
 # trt >= 7.0
-from .trt7_ops.avg_pool import *
-from .trt7_ops.compare import *
-from .trt7_ops.batch_norm import *
-from .trt7_ops.Conv import *
-from .trt7_ops.ConvTranspose import *
-from .trt7_ops.stack import *
-from .trt7_ops.transpose import *
+from .compare import *
+from .batch_norm import *
+from .Conv import *
+from .ConvTranspose import *
+from .stack import *
 
 # trt >= 7.1
 from .upsample import *
