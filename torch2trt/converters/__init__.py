@@ -60,9 +60,4 @@ from .ConvTranspose import *
 from .stack import *
 
 # trt >= 7.1
-from .upsample import *
-
-try:
-    from .interpolate import *
-except:
-    pass
+from .interpolate import *
