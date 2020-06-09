@@ -1,10 +1,8 @@
 # dummy converters throw warnings method encountered
 import tensorrt as trt
 from .dummy_converters import *
-from torch2trt.utils import get_trt_version
 
 # supported converters will override dummy converters
-trt_version = get_trt_version()
 
 from .activation import *
 from .adaptive_avg_pool2d import *
@@ -47,29 +45,26 @@ from .split import *
 from .chunk import *
 from .unary import *
 
-## Some ops implementation has been changed based on trt version.
+# trt < 7.0
+from .avg_pool2d import *
+from .BatchNorm2d import *
+from .Conv2d import *
+from .ConvTranspose2d import *
+from .transpose import *
 
-if trt_version < 7.0:  ##TRT ops supported in trt 5 and 6
-    from .avg_pool2d import *
-    from .BatchNorm2d import *
-    from .Conv2d import *
-    from .ConvTranspose2d import *
-    from .transpose import *
+# trt >= 7.0
+from .trt7_ops.avg_pool import *
+from .trt7_ops.compare import *
+from .trt7_ops.batch_norm import *
+from .trt7_ops.Conv import *
+from .trt7_ops.ConvTranspose import *
+from .trt7_ops.stack import *
+from .trt7_ops.transpose import *
 
-if trt_version >= 7.0:
-    from .trt7_ops.avg_pool import *
-    from .trt7_ops.compare import *
-    from .trt7_ops.batch_norm import *
-    from .trt7_ops.Conv import *
-    from .trt7_ops.ConvTranspose import *
-    from .trt7_ops.stack import *
-    from .trt7_ops.transpose import *
+# trt >= 7.1
+from .upsample import *
 
-## Upsample op will be fixed in 7.1 , hence a special case
-if trt_version >= 7.1:
-    from .upsample import *
-else:
-    try:
-        from .interpolate import *
-    except:
-        pass
+try:
+    from .interpolate import *
+except:
+    pass

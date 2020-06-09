@@ -2,9 +2,9 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter('torch.nn.functional.avg_pool2d')
-@tensorrt_converter('torch.nn.functional.avg_pool3d')
-def convert_avg_pool(ctx):
+@tensorrt_converter('torch.nn.functional.avg_pool2d', enabled=trt_version() >= '7.0')
+@tensorrt_converter('torch.nn.functional.avg_pool3d', enabled=trt_version() >= '7.0')
+def convert_avg_pool_trt7(ctx):
     # parse args
     input = get_arg(ctx, 'input', pos=0, default=None)
     kernel_size = get_arg(ctx, 'kernel_size', pos=1, default=None)
@@ -44,25 +44,25 @@ def convert_avg_pool(ctx):
     output._trt = layer.get_output(0)
     
     
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 6)])
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 5, 7)])
-def test_avg_pool2d_without_ceil_mode():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 6)], enabled=trt_version() >= '7.0')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 5, 7)], enabled=trt_version() >= '7.0')
+def test_avg_pool2d_without_ceil_mode_trt7():
     return torch.nn.AvgPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=False)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 6)])
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 5, 7)])
-def test_avg_pool2d_with_ceil_mode():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 6)], enabled=trt_version() >= '7.0')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 5, 7)], enabled=trt_version() >= '7.0')
+def test_avg_pool2d_with_ceil_mode_trt7():
     return torch.nn.AvgPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True, count_include_pad=False) # TRT does not support ceil_mode=True && count_include_pad=True
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 4, 6)])
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 5, 7)])
-def test_avg_pool3d_without_ceil_mode():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 4, 6)], enabled=trt_version() >= '7.0')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 5, 7)], enabled=trt_version() >= '7.0')
+def test_avg_pool3d_without_ceil_mode_trt7():
     return torch.nn.AvgPool3d(kernel_size=3, stride=2, padding=1, ceil_mode=False)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 4, 6)])
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 5, 7)])
-def test_avg_pool3d_with_ceil_mode():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 4, 6)], enabled=trt_version() >= '7.0')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 5, 7)], enabled=trt_version() >= '7.0')
+def test_avg_pool3d_with_ceil_mode_trt7():
     return torch.nn.AvgPool3d(kernel_size=3, stride=2, padding=1, ceil_mode=True, count_include_pad=False) # TRT does not support ceil_mode=True && count_include_pad=True

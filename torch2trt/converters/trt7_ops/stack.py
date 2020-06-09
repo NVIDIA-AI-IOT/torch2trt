@@ -11,8 +11,8 @@ def unsqueeze(ctx, input, dim):
     return layer.get_output(0)
 
 
-@tensorrt_converter('torch.stack')
-def convert_cat(ctx):
+@tensorrt_converter('torch.stack', enabled=trt_version() >= '7.0')
+def convert_cat_trt7(ctx):
     inputs = get_arg(ctx, 'input', pos=0, default=None) 
     dim = get_arg(ctx, 'dim', pos=1, default=0) 
 
@@ -31,10 +31,10 @@ class Stack(torch.nn.Module):
     def forward(self, *x):
         return torch.stack(x, dim=self.dim)
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 4, 4), (1, 4, 4), (1, 4, 4)])
-def test_Stack_basic():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 4, 4), (1, 4, 4), (1, 4, 4)], enabled=trt_version() >= '7.0')
+def test_Stack_basic_trt7():
     return Stack(3)
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 4, 4), (1, 4, 4), (1, 4, 4)])
-def test_Stack_basic2():
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 4, 4), (1, 4, 4), (1, 4, 4)], enabled=trt_version() >= '7.0')
+def test_Stack_basic2_trt7():
     return Stack(1)

@@ -2,7 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter("torch.nn.Conv2d.forward")
+@tensorrt_converter("torch.nn.Conv2d.forward", enabled=trt_version() < '7.0')
 def convert_Conv2d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
@@ -48,21 +48,21 @@ def convert_Conv2d(ctx):
     output._trt = layer.get_output(0)
 
 
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 10, 224, 224)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 10, 224, 224)], enabled=trt_version() < '7.0')
 def test_Conv2d_basic():
     return torch.nn.Conv2d(10, 5, kernel_size=1, stride=1, padding=0)
 
 
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 10, 224, 224)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 10, 224, 224)], enabled=trt_version() < '7.0')
 def test_Conv2d_stride2():
     return torch.nn.Conv2d(10, 5, kernel_size=1, stride=2, padding=0)
 
 
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 10, 224, 224)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 10, 224, 224)], enabled=trt_version() < '7.0')
 def test_Conv2d_kernel3():
     return torch.nn.Conv2d(10, 5, kernel_size=3, stride=2, padding=1)
 
 
-@add_module_test(torch.float32, torch.device("cuda"), [(1, 10, 224, 224)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 10, 224, 224)], enabled=trt_version() < '7.0')
 def test_Conv2d_dilation2():
     return torch.nn.Conv2d(10, 5, kernel_size=3, stride=1, padding=1, dilation=2)

@@ -2,21 +2,24 @@ import torch
 import tensorrt as trt
 from copy import copy
 import numpy as np
-from torch2trt.utils import get_trt_version
+
 from .calibration import (
     TensorBatchDataset,
     DatasetCalibrator,
     DEFAULT_CALIBRATION_ALGORITHM,
 )
 
-trt_version = get_trt_version()
 # UTILITY FUNCTIONS
 
 
+def trt_version():
+    return trt.__version__
+
+
 def torch_dtype_to_trt(dtype):
-    if trt_version >= 7.0 and dtype == torch.bool:
+    if trt_version() >= '7.0' and dtype == torch.bool:
         return trt.bool
-    if dtype == torch.int8:
+    elif dtype == torch.int8:
         return trt.int8
     elif dtype == torch.int32:
         return trt.int32
@@ -31,7 +34,7 @@ def torch_dtype_to_trt(dtype):
 def torch_dtype_from_trt(dtype):
     if dtype == trt.int8:
         return torch.int8
-    if trt_version >= 7.0 and dtype == trt.bool:
+    elif trt_version() >= '7.0' and dtype == trt.bool:
         return torch.bool
     elif dtype == trt.int32:
         return torch.int32
@@ -438,9 +441,18 @@ def torch2trt(module,
 # DEFINE ALL CONVERSION FUNCTIONS
 
 
-def tensorrt_converter(method, is_real=True):
+def tensorrt_converter(method, is_real=True, enabled=True):
+
     def register_converter(converter):
         CONVERTERS[method] = {"converter": converter, "is_real": is_real}
         return converter
+
+    def pass_converter(converter):
+        return converter
+
+    if enabled:
+        return register_converter
+    else:
+        return pass_converter
 
     return register_converter
