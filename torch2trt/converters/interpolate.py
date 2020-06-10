@@ -5,6 +5,13 @@ from torch2trt.module_test import add_module_test
 import collections
 
 
+def has_interpolate_plugin():
+    try:
+        from torch2trt.plugins import InterpolatePlugin
+        return True
+    except:
+        return False
+    
 def get_interpolate_plugin(size, mode, align_corners):
     from torch2trt.plugins import InterpolatePlugin
     PLUGIN_NAME = 'interpolate'
@@ -14,7 +21,7 @@ def get_interpolate_plugin(size, mode, align_corners):
     return creator.deserialize_plugin(PLUGIN_NAME, torch2trt_plugin.serializeToString())
 
 
-@tensorrt_converter('torch.nn.functional.interpolate', enabled=trt_version() < '7.1' and torch.__version__ >= '1.3')
+@tensorrt_converter('torch.nn.functional.interpolate', enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def convert_interpolate_plugin(ctx):
     input = ctx.method_args[0]
     input_trt = trt_(ctx.network, input)
@@ -95,26 +102,26 @@ class Interpolate(torch.nn.Module):
         return F.interpolate(x, self.size, mode=self.mode, align_corners=self.align_corners)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and torch.__version__ >= '1.3')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_interpolate_nearest():
     return Interpolate((224, 224), 'nearest', None)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and torch.__version__ >= '1.3')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_interpolate_bilinear():
     return Interpolate((224, 224), 'bilinear', False)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and torch.__version__ >= '1.3')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_interpolate_bicubic():
     return Interpolate((224, 224), 'bicubic', False)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and torch.__version__ >= '1.3')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_interpolate_area():
     return Interpolate((56, 56), 'area', None)
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and torch.__version__ >= '1.3')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_upsample_scale_factor2():
     return nn.Upsample(scale_factor=2, mode='bilinear',align_corners=False)
 
