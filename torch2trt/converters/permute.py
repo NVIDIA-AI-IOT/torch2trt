@@ -20,7 +20,7 @@ def convert_permute(ctx):
     
     layer = ctx.network.add_shuffle(input_trt)
     layer.second_transpose = tuple(trt_permutation)
-    
+   
     output._trt = layer.get_output(0)
 
 
