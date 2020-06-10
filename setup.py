@@ -1,3 +1,4 @@
+import sys
 import torch
 from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
@@ -8,8 +9,9 @@ def trt_inc_dir():
 def trt_lib_dir():
     return "/usr/lib/aarch64-linux-gnu"
 
-ext_modules = [
-    CUDAExtension(
+ext_modules = []
+
+plugins_ext_module = CUDAExtension(
         name='plugins', 
         sources=[
             'torch2trt/plugins/interpolate.cpp'
@@ -27,9 +29,12 @@ ext_modules = [
             'cxx': ['-DUSE_DEPRECATED_INTLIST'] if torch.__version__ < "1.5" else [],
             'nvcc': []
         }
-    )
-]
+)
 
+if '--plugins' in sys.argv:
+    ext_modules.append(plugins_ext_module)
+    sys.argv.remove('--plugins')
+    
 
 setup(
     name='torch2trt',
