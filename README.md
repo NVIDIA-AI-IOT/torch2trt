@@ -113,7 +113,7 @@ sudo python setup.py install
 
 To install with plugins to support some operations in PyTorch that are not natviely supported with TensorRT, call the following
 
-> This currently only includes a plugin for ``torch.nn.functional.interpolate``
+> Please note, this currently only includes the interpolate plugin.  This plugin requires PyTorch 1.3+ for serialization.  
 
 ```bash
 sudo apt-get install libprotobuf* protobuf-compiler ninja-build
@@ -121,9 +121,6 @@ git clone https://github.com/NVIDIA-AI-IOT/torch2trt
 cd torch2trt
 sudo python setup.py install --plugins
 ```
-
-> torch2trt is tested against a system configured with the [JetCard](http://github.com/NVIDIA-AI-IOT/jetcard) setup.  Different system configurations may require additional steps.
-
 
 ## How does it work?
 
