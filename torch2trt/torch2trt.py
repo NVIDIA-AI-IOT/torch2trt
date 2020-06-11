@@ -2,6 +2,7 @@ import torch
 import tensorrt as trt
 from copy import copy
 import numpy as np
+import io
 
 from .calibration import (
     TensorBatchDataset,
@@ -255,7 +256,12 @@ class ConversionHook(object):
         if self.method_impl:
             self._set_method(self.method_impl)
 
+def default_input_names(num_inputs):
+    return ["input_%d" % i for i in range(num_inputs)]
 
+def default_output_names(num_outputs):
+    return ["output_%d" % i for i in range(num_outputs)]
+    
 class ConversionContext(object):
     def __init__(self, network, converters=CONVERTERS):
         self.network = network
@@ -279,7 +285,7 @@ class ConversionContext(object):
 
     def add_inputs(self, torch_inputs, names=None):
         if names is None:
-            names = ["input_%d" % i for i in range(len(torch_inputs))]
+            names = default_input_names(len(torch_inputs))
         self.input_names = names
 
         for i, torch_input in enumerate(torch_inputs):
@@ -294,7 +300,7 @@ class ConversionContext(object):
 
     def mark_outputs(self, torch_outputs, names=None):
         if names is None:
-            names = ["output_%d" % i for i in range(len(torch_outputs))]
+            names = default_output_names(len(torch_outputs))
         self.output_names = names
 
         for i, torch_output in enumerate(torch_outputs):
@@ -372,7 +378,7 @@ class TRTModule(torch.nn.Module):
         if not self.context.profiler:
             self.context.profiler = trt.Profiler()
 
-
+    
 def torch2trt(module, 
               inputs, 
               input_names=None, 
@@ -385,7 +391,8 @@ def torch2trt(module,
               keep_network=True, 
               int8_mode=False, 
               int8_calib_dataset=None,
-              int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM):
+              int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
+              use_onnx=False):
 
     inputs_in = inputs
 
@@ -394,21 +401,43 @@ def torch2trt(module,
 
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
-    network = builder.create_network()
+    
+    if isinstance(inputs, list):
+        inputs = tuple(inputs)
+    if not isinstance(inputs, tuple):
+        inputs = (inputs,)
+        
+    # run once to get num outputs
+    outputs = module(*inputs)
+    if not isinstance(outputs, tuple) and not isinstance(outputs, list):
+        outputs = (outputs,)
+        
+    if input_names is None:
+        input_names = default_input_names(len(inputs))
+    if output_names is None:
+        output_names = default_output_names(len(outputs))
+        
+    if use_onnx:
+            
+        f = io.BytesIO()
+        torch.onnx.export(module, inputs, f, input_names=input_names, output_names=output_names)
+        f.seek(0)
+        onnx_bytes = f.read()
+        network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
+        parser = trt.OnnxParser(network, logger)
+        parser.parse(onnx_bytes)
+        
+    else:
+        network = builder.create_network()
+        with ConversionContext(network) as ctx:
 
-    with ConversionContext(network) as ctx:
+            ctx.add_inputs(inputs, input_names)
 
-        if isinstance(inputs, list):
-            inputs = tuple(inputs)
-        if not isinstance(inputs, tuple):
-            inputs = (inputs,)
-        ctx.add_inputs(inputs, input_names)
+            outputs = module(*inputs)
 
-        outputs = module(*inputs)
-
-        if not isinstance(outputs, tuple) and not isinstance(outputs, list):
-            outputs = (outputs,)
-        ctx.mark_outputs(outputs, output_names)
+            if not isinstance(outputs, tuple) and not isinstance(outputs, list):
+                outputs = (outputs,)
+            ctx.mark_outputs(outputs, output_names)
 
     builder.max_workspace_size = max_workspace_size
     builder.fp16_mode = fp16_mode
@@ -430,7 +459,7 @@ def torch2trt(module,
 
     engine = builder.build_cuda_engine(network)
 
-    module_trt = TRTModule(engine, ctx.input_names, ctx.output_names)
+    module_trt = TRTModule(engine, input_names, output_names)
 
     if keep_network:
         module_trt.network = network
