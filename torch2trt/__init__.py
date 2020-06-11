@@ -10,5 +10,7 @@ def load_plugins():
     for c in torch2trt_creators:
         registry.register_creator(c, 'torch2trt')
 
-
-load_plugins()
+try:
+    load_plugins()
+except:
+    pass
