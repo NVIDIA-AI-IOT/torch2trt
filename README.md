@@ -104,10 +104,15 @@ We tested the converter against these models using the [test.sh](test.sh) script
 To install without compiling plugins, call the following
 
 ```bash
+pip install -r requirements.txt
 git clone https://github.com/NVIDIA-AI-IOT/torch2trt
 cd torch2trt
-sudo python setup.py install
+python setup.py install
 ```
+
+The tensorRT python API is also required, this can be obtained from the [Nvidia Developer Zone](https://developer.nvidia.com/nvidia-tensorrt-7x-download)
+
+
 
 ### Option 2 - With plugins (experimental)
 
