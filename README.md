@@ -99,6 +99,8 @@ We tested the converter against these models using the [test.sh](test.sh) script
 
 ## Setup
 
+> torch2trt depends on the TensorRT Python API.  On Jetson, this is included with the latest JetPack.  For desktop, please follow the [TensorRT Installation Guide](https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html).  You may also try installing torch2trt inside one of the NGC PyTorch docker containers for [Desktop](https://ngc.nvidia.com/catalog/containers/nvidia:pytorch) or [Jetson](https://ngc.nvidia.com/catalog/containers/nvidia:l4t-pytorch).
+
 ### Option 1 - Without plugins
 
 To install without compiling plugins, call the following
@@ -106,13 +108,8 @@ To install without compiling plugins, call the following
 ```bash
 git clone https://github.com/NVIDIA-AI-IOT/torch2trt
 cd torch2trt
-pip install -r requirements.txt
 python setup.py install
 ```
-
-The tensorRT python API is also required, this can be obtained from the [Nvidia Developer Zone](https://developer.nvidia.com/nvidia-tensorrt-7x-download)
-
-
 
 ### Option 2 - With plugins (experimental)
 
@@ -121,7 +118,6 @@ To install with plugins to support some operations in PyTorch that are not natvi
 > Please note, this currently only includes the interpolate plugin.  This plugin requires PyTorch 1.3+ for serialization.  
 
 ```bash
-sudo apt-get install libprotobuf* protobuf-compiler ninja-build
 git clone https://github.com/NVIDIA-AI-IOT/torch2trt
 cd torch2trt
 sudo python setup.py install --plugins
