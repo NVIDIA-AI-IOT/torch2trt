@@ -19,8 +19,9 @@ def run(self):
     for shape in self.input_shapes:
         inputs_conversion += (torch.zeros(shape).to(self.device).type(self.dtype), )
         
+    
     # convert module
-    module_trt = torch2trt(module, inputs_conversion, **self.torch2trt_kwargs)
+    module_trt = torch2trt(module, inputs_conversion, max_workspace_size=1 << 20,  **self.torch2trt_kwargs)
 
     # create inputs for torch/trt.. copy of inputs to handle inplace ops
     inputs = ()
@@ -39,7 +40,12 @@ def run(self):
     # compute max error
     max_error = 0
     for i in range(len(outputs)):
-        max_error_i = torch.max(torch.abs(outputs[i] - outputs_trt[i]))
+        max_error_i = 0
+        if outputs[i].dtype == torch.bool:
+            max_error_i = torch.sum(outputs[i] ^ outputs_trt[i])
+        else:
+            max_error_i = torch.max(torch.abs(outputs[i] - outputs_trt[i]))
+
         if max_error_i > max_error:
             max_error = max_error_i
     
@@ -93,11 +99,13 @@ if __name__ == '__main__':
     parser.add_argument('--name', help='Regular expression to filter modules to test by name', type=str, default='.*')
     parser.add_argument('--tolerance', help='Maximum error to print warning for entry', type=float, default='-1')
     parser.add_argument('--include', help='Addition python file to include defining additional tests', action='append', default=[])
+    parser.add_argument('--use_onnx', help='Whether to test using ONNX or torch2trt tracing', action='store_true')
     args = parser.parse_args()
     
     for include in args.include:
         runpy.run_module(include)
         
+    num_tests, num_success, num_tolerance, num_error = 0, 0, 0, 0
     for test in MODULE_TESTS:
         
         # filter by module name
@@ -105,16 +113,32 @@ if __name__ == '__main__':
         if not re.search(args.name, name):
             continue
             
+        num_tests += 1
         # run test
-        max_error, fps, fps_trt, ms, ms_trt = run(test)
+        try:
+            if args.use_onnx:
+                test.torch2trt_kwargs.update({'use_onnx': True})
+                
+            max_error, fps, fps_trt, ms, ms_trt = run(test)
+
+            # write entry
+            line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt, ms, ms_trt)
         
-        # write entry
-        line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt, ms, ms_trt)
-
-        if args.tolerance >= 0 and max_error > args.tolerance:
-            print(colored(line, 'yellow'))
-        else:
-            print(line)
-
+            if args.tolerance >= 0 and max_error > args.tolerance:
+                print(colored(line, 'yellow'))
+                num_tolerance += 1
+            else:
+                print(line)
+            num_success += 1
+        except:
+            line = '| %s | %s | %s | %s | N/A | N/A | N/A | N/A | N/A |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs))
+            print(colored(line, 'red'))
+            num_error += 1
+            
         with open(args.output, 'a+') as f:
             f.write(line + '\n')
+    
+    print('NUM_TESTS: %d' % num_tests)
+    print('NUM_SUCCESSFUL_CONVERSION: %d' % num_success)
+    print('NUM_FAILED_CONVERSION: %d' % num_error)
+    print('NUM_ABOVE_TOLERANCE: %d' % num_tolerance)
