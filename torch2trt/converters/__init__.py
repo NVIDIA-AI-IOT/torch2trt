@@ -45,6 +45,7 @@ from .prelu import *
 from .prod import *
 from .relu import *
 from .relu6 import *
+from .repeat import *
 from .sigmoid import *
 from .softmax import *
 from .split import *
