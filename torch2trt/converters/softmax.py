@@ -13,6 +13,12 @@ def convert_softmax(ctx):
         dim = ctx.method_kwargs['dim']
     elif len(ctx.method_args) >= 2:
         dim = ctx.method_args[1]
+        
+    # convert negative dims
+#     import pdb
+#     pdb.set_trace()
+    if dim < 0:
+        dim = input.ndim + dim
 
     axes = 1 << (dim - 1)
 
@@ -31,3 +37,14 @@ def test_softmax_module():
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
 def test_softmax_module_dim2():
     return torch.nn.Softmax(2)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+def test_softmax_module_neg1():
+    return torch.nn.Softmax(-1)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+def test_softmax_module_dim_neg2():
+    return torch.nn.Softmax(-2)
