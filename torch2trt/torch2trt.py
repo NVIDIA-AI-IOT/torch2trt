@@ -320,6 +320,15 @@ class TRTModule(torch.nn.Module):
             self.context = self.engine.create_execution_context()
         self.input_names = input_names
         self.output_names = output_names
+    
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, val, tb):
+        if self.engine is not None:
+            self.context.__exit__(type, val, tb)
+            self.engine.__exit__(type, val, tb)
+
 
     def _on_state_dict(self, state_dict, prefix, local_metadata):
         state_dict[prefix + "engine"] = bytearray(self.engine.serialize())
@@ -399,9 +408,6 @@ def torch2trt(module,
     # copy inputs to avoid modifications to source data
     inputs = [tensor.clone()[0:1] for tensor in inputs]  # only run single entry
 
-    logger = trt.Logger(log_level)
-    builder = trt.Builder(logger)
-    
     if isinstance(inputs, list):
         inputs = tuple(inputs)
     if not isinstance(inputs, tuple):
@@ -417,54 +423,57 @@ def torch2trt(module,
     if output_names is None:
         output_names = default_output_names(len(outputs))
         
-    if use_onnx:
-            
-        f = io.BytesIO()
-        torch.onnx.export(module, inputs, f, input_names=input_names, output_names=output_names)
-        f.seek(0)
-        onnx_bytes = f.read()
-        network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
-        parser = trt.OnnxParser(network, logger)
-        parser.parse(onnx_bytes)
-        
-    else:
-        network = builder.create_network()
-        with ConversionContext(network) as ctx:
+    with trt.Logger(log_level) as logger, trt.Builder(logger) as builder:
+        if use_onnx:
+            flag = 1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
+            network = builder.create_network(flag)
 
-            ctx.add_inputs(inputs, input_names)
+            with io.BytesIO() as f:
+                torch.onnx.export(module, inputs, f, input_names=input_names, output_names=output_names)
+                f.seek(0)
+                onnx_bytes = f.read()
 
-            outputs = module(*inputs)
+                with trt.OnnxParser(network, logger) as parser:
+                    parser.parse(onnx_bytes)
 
-            if not isinstance(outputs, tuple) and not isinstance(outputs, list):
-                outputs = (outputs,)
-            ctx.mark_outputs(outputs, output_names)
+        else:
+            network = builder.create_network()
+            with ConversionContext(network) as ctx:
 
-    builder.max_workspace_size = max_workspace_size
-    builder.fp16_mode = fp16_mode
-    builder.max_batch_size = max_batch_size
-    builder.strict_type_constraints = strict_type_constraints
+                ctx.add_inputs(inputs, input_names)
 
-    if int8_mode:
+                outputs = module(*inputs)
 
-        # default to use input tensors for calibration
-        if int8_calib_dataset is None:
-            int8_calib_dataset = TensorBatchDataset(inputs_in)
+                if not isinstance(outputs, tuple) and not isinstance(outputs, list):
+                    outputs = (outputs,)
+                ctx.mark_outputs(outputs, output_names)
 
-        builder.int8_mode = True
+        builder.max_workspace_size = max_workspace_size
+        builder.fp16_mode = fp16_mode
+        builder.max_batch_size = max_batch_size
+        builder.strict_type_constraints = strict_type_constraints
 
-        # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
-        builder.int8_calibrator = DatasetCalibrator(
-            inputs, int8_calib_dataset, batch_size=1, algorithm=int8_calib_algorithm
-        )
+        if int8_mode:
 
-    engine = builder.build_cuda_engine(network)
+            # default to use input tensors for calibration
+            if int8_calib_dataset is None:
+                int8_calib_dataset = TensorBatchDataset(inputs_in)
 
-    module_trt = TRTModule(engine, input_names, output_names)
+            builder.int8_mode = True
 
-    if keep_network:
-        module_trt.network = network
+            # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
+            builder.int8_calibrator = DatasetCalibrator(
+                inputs, int8_calib_dataset, batch_size=1, algorithm=int8_calib_algorithm
+            )
 
-    return module_trt
+        engine = builder.build_cuda_engine(network)
+
+        module_trt = TRTModule(engine, input_names, output_names)
+
+        if keep_network:
+            module_trt.network = network
+
+        return module_trt
 
 
 # DEFINE ALL CONVERSION FUNCTIONS
