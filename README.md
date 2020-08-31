@@ -30,7 +30,7 @@ model = alexnet(pretrained=True).eval().cuda()
 x = torch.ones((1, 3, 224, 224)).cuda()
 
 # convert to TensorRT feeding sample data as input
-model_trt = torch2trt(model, [x])
+with torch2trt(model, [x]) as model_trt:
 ```
 
 ### Execute
@@ -58,9 +58,8 @@ We can load the saved model into a ``TRTModule``
 ```python
 from torch2trt import TRTModule
 
-model_trt = TRTModule()
-
-model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
+with torch2trt(model, [x]) as model_trt:
+    model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 ```
 
 ## Models

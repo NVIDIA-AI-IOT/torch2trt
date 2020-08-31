@@ -7,6 +7,9 @@ import runpy
 from termcolor import colored
 
 
+def GiB(val):
+    return val * 1 << 30
+
 def run(self):
     # create module
     module = self.module_fn()
@@ -18,78 +21,62 @@ def run(self):
     inputs_conversion = ()
     for shape in self.input_shapes:
         inputs_conversion += (torch.zeros(shape).to(self.device).type(self.dtype), )
-        
     
     # convert module
-    module_trt = torch2trt(module, inputs_conversion, max_workspace_size=1 << 20,  **self.torch2trt_kwargs)
+    with torch2trt(module, inputs_conversion, log_level=trt.Logger.INFO, max_workspace_size= GiB(1), **self.torch2trt_kwargs) as module_trt:
 
-    # create inputs for torch/trt.. copy of inputs to handle inplace ops
-    inputs = ()
-    for shape in self.input_shapes:
-        inputs += (torch.randn(shape).to(self.device).type(self.dtype), )
-    inputs_trt = tuple([tensor.clone() for tensor in inputs])
+        # create inputs for torch/trt.. copy of inputs to handle inplace ops
+        inputs = ()
+        for shape in self.input_shapes:
+            inputs += (torch.randn(shape).to(self.device).type(self.dtype), )
+        inputs_trt = tuple([tensor.clone() for tensor in inputs])
 
 
-    # test output against original
-    outputs = module(*inputs)
-    outputs_trt = module_trt(*inputs_trt)
-
-    if not isinstance(outputs, tuple):
-        outputs = (outputs, )
-    
-    # compute max error
-    max_error = 0
-    for i in range(len(outputs)):
-        max_error_i = 0
-        if outputs[i].dtype == torch.bool:
-            max_error_i = torch.sum(outputs[i] ^ outputs_trt[i])
-        else:
-            max_error_i = torch.max(torch.abs(outputs[i] - outputs_trt[i]))
-
-        if max_error_i > max_error:
-            max_error = max_error_i
-    
-    # benchmark pytorch throughput
-    torch.cuda.current_stream().synchronize()
-    t0 = time.time()
-    for i in range(50):
+        # test output against original
         outputs = module(*inputs)
-    torch.cuda.current_stream().synchronize()
-    t1 = time.time()
+        outputs_trt = module_trt(*inputs_trt)
+
+        if not isinstance(outputs, tuple):
+            outputs = (outputs, )
     
-    fps = 50.0 / (t1 - t0)
+        # compute max error
+        max_error = 0
+        for i in range(len(outputs)):
+            max_error_i = 0
+            if outputs[i].dtype == torch.bool:
+                max_error_i = torch.sum(outputs[i] ^ outputs_trt[i])
+            else:
+                max_error_i = torch.max(torch.abs(outputs[i] - outputs_trt[i]))
+
+            if max_error_i > max_error:
+                max_error = max_error_i
+
+        NUM_N = 50
+        NUM_F = NUM_N * 1.0
     
-    # benchmark tensorrt throughput
-    torch.cuda.current_stream().synchronize()
-    t0 = time.time()
-    for i in range(50):
-        outputs = module_trt(*inputs)
-    torch.cuda.current_stream().synchronize()
-    t1 = time.time()
-    
-    fps_trt = 50.0 / (t1 - t0)
-    
-    # benchmark pytorch latency
-    torch.cuda.current_stream().synchronize()
-    t0 = time.time()
-    for i in range(50):
-        outputs = module(*inputs)
+        # benchmark pytorch
         torch.cuda.current_stream().synchronize()
-    t1 = time.time()
-    
-    ms = 1000.0 * (t1 - t0) / 50.0
-    
-    # benchmark tensorrt latency
-    torch.cuda.current_stream().synchronize()
-    t0 = time.time()
-    for i in range(50):
-        outputs = module_trt(*inputs)
+        t0 = time.time()
+        for i in range(NUM_N):
+            outputs = module(*inputs)
         torch.cuda.current_stream().synchronize()
-    t1 = time.time()
+        t1 = time.time()
     
-    ms_trt = 1000.0 * (t1 - t0) / 50.0
+        fps = NUM_F / (t1 - t0)
+        ms = 1000.0 * (t1 - t0) / NUM_F
     
-    return max_error, fps, fps_trt, ms, ms_trt
+        # benchmark tensorrt
+        torch.cuda.current_stream().synchronize()
+        t0 = time.time()
+        for i in range(NUM_N):
+            outputs = module_trt(*inputs)
+        torch.cuda.current_stream().synchronize()
+        t1 = time.time()
+    
+        fps_trt = NUM_F / (t1 - t0)
+        ms_trt = 1000.0 * (t1 - t0) / NUM_F
+    
+        return max_error, fps, fps_trt, ms, ms_trt
         
         
 if __name__ == '__main__':
@@ -122,7 +109,7 @@ if __name__ == '__main__':
             max_error, fps, fps_trt, ms, ms_trt = run(test)
 
             # write entry
-            line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt, ms, ms_trt)
+            line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt, ms, ms_trt, ms / ms_trt)
         
             if args.tolerance >= 0 and max_error > args.tolerance:
                 print(colored(line, 'yellow'))
@@ -131,7 +118,7 @@ if __name__ == '__main__':
                 print(line)
             num_success += 1
         except:
-            line = '| %s | %s | %s | %s | N/A | N/A | N/A | N/A | N/A |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs))
+            line = '| %s | %s | %s | %s | N/A | N/A | N/A | N/A | N/A | N/A |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs))
             print(colored(line, 'red'))
             num_error += 1
             
