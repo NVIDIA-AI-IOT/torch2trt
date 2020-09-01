@@ -8,7 +8,8 @@ def convert_cat(ctx):
     dim = get_arg(ctx, 'dim', pos=1, default=0) 
 
     output = ctx.method_return
-    trt_inputs = [trt_(ctx.network, i) for i in inputs]
+    trt_inputs = add_missing_trt_tensors(ctx.network, inputs)
+    trt_inputs = broadcast_trt_tensors(ctx.network, trt_inputs, output.ndim - 1)
 
     layer = ctx.network.add_concatenation(inputs=trt_inputs)
     layer.axis = dim - 1
