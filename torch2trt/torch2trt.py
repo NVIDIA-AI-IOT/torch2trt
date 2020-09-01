@@ -159,15 +159,15 @@ def add_missing_trt_tensors(network, tensors):
 
 def broadcast_trt_tensors(network, trt_tensors, broadcast_ndim):
     """Broadcast TensorRT tensors to the specified dimension by pre-padding shape 1 dims"""
-    broadcasted_trt_tensors = [None] * len(tensors)
+    broadcasted_trt_tensors = [None] * len(trt_tensors)
     
     for i, t in enumerate(trt_tensors):
         
-        if len(trt_tensor.shape) < broadcast_ndim:
+        if len(t.shape) < broadcast_ndim:
             # append 1 size dims to front
-            diff = broadcast_ndim - len(trt_tensor.shape)
-            shape = tuple([1] * diff + list(trt_tensor.shape))
-            layer = network.add_shuffle(trt_tensor)
+            diff = broadcast_ndim - len(t.shape)
+            shape = tuple([1] * diff + list(t.shape))
+            layer = network.add_shuffle(t)
             layer.reshape_dims = shape
             trt_tensor = layer.get_output(0)
         else:
@@ -175,7 +175,7 @@ def broadcast_trt_tensors(network, trt_tensors, broadcast_ndim):
 
         broadcasted_trt_tensors[i] = trt_tensor
         
-    return broadcast_trt_tensors
+    return broadcasted_trt_tensors
     
     
 def trt_(network, *tensors):
