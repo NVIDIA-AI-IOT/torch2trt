@@ -11,7 +11,7 @@ def convert_prelu(ctx):
     weight_shape = [1] * (len(input.shape) - 1)
     weight_shape[0] = weight.numel()
     
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     
    
     # y = prelu(x) = relu(x) - alpha * relu(-x)

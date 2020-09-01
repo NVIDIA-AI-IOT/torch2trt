@@ -14,7 +14,8 @@ def convert_normalize(ctx):
     output = ctx.method_return
     
     # add broadcastable scalar constants to network
-    input_trt, eps_trt, p_trt, p_inv_trt = trt_(ctx.network, input, eps, p, 1.0 / p)
+    input_trt, eps_trt, p_trt, p_inv_trt = add_missing_trt_tensors(ctx.network, [input, eps, p, 1.0 / p])
+    input_trt, eps_trt, p_trt, p_inv_trt = broadcast_trt_tensors(ctx.network, [input_trt, eps_trt, p_trt, p_inv_trt], len(input_trt.shape))
     
     # compute norm = sum(abs(x)**p, dim=dim)**(1./p)
     norm = ctx.network.add_unary(input_trt, trt.UnaryOperation.ABS).get_output(0)

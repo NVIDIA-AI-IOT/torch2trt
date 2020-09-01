@@ -11,7 +11,7 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.unsqueeze')
 def convert_view(ctx):
     input = ctx.method_args[0]
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     layer = ctx.network.add_shuffle(input_trt)
     layer.reshape_dims = tuple(output.shape[1:])
