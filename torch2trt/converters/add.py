@@ -79,3 +79,31 @@ class RAddFloat(torch.nn.Module):
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224)])
 def test_add_radd_float():
     return RAddFloat()
+
+
+class AddConstantNoBatch(torch.nn.Module):
+    def __init__(self):
+        super(AddConstantNoBatch, self).__init__()
+        self.register_buffer('y', torch.ones((3, 10, 10)))
+
+    def forward(self, x):
+        return x + self.y
+
+    
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 10, 10)])
+def test_add_constant_nobatch():
+    return AddConstantNoBatch()
+
+
+class AddConstantBatch(torch.nn.Module):
+    def __init__(self):
+        super(AddConstantBatch, self).__init__()
+        self.register_buffer('y', torch.ones((1, 3, 10, 10)))
+
+    def forward(self, x):
+        return x + self.y
+
+    
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 10, 10)])
+def test_add_constant_batch():
+    return AddConstantBatch()
