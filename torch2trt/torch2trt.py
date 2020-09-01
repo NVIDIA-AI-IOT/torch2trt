@@ -135,8 +135,8 @@ def add_missing_trt_tensors(network, tensors):
             
             # remove all preceding ones, these can be re-inserted later when broadcasting
             num_preceding_ones = 0
-            for i in range(t.ndim):
-                if int(t.shape[i]) == 1:
+            for j in range(t.ndim):
+                if int(t.shape[j]) == 1:
                     num_preceding_ones += 1
             shape = tuple(t.shape[num_preceding_ones:])
             

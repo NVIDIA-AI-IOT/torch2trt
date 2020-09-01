@@ -4,6 +4,7 @@ import time
 import argparse
 import re
 import runpy
+import traceback
 from termcolor import colored
 
 
@@ -134,6 +135,8 @@ if __name__ == '__main__':
             line = '| %s | %s | %s | %s | N/A | N/A | N/A | N/A | N/A |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs))
             print(colored(line, 'red'))
             num_error += 1
+            tb = traceback.format_exc()
+            print(tb)
             
         with open(args.output, 'a+') as f:
             f.write(line + '\n')
