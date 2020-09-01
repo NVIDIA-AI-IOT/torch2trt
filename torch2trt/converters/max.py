@@ -6,8 +6,9 @@ from .unary import UnaryModule
 def __convert_max_elementwise(ctx):
     input_a = ctx.method_args[0]
     input_b = ctx.method_args[1]
-    input_a_trt, input_b_trt = trt_(ctx.network, input_a, input_b)
     output = ctx.method_return
+    input_a_trt, input_b_trt = add_missing_trt_tensors(ctx.network, [input_a, input_b])
+    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], output.ndim - 1)
     layer = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.MAX)
     output._trt = layer.get_output(0)
     
@@ -16,7 +17,7 @@ def __convert_max_reduce(ctx):
     input = ctx.method_args[0]
     dim = get_arg(ctx, 'dim', pos=1, default=tuple(range(1, input.ndim)))
     keepdim = get_arg(ctx, 'keepdim', pos=2, default=False)
-    input_trt= trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output_val = ctx.method_return[0]
     output_idx = ctx.method_return[1]
     layer = ctx.network.add_reduce(input_trt,  trt.ReduceOperation.MAX, torch_dim_to_trt_axes(dim), keepdim)

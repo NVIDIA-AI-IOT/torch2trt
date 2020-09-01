@@ -6,7 +6,7 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.Tensor.split')
 def convert_split(ctx):
     input = get_arg(ctx, 'input', 0, None)
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     # we don't need to parse split/chunk (arg 1)
     # since we infer size from output tensors
     dim = get_arg(ctx, 'dim', 2, 0)
