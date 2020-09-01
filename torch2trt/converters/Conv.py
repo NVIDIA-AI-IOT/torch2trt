@@ -7,7 +7,7 @@ from torch2trt.module_test import add_module_test
 def convert_Conv_trt7(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
 
     input_dim = input.dim() - 2
