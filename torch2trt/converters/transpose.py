@@ -5,7 +5,7 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter("torch.transpose", enabled=trt_version() < '7.0')
 def convert_transpose(ctx):
     input = ctx.method_args[0]
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     # permutation -1 because TRT does not include batch dim
     permutation = list(range(len(input.shape) - 1))
@@ -21,7 +21,7 @@ def convert_transpose(ctx):
 @tensorrt_converter('torch.transpose', enabled=trt_version() >= '7.0')
 def convert_transpose_trt7(ctx):
     input = ctx.method_args[0]
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     # permutation -1 because TRT does not include batch dim
     permutation = list(range(len(input.shape) - 1))

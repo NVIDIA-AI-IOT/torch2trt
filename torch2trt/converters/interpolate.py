@@ -24,7 +24,7 @@ def get_interpolate_plugin(size, mode, align_corners):
 @tensorrt_converter('torch.nn.functional.interpolate', enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def convert_interpolate_plugin(ctx):
     input = ctx.method_args[0]
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
 
     try:
@@ -60,7 +60,7 @@ def convert_interpolate_trt7(ctx):
 
     input_dim = input.dim() - 2
     
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     layer = ctx.network.add_resize(input=input_trt)
 

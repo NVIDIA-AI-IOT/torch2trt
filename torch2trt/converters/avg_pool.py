@@ -13,7 +13,7 @@ def convert_avg_pool2d(ctx):
     count_include_pad = get_arg(ctx, "count_include_pad", pos=5, default=True)
 
     # get input trt tensor (or create constant if it doesn't exist)
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
 
     output = ctx.method_return
 
@@ -55,7 +55,7 @@ def convert_avg_pool_trt7(ctx):
     count_include_pad = get_arg(ctx, 'count_include_pad', pos=5, default=True)
     
     # get input trt tensor (or create constant if it doesn't exist)
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
 
     input_dim = input.dim() - 2

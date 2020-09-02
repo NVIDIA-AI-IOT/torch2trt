@@ -114,7 +114,72 @@ def check_torch_dtype(*tensors):
     )  # , 'Data type could not be inferred from any item in list')
     return dtype
 
+    
+def add_missing_trt_tensors(network, tensors):
+    """Creates missing TensorRT tensors as constants and attaches them to the Torch Tensors"""
+    trt_tensors = [None] * len(tensors)
 
+    dtype = check_torch_dtype(*tensors)
+
+    for i, t in enumerate(tensors):
+        trt_tensor = None
+
+        # GET TRT TENSOR (OR CREATE TRT CONSTANT)
+
+        # get tensor w/ _trt
+        # or... add constant for scalar primitive
+        if isinstance(t, float) or isinstance(t, int):
+            shape = (1,)
+            scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
+            trt_tensor = network.add_constant(shape, scalar).get_output(0)
+        elif hasattr(t, "_trt"):
+            trt_tensor = t._trt
+
+        # or... add constant for leaf tensor w/o _trt
+        else:
+            
+            # remove all preceding ones, these can be re-inserted later when broadcasting
+            num_preceding_ones = 0
+            for j in range(t.ndim):
+                if int(t.shape[j]) == 1:
+                    num_preceding_ones += 1
+                else:
+                    break
+            shape = tuple(t.shape[num_preceding_ones:])
+            
+            weight = t.detach().cpu().numpy()
+            t._trt = network.add_constant(shape, weight).get_output(0)
+            trt_tensor = t._trt
+
+
+        assert trt_tensor is not None
+
+        trt_tensors[i] = trt_tensor
+
+    return trt_tensors
+    
+
+def broadcast_trt_tensors(network, trt_tensors, broadcast_ndim):
+    """Broadcast TensorRT tensors to the specified dimension by pre-padding shape 1 dims"""
+    broadcasted_trt_tensors = [None] * len(trt_tensors)
+    
+    for i, t in enumerate(trt_tensors):
+        
+        if len(t.shape) < broadcast_ndim:
+            # append 1 size dims to front
+            diff = broadcast_ndim - len(t.shape)
+            shape = tuple([1] * diff + list(t.shape))
+            layer = network.add_shuffle(t)
+            layer.reshape_dims = shape
+            trt_tensor = layer.get_output(0)
+        else:
+            trt_tensor = t
+
+        broadcasted_trt_tensors[i] = trt_tensor
+        
+    return broadcasted_trt_tensors
+    
+    
 def trt_(network, *tensors):
     """Creates missing TensorRT tensors and adds shuffle layers to make tensors broadcastable"""
     trt_tensors = [None] * len(tensors)

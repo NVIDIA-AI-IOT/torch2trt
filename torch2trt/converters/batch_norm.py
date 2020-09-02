@@ -12,7 +12,7 @@ def convert_batch_norm_trt7(ctx):
     bias = get_arg(ctx, 'bias', pos=4, default=None) 
     eps = get_arg(ctx, 'eps', pos=7, default=10e-6) 
 
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     
     scale = weight.detach().cpu().numpy() / np.sqrt(running_var.detach().cpu().numpy() + eps)
