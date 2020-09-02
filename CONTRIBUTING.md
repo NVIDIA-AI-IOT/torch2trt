@@ -1,12 +1,8 @@
 # Contributing
 
-<<<<<<< HEAD
 ## Forms of contribution
 
 ### Submit an Issue
-=======
-## Submit an Issue
->>>>>>> 4933faf05cd9e5d9aef2b23e7fe692bfda5fbc06
 
 torch2trt is use case driven.  We originally created it to solve
 use cases related to NVIDIA Jetson, but the layer support has grown
@@ -32,22 +28,13 @@ If you report an issue, we typically find the following information helpful
 If you're not sure how to provide any of these pieces of information, don't worry.  Just open the issue
 and we're happy to discuss and help work out the details.
 
-<<<<<<< HEAD
 ### Ask a Question
-=======
-## Ask a Question
->>>>>>> 4933faf05cd9e5d9aef2b23e7fe692bfda5fbc06
 
 Another great way to contribute is to ask a question on [GitHub](https://github.com/NVIDIA-AI-IOT/torch2trt/issues).
 There are often other developers who share your question, and they may find the discussion helpful.  This also
 helps us gauge feature interest and identify gaps in documentation.
 
-
-<<<<<<< HEAD
 ### Submit a Pull Request
-=======
-## Submit a Pull Request
->>>>>>> 4933faf05cd9e5d9aef2b23e7fe692bfda5fbc06
 
 torch2trt is use case driven and has limited maintainence, for this reason we value community contributions greatly.
 Another great way to contribute is by submitting a pull request.  Pull requests which are most likely to be accepted are
@@ -62,7 +49,6 @@ as described in the [Custom Converter](usage/custom_converter.md) usage guide.
 
 Ideally pull requests solve one thing at a time.  This makes it easy
 to evaluate the impact that the changes have on the project step-by-step.  The more confident we are that
-<<<<<<< HEAD
 the changes will not adversely impact the experience of other developers, the more likely we are to accept them.
 
 ## Running module test cases
@@ -118,6 +104,3 @@ And then navigate to ``<ip_address>:8000``.
     ./scripts/build_docs.sh https://github.com/<user>/torch2trt my_branch
     ```
     
-=======
-the changes will not adversely impact the experience of other developers, the more likely we are to accept them.
->>>>>>> 4933faf05cd9e5d9aef2b23e7fe692bfda5fbc06
