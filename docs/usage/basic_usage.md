@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Basic Usage
 
 Below are some usage examples, for more check out the [usage](usage) guide.
@@ -48,3 +49,6 @@ model_trt = TRTModule()
 
 model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 ```
+=======
+# Basic Usage
+>>>>>>> 4933faf05cd9e5d9aef2b23e7fe692bfda5fbc06
