@@ -40,11 +40,13 @@ nav:
       - Cpp Usage: usage/cpp_usage.md
       - Custom Converter: usage/custom_converter.md
       - Profiling: usage/profiling.md
-      - Network Visualization: usage/network_visualization.md
+      - Debugging: usage/debugging.md
   - Converters: converters.md
   - Benchmarks: 
       - Jetson Nano: benchmarks/jetson_nano.md
       - Jetson Xavier: benchmarks/jetson_xavier.md
+  - Contributing: CONTRIBUTING.md
+  - Changes: CHANGELOG.md
 
 extra_css:
     - css/version-select.css
