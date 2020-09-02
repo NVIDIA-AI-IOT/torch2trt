@@ -457,6 +457,7 @@ def torch2trt(module,
               int8_mode=False, 
               int8_calib_dataset=None,
               int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
+              int8_calib_batch_size=1,
               use_onnx=False):
 
     inputs_in = inputs
@@ -519,7 +520,7 @@ def torch2trt(module,
 
         # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
         builder.int8_calibrator = DatasetCalibrator(
-            inputs, int8_calib_dataset, batch_size=1, algorithm=int8_calib_algorithm
+            inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
         )
 
     engine = builder.build_cuda_engine(network)
