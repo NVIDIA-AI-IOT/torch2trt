@@ -1,7 +1,6 @@
 #!/bin/bash
 
-TAG=$1
+GITHUB=$1
+TAG=$2
 
-# python3 scripts/dump_converters.py --tag=$TAG > docs/converters.md
-
-mike deploy $TAG
+python3 scripts/dump_converters.py --github=$GITHUB --tag=$TAG > docs/converters.md
