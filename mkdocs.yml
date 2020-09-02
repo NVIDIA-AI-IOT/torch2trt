@@ -47,6 +47,7 @@ nav:
       - Jetson Xavier: benchmarks/jetson_xavier.md
   - Contributing: CONTRIBUTING.md
   - Changes: CHANGELOG.md
+  - See Also: see_also.md
 
 extra_css:
     - css/version-select.css
