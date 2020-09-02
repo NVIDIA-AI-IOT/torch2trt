@@ -1,9 +1,8 @@
-<<<<<<< HEAD
-## Basic Usage
+# Basic Usage
 
 Below are some usage examples, for more check out the [usage](usage) guide.
 
-### Convert
+## Convert
 
 ```python
 import torch
@@ -20,7 +19,7 @@ x = torch.ones((1, 3, 224, 224)).cuda()
 model_trt = torch2trt(model, [x])
 ```
 
-### Execute
+## Execute
 
 We can execute the returned ``TRTModule`` just like the original PyTorch model
 
@@ -32,7 +31,7 @@ y_trt = model_trt(x)
 print(torch.max(torch.abs(y - y_trt)))
 ```
 
-### Save and load
+## Save and load
 
 We can save the model as a ``state_dict``.
 
@@ -49,6 +48,3 @@ model_trt = TRTModule()
 
 model_trt.load_state_dict(torch.load('alexnet_trt.pth'))
 ```
-=======
-# Basic Usage
->>>>>>> 4933faf05cd9e5d9aef2b23e7fe692bfda5fbc06
