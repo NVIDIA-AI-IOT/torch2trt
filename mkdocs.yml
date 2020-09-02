@@ -35,12 +35,12 @@ nav:
   - Getting Started: getting_started.md
   - Usage:
       - Basic Usage: usage/basic_usage.md
-      - Reduced Precision: usage/reduced_precision.md
-      - Batch Size: usage/batch_size.md
-      - Cpp Usage: usage/cpp_usage.md
-      - Custom Converter: usage/custom_converter.md
-      - Profiling: usage/profiling.md
-      - Debugging: usage/debugging.md
+#       - Reduced Precision: usage/reduced_precision.md
+#       - Batch Size: usage/batch_size.md
+#       - Cpp Usage: usage/cpp_usage.md
+#       - Custom Converter: usage/custom_converter.md
+#       - Profiling: usage/profiling.md
+#       - Debugging: usage/debugging.md
   - Converters: converters.md
   - Benchmarks: 
       - Jetson Nano: benchmarks/jetson_nano.md
