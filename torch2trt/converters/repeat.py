@@ -3,6 +3,8 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 @tensorrt_converter('torch.Tensor.repeat', enabled=trt_version() >= '6.0')
+@tensorrt_converter('torch.repeat', enabled=trt_version() >= '6.0')
+
 def convert_repeat(ctx):
     inputs = get_arg(ctx, 'input', pos=0, default=None) 
     output = ctx.method_return
@@ -21,7 +23,7 @@ class Repeat(torch.nn.Module):
 
 @add_module_test(torch.float32, torch.device('cuda'), [(4, 4)] , enabled=trt_version() >= '6.0')
 def test_Stack_repeat():
-    return Repeat(3,3)
+    return Repeat((3,3))
 
 @add_module_test(torch.float32, torch.device('cuda'), [(4)], enabled=trt_version() >= '6.0')
 def test_basic2_repeat():
