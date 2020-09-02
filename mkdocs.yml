@@ -1,0 +1,57 @@
+site_name: torch2trt
+theme:
+    name: "material"
+    palette:
+        primary: green
+        secondary: light green
+
+repo_url: https://github.com/NVIDIA-AI-IOT/torch2trt
+
+plugins:
+  - search
+  
+use_directory_urls: False
+
+edit_uri: blob/master
+markdown_extensions:
+  - pymdownx.tabbed
+  - pymdownx.keys
+  - pymdownx.snippets
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      use_pygments: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  
+# use_directory_urls - False to fix broken raw html image links
+# https://github.com/mkdocs/mkdocs/issues/991
+
+
+nav:
+
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - Usage:
+      - Basic Usage: usage/basic_usage.md
+      - Reduced Precision: usage/reduced_precision.md
+      - Batch Size: usage/batch_size.md
+      - Cpp Usage: usage/cpp_usage.md
+      - Custom Converter: usage/custom_converter.md
+      - Profiling: usage/profiling.md
+      - Network Visualization: usage/network_visualization.md
+  - Converters: converters.md
+  - Benchmarks: 
+      - Jetson Nano: benchmarks/jetson_nano.md
+      - Jetson Xavier: benchmarks/jetson_xavier.md
+
+extra_css:
+    - css/version-select.css
+extra_javascript:
+    - js/version-select.js
+    
+google_analytics:
+    - UA-135919510-3
+    - auto
+    
