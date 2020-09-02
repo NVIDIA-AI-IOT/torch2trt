@@ -10,7 +10,7 @@ helped many other developers as well.
 The growth of torch2trt has been largely driven by issues submitted on [GitHub](https://github.com/NVIDIA-AI-IOT/torch2trt/issues).
 We learn a lot from the reported issues. Submitting an issue it is one of the best ways to begin contributing to torch2trt.
 
-The reported issues are typically are one of the following,
+The reported issues typically are one of the following,
 
 * A bug or unexpected result
 * A model with unsupported layers
@@ -23,7 +23,7 @@ If you report an issue, we typically find the following information helpful
 * The PyTorch Module you're attempting to convert
 * The steps taken to convert the PyTorch module
 
-If you're not sure how to provide any of these pieces of information, don't worry.  Just open the pull request
+If you're not sure how to provide any of these pieces of information, don't worry.  Just open the issue
 and we're happy to discuss and help work out the details.
 
 ## Ask a Question
