@@ -18,7 +18,7 @@ def convert_leaky_relu(ctx):
     negative_slope = get_arg(ctx, 'negative_slope', pos=1, default=0.01)
     output = ctx.method_return
     
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     layer = ctx.network.add_activation(input_trt, trt.ActivationType.LEAKY_RELU)
     layer.alpha = negative_slope
     
@@ -40,7 +40,7 @@ def convert_elu(ctx):
     alpha = get_arg(ctx, 'alpha', pos=1, default=1.0)
     output = ctx.method_return
     
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     layer = ctx.network.add_activation(input_trt, trt.ActivationType.ELU)
     layer.alpha = alpha
     
@@ -63,7 +63,7 @@ def convert_selu(ctx):
     alpha = get_arg(ctx, 'alpha', pos=1, default=1.0)
     output = ctx.method_return
     
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     layer = ctx.network.add_activation(input_trt, trt.ActivationType.SELU)
     layer.alpha = 1.6732632423543772848170429916717
     layer.beta = 1.0507009873554804934193349852946
@@ -84,7 +84,7 @@ def convert_softsign(ctx):
     input = get_arg(ctx, 'input', pos=0, default=None)
     output = ctx.method_return
     
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     layer = ctx.network.add_activation(input_trt, trt.ActivationType.SOFTSIGN)
     
     output._trt = layer.get_output(0)
@@ -103,7 +103,7 @@ def convert_softplus(ctx):
     input = get_arg(ctx, 'input', pos=0, default=None)
     output = ctx.method_return
     
-    input_trt = trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     layer = ctx.network.add_activation(input_trt, trt.ActivationType.SOFTPLUS)
     
     output._trt = layer.get_output(0)

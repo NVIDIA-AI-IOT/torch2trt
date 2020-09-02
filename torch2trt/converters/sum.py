@@ -9,7 +9,7 @@ def convert_sum(ctx):
     input = ctx.method_args[0]
     dim = get_arg(ctx, 'dim', pos=1, default=tuple(range(1, input.ndim)))
     keepdim = get_arg(ctx, 'keepdim', pos=2, default=False)
-    input_trt= trt_(ctx.network, input)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     layer = ctx.network.add_reduce(input_trt,  trt.ReduceOperation.SUM, torch_dim_to_trt_axes(dim), keepdim)
     output._trt = layer.get_output(0)
@@ -44,7 +44,7 @@ class DisparityRegression(nn.Module):
         self.register_buffer('disp', torch.arange(maxdisp, dtype=torch.float32).view(maxdisp, 1, 1))
 
     def forward(self, x):      
-        return torch.sum(x * self.disp, 1) 
+        return x * self.disp#, 1) 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 23, 23)])
