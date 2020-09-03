@@ -15,4 +15,3 @@ __pycache__/
 *.pyc
 *.ipynb_checkpoints
 *.pth
-docs/converters.md
