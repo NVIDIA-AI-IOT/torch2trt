@@ -35,6 +35,7 @@ nav:
   - Getting Started: getting_started.md
   - Usage:
       - Basic Usage: usage/basic_usage.md
+      - Reduced Precision: usage/reduced_precision.md
       - Custom Converter: usage/custom_converter.md
   - Converters: converters.md
   - Benchmarks: 
