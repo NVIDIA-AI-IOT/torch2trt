@@ -41,7 +41,6 @@ nav:
       - Jetson Nano: benchmarks/jetson_nano.md
       - Jetson Xavier: benchmarks/jetson_xavier.md
   - Contributing: CONTRIBUTING.md
-  - Changes: CHANGELOG.md
   - See Also: see_also.md
 
 extra_css:
