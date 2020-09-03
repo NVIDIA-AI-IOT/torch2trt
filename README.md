@@ -1,5 +1,7 @@
 # torch2trt
 
+<a href="https://nvidia-ai-iot.github.io/torch2trt"><img src="https://img.shields.io/badge/-Documentation-brightgreen"/></a>
+
 torch2trt is a PyTorch to TensorRT converter which utilizes the 
 TensorRT Python API.  The converter is
 

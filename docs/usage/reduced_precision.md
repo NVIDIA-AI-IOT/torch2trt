@@ -9,10 +9,10 @@ Below is a table of layer precision support for various NVIDIA platforms.
 
 | Platform | FP16 | INT8 |
 |----------|------|------|
-| Jetson Nano | ![X](/images/check.svg) |  |
-| Jetson TX2 | ![X](/images/check.svg)  | ![X](/images/check.svg) |
-| Jetson Xavier NX | ![X](/images/check.svg) | ![X](/images/check.svg) |
-| Jetson AGX Xavier | ![X](/images/check.svg)  | ![X](/images/check.svg)  |
+| Jetson Nano | ![X](../images/check.svg) |  |
+| Jetson TX2 | ![X](../images/check.svg)  | ![X](../images/check.svg) |
+| Jetson Xavier NX | ![X](../images/check.svg) | ![X](../images/check.svg) |
+| Jetson AGX Xavier | ![X](../images/check.svg)  | ![X](../images/check.svg)  |
 
 !!! note
 
