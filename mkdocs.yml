@@ -14,6 +14,9 @@ use_directory_urls: False
 
 edit_uri: blob/master
 markdown_extensions:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
   - pymdownx.tabbed
   - pymdownx.keys
   - pymdownx.snippets
@@ -35,6 +38,7 @@ nav:
   - Getting Started: getting_started.md
   - Usage:
       - Basic Usage: usage/basic_usage.md
+      - Reduced Precision: usage/reduced_precision.md
       - Custom Converter: usage/custom_converter.md
   - Converters: converters.md
   - Benchmarks: 
