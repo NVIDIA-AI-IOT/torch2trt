@@ -78,29 +78,27 @@ To view the docs, simply call
 ./scripts/test_docs.sh
 ```
 
-And then navigate to ``<ip_address>:8000``.
+And then navigate to ``https://<ip_address>:8000``.
 
-!!! note
-
-    This will not include dynamically generated documentation pages like the converters page.
-    These contain cross reference links to the GitHub source code. If you want to test these
-    you can call 
+Please note, this will not include dynamically generated documentation pages like the converters page.
+These contain cross reference links to the GitHub source code. If you want to test these
+you can call 
     
-    ```bash
-    ./scripts/build_docs.sh <github url> <tag>
-    ```
+```bash
+./scripts/build_docs.sh <github url> <tag>
+```
     
-    Pointing to the public reflection
-    of your local repository.  For example, if we're working off the upstream master branch, we
-    would call 
+Pointing to the public reflection
+of your local repository.  For example, if we're working off the upstream master branch, we
+would call 
+   
+```bash
+./scripts/build_docs.sh https://github.com/NVIDIA-AI-IOT/torch2trt master
+```
     
-    ```bash
-    ./scripts/build_docs.sh https://github.com/NVIDIA-AI-IOT/torch2trt master
-    ```
-    
-    If your changes are pushed to your fork, you would do 
-    
-    ```bash
-    ./scripts/build_docs.sh https://github.com/<user>/torch2trt my_branch
-    ```
+If your changes are pushed to your fork, you would do 
+   
+```bash
+./scripts/build_docs.sh https://github.com/<user>/torch2trt my_branch
+```
     
