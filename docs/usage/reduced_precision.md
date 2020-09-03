@@ -69,7 +69,7 @@ You could wrap this dataset for calibration, by defining a new dataset which ret
 
 ```python
 from torchvision.datasets import ImageFolder
-from torchvision.transforms import ToTensor, Compose, Normalize
+from torchvision.transforms import ToTensor, Compose, Normalize, Resize
 
 
 class ImageFolderCalibDataset():
@@ -78,9 +78,9 @@ class ImageFolderCalibDataset():
         self.dataset = ImageFolder(
             root=root, 
             transform=Compose([
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                Resize((224, 224)),
+                ToTensor(),
+                Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
         )
         
@@ -105,7 +105,7 @@ model_trt = torch2trt(model, [data], int8_calib_dataset=dataset)
 
 To override the default calibration algorithm that torch2trt uses, you can set the ``int8_calib_algoirthm``
 to the [``tensorrt.CalibrationAlgoType``](https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Int8/Calibrator.html#iint8calibrator)
-that you wish to use.  For example, to use the minmax calibration algoirthm you would do
+that you wish to use.  For example, to use the minmax calibration algorithm you would do
 
 ```python
 import tensorrt as trt
@@ -129,7 +129,7 @@ The data type of input and output bindings in TensorRT are determined by the ori
 PyTorch module input and output data types.
 This does not directly impact whether the TensorRT optimizer will internally use fp16 or int8 precision.
 
-For example, to create a model with half precision bindings, you would do the following
+For example, to create a model with fp32 precision bindings, you would do the following
 
 ```python
 model = model.float()
