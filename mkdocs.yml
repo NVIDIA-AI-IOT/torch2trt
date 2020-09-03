@@ -12,7 +12,7 @@ plugins:
   
 use_directory_urls: False
 
-edit_uri: blob/master
+edit_uri: blob/master/docs
 markdown_extensions:
   - pymdownx.tabbed
   - pymdownx.keys
