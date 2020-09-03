@@ -14,9 +14,6 @@ use_directory_urls: False
 
 edit_uri: blob/master
 markdown_extensions:
-  - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
   - pymdownx.tabbed
   - pymdownx.keys
   - pymdownx.snippets
