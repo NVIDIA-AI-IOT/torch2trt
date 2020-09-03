@@ -1,8 +1,10 @@
 # Basic Usage
 
-Below are some usage examples, for more check out the [usage](usage) guide.
+This page demonstrates basic torch2trt usage.
 
-## Convert
+## Conversion
+
+You can easily convert a PyTorch module by calling ``torch2trt`` passing example data as input, for example to convert ``alexnet`` we call
 
 ```python
 import torch
@@ -19,9 +21,16 @@ x = torch.ones((1, 3, 224, 224)).cuda()
 model_trt = torch2trt(model, [x])
 ```
 
-## Execute
+!!! note
 
-We can execute the returned ``TRTModule`` just like the original PyTorch model
+    Currently with torch2trt, once the model is converted, you must use the same input shapes during
+    execution.  The exception is
+    the batch size, which can vary up to the value specified by the ``max_batch_size`` parameter.
+    
+## Executution
+
+We can execute the returned ``TRTModule`` just like the original PyTorch model.  Here we
+execute the model and print the maximum absolute error.
 
 ```python
 y = model(x)
@@ -31,7 +40,7 @@ y_trt = model_trt(x)
 print(torch.max(torch.abs(y - y_trt)))
 ```
 
-## Save and load
+## Saving and loading
 
 We can save the model as a ``state_dict``.
 
