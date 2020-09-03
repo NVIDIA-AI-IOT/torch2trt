@@ -9,4 +9,4 @@ TensorRT Python API.  The converter is
 
 * Easy to extend - Write your own layer converter in Python and register it with ``@tensorrt_converter``
 
-If you find an issue, please [let us know](https://github.com/NVIDIA-AI-IOT/torch2trt)!
+If you find an issue, please [let us know](https://github.com/NVIDIA-AI-IOT/torch2trt/issues)!
