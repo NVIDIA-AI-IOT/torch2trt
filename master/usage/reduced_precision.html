@@ -15,7 +15,7 @@
     
     
       
-        <title>Basic Usage - torch2trt</title>
+        <title>Reduced Precision - torch2trt</title>
       
     
     
@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#basic-usage" class="md-skip">
+        <a href="#reduced-precision" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +92,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Basic Usage
+              Reduced Precision
             
           </span>
         </div>
@@ -237,6 +237,18 @@
           
           
 
+
+  <li class="md-nav__item">
+    <a href="basic_usage.html" title="Basic Usage" class="md-nav__link">
+      Basic Usage
+    </a>
+  </li>
+
+        
+          
+          
+          
+
   
 
 
@@ -247,65 +259,10 @@
       
     
     
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Basic Usage
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="basic_usage.html" title="Basic Usage" class="md-nav__link md-nav__link--active">
-      Basic Usage
-    </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#conversion" class="md-nav__link">
-    Conversion
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#executution" class="md-nav__link">
-    Executution
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#saving-and-loading" class="md-nav__link">
-    Saving and loading
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
-  </li>
-
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="reduced_precision.html" title="Reduced Precision" class="md-nav__link">
+    <a href="reduced_precision.html" title="Reduced Precision" class="md-nav__link md-nav__link--active">
       Reduced Precision
     </a>
+    
   </li>
 
         
@@ -429,35 +386,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#conversion" class="md-nav__link">
-    Conversion
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#executution" class="md-nav__link">
-    Executution
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#saving-and-loading" class="md-nav__link">
-    Saving and loading
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -468,7 +396,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/usage/basic_usage.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/usage/reduced_precision.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
@@ -476,52 +404,152 @@
                   
                 
                 
-                <h1 id="basic-usage">Basic Usage</h1>
-<p>This page demonstrates basic torch2trt usage.</p>
-<h2 id="conversion">Conversion</h2>
-<p>You can easily convert a PyTorch module by calling <code>torch2trt</code> passing example data as input, for example to convert <code>alexnet</code> we call</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch2trt</span> <span class="kn">import</span> <span class="n">torch2trt</span>
-<span class="kn">from</span> <span class="nn">torchvision.models.alexnet</span> <span class="kn">import</span> <span class="n">alexnet</span>
-
-<span class="c1"># create some regular pytorch model...</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">alexnet</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
-
-<span class="c1"># create example data</span>
-<span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">))</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
-
-<span class="c1"># convert to TensorRT feeding sample data as input</span>
-<span class="n">model_trt</span> <span class="o">=</span> <span class="n">torch2trt</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">])</span>
+                <h1 id="reduced-precision">Reduced Precision</h1>
+<p>For certain platforms, reduced precision can result in substantial improvements in throughput,
+often with little impact on model accuracy.</p>
+<h1 id="support-matrix">Support Matrix</h1>
+<p>Below is a table of layer precision support for various NVIDIA platforms.</p>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>FP16</th>
+<th>INT8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jetson Nano</td>
+<td><img alt="X" src="../images/check.svg" /></td>
+<td></td>
+</tr>
+<tr>
+<td>Jetson TX2</td>
+<td><img alt="X" src="../images/check.svg" /></td>
+<td><img alt="X" src="../images/check.svg" /></td>
+</tr>
+<tr>
+<td>Jetson Xavier NX</td>
+<td><img alt="X" src="../images/check.svg" /></td>
+<td><img alt="X" src="../images/check.svg" /></td>
+</tr>
+<tr>
+<td>Jetson AGX Xavier</td>
+<td><img alt="X" src="../images/check.svg" /></td>
+<td><img alt="X" src="../images/check.svg" /></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the platform you're using is missing from this table or you spot anything incorrect
+please <a href="https://github.com/NVIDIA-AI-IOT/torch2trt">let us know</a>.</p>
+</div>
+<h2 id="fp16-precision">FP16 Precision</h2>
+<p>To enable support for fp16 precision with TensorRT, torch2trt exposes the <code>fp16_mode</code> parameter.
+Converting a model with <code>fp16_mode=True</code> allows the TensorRT optimizer to select layers with fp16
+precision.</p>
+<div class="highlight"><pre><span></span><code><span class="n">model_trt</span> <span class="o">=</span> <span class="n">torch2trt</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="n">fp16_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Currently with torch2trt, once the model is converted, you must use the same input shapes during
-execution.  The exception is
-the batch size, which can vary up to the value specified by the <code>max_batch_size</code> parameter.</p>
+<p>When <code>fp16_mode=True</code>, this does not necessarily mean that TensorRT will select FP16 layers.
+The optimizer attempts to automatically select tactics which result in the best performance.</p>
 </div>
-<h2 id="executution">Executution</h2>
-<p>We can execute the returned <code>TRTModule</code> just like the original PyTorch model.  Here we
-execute the model and print the maximum absolute error.</p>
-<div class="highlight"><pre><span></span><code><span class="n">y</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-<span class="n">y_trt</span> <span class="o">=</span> <span class="n">model_trt</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<h2 id="int8-precision">INT8 Precision</h2>
+<p>torch2trt also supports int8 precision with TensorRT with the <code>int8_mode</code> parameter.  Unlike fp16 and fp32 precision, switching
+to in8 precision often requires calibration to avoid a significant drop in accuracy.  </p>
+<h3 id="input-data-calibration">Input Data Calibration</h3>
+<p>By default
+torch2trt will calibrate using the input data provided.  For example, if you wanted
+to calibrate on a set of 64 random normal images you could do.</p>
+<div class="highlight"><pre><span></span><code><span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
 
-<span class="c1"># check the output against PyTorch</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">y_trt</span><span class="p">)))</span>
+<span class="n">model_trt</span> <span class="o">=</span> <span class="n">torch2trt</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="n">int8_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 
-<h2 id="saving-and-loading">Saving and loading</h2>
-<p>We can save the model as a <code>state_dict</code>.</p>
-<div class="highlight"><pre><span></span><code><span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model_trt</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="s1">&#39;alexnet_trt.pth&#39;</span><span class="p">)</span>
+<h3 id="dataset-calibration">Dataset Calibration</h3>
+<p>In many instances, you may want to calibrate on more data than fits in memory.  For this reason,
+torch2trt exposes the <code>int8_calibration_dataset</code> parameter.  This parameter takes an input
+dataset that is used for calibration.  If this parameter is specified, the input data is 
+ignored during calibration.  You create an input dataset by defining
+a class which implements the <code>__len__</code> and <code>__getitem__</code> methods.  </p>
+<ul>
+<li>The <code>__len__</code> method should return the number of calibration samples</li>
+<li>The <code>__getitem__</code> method must return a single calibration sample.  This is a list of input tensors to the model.  Each tensor should match the shape
+you provide to the <code>inputs</code> parameter when calling <code>torch2trt</code>.</li>
+</ul>
+<p>For example, say you trained an image classification network using the PyTorch <a href="https://pytorch.org/docs/stable/torchvision/datasets.html#imagefolder"><code>ImageFolder</code></a> dataset.
+You could wrap this dataset for calibration, by defining a new dataset which returns only the images without labels in list format.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">torchvision.datasets</span> <span class="kn">import</span> <span class="n">ImageFolder</span>
+<span class="kn">from</span> <span class="nn">torchvision.transforms</span> <span class="kn">import</span> <span class="n">ToTensor</span><span class="p">,</span> <span class="n">Compose</span><span class="p">,</span> <span class="n">Normalize</span>
+
+
+<span class="k">class</span> <span class="nc">ImageFolderCalibDataset</span><span class="p">():</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">ImageFolder</span><span class="p">(</span>
+            <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> 
+            <span class="n">transform</span><span class="o">=</span><span class="n">Compose</span><span class="p">([</span>
+                <span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">((</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)),</span>
+                <span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
+                <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">([</span><span class="mf">0.485</span><span class="p">,</span> <span class="mf">0.456</span><span class="p">,</span> <span class="mf">0.406</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.229</span><span class="p">,</span> <span class="mf">0.224</span><span class="p">,</span> <span class="mf">0.225</span><span class="p">])</span>
+            <span class="p">])</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="n">image</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>  <span class="c1"># add batch dimension</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">image</span><span class="p">]</span>
 </code></pre></div>
 
-<p>We can load the saved model into a <code>TRTModule</code></p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">torch2trt</span> <span class="kn">import</span> <span class="n">TRTModule</span>
+<p>You would then provide this calibration dataset to torch2trt as follows</p>
+<div class="highlight"><pre><span></span><code><span class="n">dataset</span> <span class="o">=</span> <span class="n">ImageFolderCalibDataset</span><span class="p">(</span><span class="s1">&#39;images&#39;</span><span class="p">)</span>
 
-<span class="n">model_trt</span> <span class="o">=</span> <span class="n">TRTModule</span><span class="p">()</span>
-
-<span class="n">model_trt</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;alexnet_trt.pth&#39;</span><span class="p">))</span>
+<span class="n">model_trt</span> <span class="o">=</span> <span class="n">torch2trt</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="n">int8_calib_dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
 </code></pre></div>
+
+<h3 id="calibration-algorithm">Calibration Algorithm</h3>
+<p>To override the default calibration algorithm that torch2trt uses, you can set the <code>int8_calib_algoirthm</code>
+to the <a href="https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Int8/Calibrator.html#iint8calibrator"><code>tensorrt.CalibrationAlgoType</code></a>
+that you wish to use.  For example, to use the minmax calibration algoirthm you would do</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">tensorrt</span> <span class="k">as</span> <span class="nn">trt</span>
+
+<span class="n">model_trt</span> <span class="o">=</span> <span class="n">torch2trt</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="n">int8_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">int8_calib_algorithm</span><span class="o">=</span><span class="n">trt</span><span class="o">.</span><span class="n">CalibrationAlgoType</span><span class="o">.</span><span class="n">MINMAX_CALIBRATION</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="calibration-batch-size">Calibration Batch Size</h3>
+<p>During calibration, torch2trt pulls data in batches for the TensorRT calibrator.  In some instances
+<a href="https://github.com/NVIDIA-AI-IOT/torch2trt/pull/398">developers have found</a> that the calibration batch size can impact the calibrated model accuracy.  To set the calibration batch size, you can set the <code>int8_calib_batch_size</code>
+parameter.  For example, to use a calibration batch size of 32 you could do</p>
+<div class="highlight"><pre><span></span><code><span class="n">model_trt</span> <span class="o">=</span> <span class="n">torch2trt</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="n">int8_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">int8_calib_batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="binding-data-types">Binding Data Types</h2>
+<p>The data type of input and output bindings in TensorRT are determined by the original
+PyTorch module input and output data types.
+This does not directly impact whether the TensorRT optimizer will internally use fp16 or int8 precision.</p>
+<p>For example, to create a model with half precision bindings, you would do the following</p>
+<div class="highlight"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+
+<span class="n">model_trt</span> <span class="o">=</span> <span class="n">torch2trt</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="n">fp16_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+<p>In this instance, the optimizer may choose to use fp16 precision layers internally, but the
+input and output data types are fp32.  To use fp16 precision input and output bindings you would do</p>
+<div class="highlight"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">half</span><span class="p">()</span>
+
+<span class="n">model_trt</span> <span class="o">=</span> <span class="n">torch2trt</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="n">fp16_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Now, the input and output bindings of the model are half precision, and internally the optimizer may
+choose to select fp16 layers as well.</p>
                 
               
               
@@ -540,7 +568,7 @@ execute the model and print the maximum absolute error.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../getting_started.html" title="Getting Started" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="basic_usage.html" title="Basic Usage" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -549,19 +577,19 @@ execute the model and print the maximum absolute error.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Getting Started
+                Basic Usage
               </div>
             </div>
           </a>
         
         
-          <a href="reduced_precision.html" title="Reduced Precision" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="custom_converter.html" title="Custom Converter" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Reduced Precision
+                Custom Converter
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
