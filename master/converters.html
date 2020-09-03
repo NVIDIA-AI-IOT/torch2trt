@@ -1,0 +1,1158 @@
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="shortcut icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.11">
+    
+    
+      
+        <title>Converters - torch2trt</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.860688db.min.css">
+      
+        <link rel="stylesheet" href="assets/stylesheets/palette.943997b5.min.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#4cae4f">
+      
+    
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+      
+    
+    
+    
+      <link rel="stylesheet" href="css/version-select.css">
+    
+    
+      
+        
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-135919510-3","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})}),document.addEventListener("DOMContentSwitch",function(){ga("send","pageview",document.location.pathname)})</script>
+<script async src="https://www.google-analytics.com/analytics.js"></script>
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="green" data-md-color-accent="">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#converters" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid" aria-label="Header">
+    <a href="." title="torch2trt" class="md-header-nav__button md-logo" aria-label="torch2trt">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header-nav__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header-nav__title" data-md-component="header-title">
+      
+        <div class="md-header-nav__ellipsis">
+          <span class="md-header-nav__topic md-ellipsis">
+            torch2trt
+          </span>
+          <span class="md-header-nav__topic md-ellipsis">
+            
+              Converters
+            
+          </span>
+        </div>
+      
+    </div>
+    
+      <label class="md-header-nav__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header-nav__source">
+        
+<a href="https://github.com/NVIDIA-AI-IOT/torch2trt/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+        
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="torch2trt" class="md-nav__button md-logo" aria-label="torch2trt">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    torch2trt
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/NVIDIA-AI-IOT/torch2trt/" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="index.html" title="Home" class="md-nav__link">
+      Home
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="getting_started.html" title="Getting Started" class="md-nav__link">
+      Getting Started
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Usage
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Usage" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        <span class="md-nav__icon md-icon"></span>
+        Usage
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="usage/basic_usage.html" title="Basic Usage" class="md-nav__link">
+      Basic Usage
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="usage/custom_converter.html" title="Custom Converter" class="md-nav__link">
+      Custom Converter
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+    <a href="converters.html" title="Converters" class="md-nav__link md-nav__link--active">
+      Converters
+    </a>
+    
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Benchmarks
+      <span class="md-nav__icon md-icon"></span>
+    </label>
+    <nav class="md-nav" aria-label="Benchmarks" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        <span class="md-nav__icon md-icon"></span>
+        Benchmarks
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="benchmarks/jetson_nano.html" title="Jetson Nano" class="md-nav__link">
+      Jetson Nano
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="benchmarks/jetson_xavier.html" title="Jetson Xavier" class="md-nav__link">
+      Jetson Xavier
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="CONTRIBUTING.html" title="Contributing" class="md-nav__link">
+      Contributing
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="see_also.html" title="See Also" class="md-nav__link">
+      See Also
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/converters.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  
+                
+                
+                <h1 id="converters">Converters</h1>
+<p>This table contains a list of supported PyTorch methods and their associated converters.</p>
+<p>If your model is not converting, a good start in debugging would be to see if it contains a method not listed
+in this table.  You may also find these a useful reference when writing your own converters.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Converter</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>torch.abs</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L88"><code>convert_abs</code></a></td>
+</tr>
+<tr>
+<td><code>torch.abs_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L88"><code>convert_abs</code></a></td>
+</tr>
+<tr>
+<td><code>torch.acos</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L216"><code>convert_acos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.acos_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L216"><code>convert_acos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.add</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/add.py#L5"><code>convert_add</code></a></td>
+</tr>
+<tr>
+<td><code>torch.asin</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L200"><code>convert_asin</code></a></td>
+</tr>
+<tr>
+<td><code>torch.asin_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L200"><code>convert_asin</code></a></td>
+</tr>
+<tr>
+<td><code>torch.atan</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L232"><code>convert_atan</code></a></td>
+</tr>
+<tr>
+<td><code>torch.atan_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L232"><code>convert_atan</code></a></td>
+</tr>
+<tr>
+<td><code>torch.cat</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/cat.py#L5"><code>convert_cat</code></a></td>
+</tr>
+<tr>
+<td><code>torch.ceil</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L255"><code>convert_ceil</code></a></td>
+</tr>
+<tr>
+<td><code>torch.ceil_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L255"><code>convert_ceil</code></a></td>
+</tr>
+<tr>
+<td><code>torch.chunk</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/chunk.py#L6"><code>convert_chunk</code></a></td>
+</tr>
+<tr>
+<td><code>torch.clamp</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/clamp.py#L90"><code>convert_clamp</code></a></td>
+</tr>
+<tr>
+<td><code>torch.clamp_max</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/clamp.py#L55"><code>convert_clamp_max</code></a></td>
+</tr>
+<tr>
+<td><code>torch.clamp_min</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/clamp.py#L19"><code>convert_clamp_min</code></a></td>
+</tr>
+<tr>
+<td><code>torch.cos</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L136"><code>convert_cos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.cos_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L136"><code>convert_cos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.cosh</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L184"><code>convert_cosh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.cosh_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L184"><code>convert_cosh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.div</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/div.py#L5"><code>convert_div</code></a></td>
+</tr>
+<tr>
+<td><code>torch.exp</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L24"><code>convert_exp</code></a></td>
+</tr>
+<tr>
+<td><code>torch.exp_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L24"><code>convert_exp</code></a></td>
+</tr>
+<tr>
+<td><code>torch.flatten</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/view.py#L5"><code>convert_view</code></a></td>
+</tr>
+<tr>
+<td><code>torch.floor</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L271"><code>convert_floor</code></a></td>
+</tr>
+<tr>
+<td><code>torch.floor_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L271"><code>convert_floor</code></a></td>
+</tr>
+<tr>
+<td><code>torch.instance_norm</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/instance_norm.py#L26"><code>convert_instance_norm</code></a></td>
+</tr>
+<tr>
+<td><code>torch.log</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L40"><code>convert_log</code></a></td>
+</tr>
+<tr>
+<td><code>torch.log_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L40"><code>convert_log</code></a></td>
+</tr>
+<tr>
+<td><code>torch.max</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/max.py#L27"><code>convert_max</code></a></td>
+</tr>
+<tr>
+<td><code>torch.mean</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/mean.py#L5"><code>convert_mean</code></a></td>
+</tr>
+<tr>
+<td><code>torch.min</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/min.py#L27"><code>convert_min</code></a></td>
+</tr>
+<tr>
+<td><code>torch.mul</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/mul.py#L5"><code>convert_mul</code></a></td>
+</tr>
+<tr>
+<td><code>torch.narrow</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/narrow.py#L5"><code>convert_narrow</code></a></td>
+</tr>
+<tr>
+<td><code>torch.neg</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L103"><code>convert_neg</code></a></td>
+</tr>
+<tr>
+<td><code>torch.neg_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L103"><code>convert_neg</code></a></td>
+</tr>
+<tr>
+<td><code>torch.pow</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/pow.py#L5"><code>convert_pow</code></a></td>
+</tr>
+<tr>
+<td><code>torch.prod</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/prod.py#L6"><code>convert_prod</code></a></td>
+</tr>
+<tr>
+<td><code>torch.reciprocal</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L72"><code>convert_reciprocal</code></a></td>
+</tr>
+<tr>
+<td><code>torch.reciprocal_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L72"><code>convert_reciprocal</code></a></td>
+</tr>
+<tr>
+<td><code>torch.relu</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/relu.py#L5"><code>convert_relu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.relu_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/relu.py#L5"><code>convert_relu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.selu</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L57"><code>convert_selu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.selu_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L57"><code>convert_selu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.sigmoid</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/sigmoid.py#L5"><code>convert_sigmoid</code></a></td>
+</tr>
+<tr>
+<td><code>torch.sin</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L120"><code>convert_sin</code></a></td>
+</tr>
+<tr>
+<td><code>torch.sin_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L120"><code>convert_sin</code></a></td>
+</tr>
+<tr>
+<td><code>torch.sinh</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L168"><code>convert_sinh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.sinh_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L168"><code>convert_sinh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.split</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/split.py#L5"><code>convert_split</code></a></td>
+</tr>
+<tr>
+<td><code>torch.sqrt</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L56"><code>convert_sqrt</code></a></td>
+</tr>
+<tr>
+<td><code>torch.sqrt_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L56"><code>convert_sqrt</code></a></td>
+</tr>
+<tr>
+<td><code>torch.squeeze</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/view.py#L5"><code>convert_view</code></a></td>
+</tr>
+<tr>
+<td><code>torch.sub</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/sub.py#L5"><code>convert_sub</code></a></td>
+</tr>
+<tr>
+<td><code>torch.sum</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/sum.py#L6"><code>convert_sum</code></a></td>
+</tr>
+<tr>
+<td><code>torch.tan</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L152"><code>convert_cos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.tan_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L152"><code>convert_cos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.tanh</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/tanh.py#L5"><code>convert_tanh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.transpose</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/transpose.py#L5"><code>convert_transpose</code></a></td>
+</tr>
+<tr>
+<td><code>torch.unsqueeze</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/view.py#L5"><code>convert_view</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__add__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/add.py#L5"><code>convert_add</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__div__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/div.py#L5"><code>convert_div</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__iadd__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/add.py#L5"><code>convert_add</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__idiv__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/div.py#L5"><code>convert_div</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__imul__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/mul.py#L5"><code>convert_mul</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__ipow__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/pow.py#L5"><code>convert_pow</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__isub__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/sub.py#L5"><code>convert_sub</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__itruediv__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/div.py#L5"><code>convert_div</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__mul__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/mul.py#L5"><code>convert_mul</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__neg__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L103"><code>convert_neg</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__pow__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/pow.py#L5"><code>convert_pow</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__radd__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/add.py#L5"><code>convert_add</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__rdiv__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/div.py#L20"><code>convert_rdiv</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__rmul__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/mul.py#L5"><code>convert_mul</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__rpow__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/pow.py#L18"><code>convert_pow</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__rsub__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/sub.py#L18"><code>convert_sub</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__rtruediv__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/div.py#L20"><code>convert_rdiv</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__sub__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/sub.py#L5"><code>convert_sub</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__truediv__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/div.py#L5"><code>convert_div</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.abs</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L88"><code>convert_abs</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.abs_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L88"><code>convert_abs</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.acos</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L216"><code>convert_acos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.acos_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L216"><code>convert_acos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.asin</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L200"><code>convert_asin</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.asin_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L200"><code>convert_asin</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.atan</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L232"><code>convert_atan</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.atan_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L232"><code>convert_atan</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.ceil</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L255"><code>convert_ceil</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.ceil_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L255"><code>convert_ceil</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.chunk</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/chunk.py#L6"><code>convert_chunk</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.clamp</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/clamp.py#L90"><code>convert_clamp</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.clamp_max</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/clamp.py#L55"><code>convert_clamp_max</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.clamp_min</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/clamp.py#L19"><code>convert_clamp_min</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.contiguous</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/identity.py#L4"><code>convert_identity</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.cos</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L136"><code>convert_cos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.cos_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L136"><code>convert_cos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.cosh</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L184"><code>convert_cosh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.cosh_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L184"><code>convert_cosh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.exp</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L24"><code>convert_exp</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.exp_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L24"><code>convert_exp</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.floor</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L271"><code>convert_floor</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.floor_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L271"><code>convert_floor</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.log</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L40"><code>convert_log</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.log_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L40"><code>convert_log</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.max</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/max.py#L27"><code>convert_max</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.mean</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/mean.py#L5"><code>convert_mean</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.min</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/min.py#L27"><code>convert_min</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.narrow</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/narrow.py#L5"><code>convert_narrow</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.neg</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L103"><code>convert_neg</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.neg_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L103"><code>convert_neg</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.permute</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/permute.py#L5"><code>convert_permute</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.prod</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/prod.py#L6"><code>convert_prod</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.reciprocal</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L72"><code>convert_reciprocal</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.reciprocal_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L72"><code>convert_reciprocal</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.reshape</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/view.py#L5"><code>convert_view</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.sin</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L120"><code>convert_sin</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.sin_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L120"><code>convert_sin</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.sinh</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L168"><code>convert_sinh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.sinh_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L168"><code>convert_sinh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.split</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/split.py#L5"><code>convert_split</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.sqrt</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L56"><code>convert_sqrt</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.sqrt_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L56"><code>convert_sqrt</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.squeeze</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/view.py#L5"><code>convert_view</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.sum</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/sum.py#L6"><code>convert_sum</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.tan</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L152"><code>convert_cos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.tan_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/unary.py#L152"><code>convert_cos</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.unsqueeze</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/view.py#L5"><code>convert_view</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.view</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/view.py#L5"><code>convert_view</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.adaptive_avg_pool2d</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/adaptive_avg_pool2d.py#L5"><code>convert_adaptive_avg_pool2d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.adaptive_max_pool2d</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/adaptive_max_pool2d.py#L5"><code>convert_adaptive_max_pool2d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.avg_pool2d</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/avg_pool.py#L5"><code>convert_avg_pool2d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.dropout</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/identity.py#L4"><code>convert_identity</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.dropout2d</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/identity.py#L4"><code>convert_identity</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.dropout3d</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/identity.py#L4"><code>convert_identity</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.elu</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L36"><code>convert_elu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.elu_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L36"><code>convert_elu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.instance_norm</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/instance_norm.py#L26"><code>convert_instance_norm</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.leaky_relu</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L14"><code>convert_leaky_relu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.leaky_relu_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L14"><code>convert_leaky_relu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.max_pool2d</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/max_pool2d.py#L5"><code>convert_max_pool2d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.normalize</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/normalize.py#L5"><code>convert_normalize</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.pad</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/pad.py#L5"><code>convert_pad</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.prelu</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/prelu.py#L5"><code>convert_prelu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.relu</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/relu.py#L5"><code>convert_relu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.relu6</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/relu6.py#L5"><code>convert_relu6</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.relu_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/relu.py#L5"><code>convert_relu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.selu</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L57"><code>convert_selu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.selu_</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L57"><code>convert_selu</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.sigmoid</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/sigmoid.py#L5"><code>convert_sigmoid</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.softmax</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/softmax.py#L5"><code>convert_softmax</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.softplus</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L101"><code>convert_softplus</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.softsign</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/activation.py#L82"><code>convert_softsign</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.functional.tanh</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/tanh.py#L5"><code>convert_tanh</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.AdaptiveAvgPool2d.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/AdaptiveAvgPool2d.py#L5"><code>convert_AdaptiveAvgPool2d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.BatchNorm1d.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/BatchNorm1d.py#L5"><code>convert_BatchNorm2d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.BatchNorm2d.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/BatchNorm2d.py#L5"><code>convert_BatchNorm2d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.Conv1d.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/Conv1d.py#L5"><code>convert_Conv1d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.Conv2d.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/Conv2d.py#L5"><code>convert_Conv2d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.ConvTranspose2d.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/ConvTranspose2d.py#L4"><code>convert_ConvTranspose2d</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.Dropout3d.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/Identity.py#L4"><code>convert_Identity</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.Dropout2d.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/Identity.py#L4"><code>convert_Identity</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.Dropout.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/Identity.py#L4"><code>convert_Identity</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.Linear.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/Linear.py#L5"><code>convert_Linear</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.LogSoftmax.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/LogSoftmax.py#L4"><code>convert_LogSoftmax</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.ReLU.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/ReLU.py#L4"><code>convert_ReLU</code></a></td>
+</tr>
+<tr>
+<td><code>torch.nn.ReLU6.forward</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/ReLU6.py#L5"><code>convert_ReLU6</code></a></td>
+</tr>
+<tr>
+<td><code>torch.Tensor.__getitem__</code></td>
+<td><a href="https://github.com/NVIDIA-AI-IOT/torch2trt/blob/master/torch2trt/converters/getitem.py#L24"><code>convert_tensor_getitem</code></a></td>
+</tr>
+</tbody>
+</table>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="usage/custom_converter.html" title="Custom Converter" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Custom Converter
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="benchmarks/jetson_nano.html" title="Jetson Nano" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Jetson Nano
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="assets/javascripts/vendor.df0def68.min.js"></script>
+      <script src="assets/javascripts/bundle.ba57d267.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      
+      <script>
+        app = initialize({
+          base: ".",
+          features: [],
+          search: Object.assign({
+            worker: "assets/javascripts/worker/search.5eca75d3.min.js"
+          }, typeof search !== "undefined" && search)
+        })
+      </script>
+      
+        <script src="js/version-select.js"></script>
+      
+    
+  </body>
+</html>
