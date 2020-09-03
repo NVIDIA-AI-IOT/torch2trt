@@ -483,7 +483,7 @@ you provide to the <code>inputs</code> parameter when calling <code>torch2trt</c
 <p>For example, say you trained an image classification network using the PyTorch <a href="https://pytorch.org/docs/stable/torchvision/datasets.html#imagefolder"><code>ImageFolder</code></a> dataset.
 You could wrap this dataset for calibration, by defining a new dataset which returns only the images without labels in list format.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">torchvision.datasets</span> <span class="kn">import</span> <span class="n">ImageFolder</span>
-<span class="kn">from</span> <span class="nn">torchvision.transforms</span> <span class="kn">import</span> <span class="n">ToTensor</span><span class="p">,</span> <span class="n">Compose</span><span class="p">,</span> <span class="n">Normalize</span>
+<span class="kn">from</span> <span class="nn">torchvision.transforms</span> <span class="kn">import</span> <span class="n">ToTensor</span><span class="p">,</span> <span class="n">Compose</span><span class="p">,</span> <span class="n">Normalize</span><span class="p">,</span> <span class="n">Resize</span>
 
 
 <span class="k">class</span> <span class="nc">ImageFolderCalibDataset</span><span class="p">():</span>
@@ -492,9 +492,9 @@ You could wrap this dataset for calibration, by defining a new dataset which ret
         <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">ImageFolder</span><span class="p">(</span>
             <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> 
             <span class="n">transform</span><span class="o">=</span><span class="n">Compose</span><span class="p">([</span>
-                <span class="n">transforms</span><span class="o">.</span><span class="n">Resize</span><span class="p">((</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)),</span>
-                <span class="n">transforms</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
-                <span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">([</span><span class="mf">0.485</span><span class="p">,</span> <span class="mf">0.456</span><span class="p">,</span> <span class="mf">0.406</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.229</span><span class="p">,</span> <span class="mf">0.224</span><span class="p">,</span> <span class="mf">0.225</span><span class="p">])</span>
+                <span class="n">Resize</span><span class="p">((</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)),</span>
+                <span class="n">ToTensor</span><span class="p">(),</span>
+                <span class="n">Normalize</span><span class="p">([</span><span class="mf">0.485</span><span class="p">,</span> <span class="mf">0.456</span><span class="p">,</span> <span class="mf">0.406</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.229</span><span class="p">,</span> <span class="mf">0.224</span><span class="p">,</span> <span class="mf">0.225</span><span class="p">])</span>
             <span class="p">])</span>
         <span class="p">)</span>
 
@@ -516,7 +516,7 @@ You could wrap this dataset for calibration, by defining a new dataset which ret
 <h3 id="calibration-algorithm">Calibration Algorithm</h3>
 <p>To override the default calibration algorithm that torch2trt uses, you can set the <code>int8_calib_algoirthm</code>
 to the <a href="https://docs.nvidia.com/deeplearning/tensorrt/api/python_api/infer/Int8/Calibrator.html#iint8calibrator"><code>tensorrt.CalibrationAlgoType</code></a>
-that you wish to use.  For example, to use the minmax calibration algoirthm you would do</p>
+that you wish to use.  For example, to use the minmax calibration algorithm you would do</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">tensorrt</span> <span class="k">as</span> <span class="nn">trt</span>
 
 <span class="n">model_trt</span> <span class="o">=</span> <span class="n">torch2trt</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="n">int8_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">int8_calib_algorithm</span><span class="o">=</span><span class="n">trt</span><span class="o">.</span><span class="n">CalibrationAlgoType</span><span class="o">.</span><span class="n">MINMAX_CALIBRATION</span><span class="p">)</span>
@@ -533,7 +533,7 @@ parameter.  For example, to use a calibration batch size of 32 you could do</p>
 <p>The data type of input and output bindings in TensorRT are determined by the original
 PyTorch module input and output data types.
 This does not directly impact whether the TensorRT optimizer will internally use fp16 or int8 precision.</p>
-<p>For example, to create a model with half precision bindings, you would do the following</p>
+<p>For example, to create a model with fp32 precision bindings, you would do the following</p>
 <div class="highlight"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
 
