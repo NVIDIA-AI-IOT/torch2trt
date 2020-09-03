@@ -48,7 +48,7 @@ converter is typically strong in this regards, since the parser is distributed w
 
 In case none of the converters satisfy for your use case, you may find it necessary to adapt
 the converter to fit your needs.  This is very intuitive with torch2trt,
-since it is done inline with Python, and there are many [examples](converters) to reference.  If you know 
+since it is done inline with Python, and there are many [examples](converters.md) to reference.  If you know 
 how the original PyTorch method works, and have the TensorRT Python API on hand, it is relatively straight forward to adapt torch2trt to your needs.
 The extensibility is often helpful when you want to implement a converter that is specific to the 
 context the layer appears in.  
