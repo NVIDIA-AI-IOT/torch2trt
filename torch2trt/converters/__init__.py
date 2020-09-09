@@ -56,3 +56,6 @@ from .tanh import *
 from .transpose import *
 from .unary import *
 from .view import *
+
+from .QATConvBNRelu2D import *
+
