@@ -28,24 +28,14 @@ def convert_ConvBNRelu2D(ctx):
     if not isinstance(dilation, Iterable):
         dilation = (dilation, ) * input_dim
 
-    kernel = module.weight
-    kernel_trt = add_missing_trt_tensors(ctx.network, [kernel])[0]
-    ## Creating an int8 weights tensor 
-    zeros = np.zeros(shape=(1, ), dtype=np.float32)
-    mode = trt.ScaleMode.UNIFORM
-    q_kernel = ctx.network.add_scale(kernel_trt,mode=mode,scale=module.weight_fake_quant.scale.detach().cpu().numpy(), shift=zeros)
-    q_kernel.precision = trt.int8
-    q_kernel.set_output_type(0,trt.int8)
-    q_kernel_out = q_kernel.get_output(0)
-    q_kernel_out.dynamic_range = (module.weight_fake_quant.quant_min,module.weight_fake_quant.quant_max)
-    bias=trt.Weights(torch_dtype_to_trt(module.weight.dtype))
+    kernel = module.weight.detach().cpu().numpy()
     ## There is no bias as BN is being used
     layer = ctx.network.add_convolution_nd(
         input=input_trt,
         num_output_maps=module.out_channels,
         kernel_shape=kernel_size,
-        kernel=q_kernel_out,
-        bias=bias)
+        kernel=kernel,
+        bias=None)
     layer.stride_nd = stride
     layer.padding_nd = padding
     layer.dilation_nd = dilation
@@ -54,6 +44,11 @@ def convert_ConvBNRelu2D(ctx):
     
     layer.precision = trt.int8
     layer.set_output_type(0,trt.int8)
+    conv_out = layer.get_output(0)
+    
+    quant_min = module.weight_fake_quant.activation_post_process.min_val.detach().cpu().numpy()
+    quant_max = module.weight_fake_quant.activation_post_process.max_val.detach().cpu().numpy()
+    conv_out.dynamic_range = (quant_min,quant_max)
 
     scale = module.bn.weight.detach().cpu().numpy() / np.sqrt(
         module.bn.running_var.detach().cpu().numpy() + module.bn.eps
@@ -64,7 +59,7 @@ def convert_ConvBNRelu2D(ctx):
     )
     power = np.ones_like(scale)
 
-    bn_layer = ctx.network.add_scale(layer.get_output(0), trt.ScaleMode.CHANNEL, bias, scale, power)
+    bn_layer = ctx.network.add_scale(conv_out, trt.ScaleMode.CHANNEL, bias, scale, power)
     bn_layer.precision=trt.int8
     bn_layer.set_output_type(0,trt.int8)
 
@@ -73,8 +68,12 @@ def convert_ConvBNRelu2D(ctx):
     act_layer.set_output_type(0,trt.int8)
     
     act_layer_out = act_layer.get_output(0)
-    act_layer_out.dynamic_range = (module.activation_post_process.quant_min,module.activation_post_process.quant_max)
-    output._trt = act_layer.get_output(0)
+
+    quant_min = module.activation_post_process.activation_post_process.min_val.detach().cpu().numpy()
+    quant_max = module.activation_post_process.activation_post_process.max_val.detach().cpu().numpy()
+    act_layer_out.dynamic_range = (quant_min,quant_max)
+    output._trt = act_layer_out
+
 
 
 
