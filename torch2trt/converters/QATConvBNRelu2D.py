@@ -1,3 +1,4 @@
+import numpy as np 
 from collections import Iterable
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
@@ -27,23 +28,24 @@ def convert_ConvBNRelu2D(ctx):
     if not isinstance(dilation, Iterable):
         dilation = (dilation, ) * input_dim
 
-    kernel = module.weight.detach().cpu().numpy()
-    
+    kernel = module.weight
+    kernel_trt = add_missing_trt_tensors(ctx.network, [kernel])[0]
     ## Creating an int8 weights tensor 
-    mode = trt.ScaleMode.Uniform
-    q_kernel = ctx.network.add_scale(kernel,mode,scale=module.weight_fake_quant.scale, shift=zeros)
+    zeros = np.zeros(shape=(1, ), dtype=np.float32)
+    mode = trt.ScaleMode.UNIFORM
+    q_kernel = ctx.network.add_scale(kernel_trt,mode=mode,scale=module.weight_fake_quant.scale.detach().cpu().numpy(), shift=zeros)
     q_kernel.precision = trt.int8
     q_kernel.set_output_type(0,trt.int8)
     q_kernel_out = q_kernel.get_output(0)
     q_kernel_out.dynamic_range = (module.weight_fake_quant.quant_min,module.weight_fake_quant.quant_max)
-
+    bias=trt.Weights(torch_dtype_to_trt(module.weight.dtype))
     ## There is no bias as BN is being used
     layer = ctx.network.add_convolution_nd(
         input=input_trt,
         num_output_maps=module.out_channels,
         kernel_shape=kernel_size,
-        kernel=q_kernel,
-        bias=None)
+        kernel=q_kernel_out,
+        bias=bias)
     layer.stride_nd = stride
     layer.padding_nd = padding
     layer.dilation_nd = dilation
