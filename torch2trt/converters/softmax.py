@@ -18,7 +18,7 @@ def convert_softmax(ctx):
 #     import pdb
 #     pdb.set_trace()
     if dim < 0:
-        dim = input.ndim + dim
+        dim = len(input.shape) + dim
 
     axes = 1 << (dim - 1)
 

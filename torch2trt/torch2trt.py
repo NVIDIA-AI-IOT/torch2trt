@@ -140,7 +140,7 @@ def add_missing_trt_tensors(network, tensors):
             
             # remove all preceding ones, these can be re-inserted later when broadcasting
             num_preceding_ones = 0
-            for j in range(t.ndim):
+            for j in range(len(t.shape)):
                 if int(t.shape[j]) == 1:
                     num_preceding_ones += 1
                 else:

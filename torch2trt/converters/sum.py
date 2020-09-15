@@ -7,7 +7,7 @@ from torch import nn
 @tensorrt_converter('torch.Tensor.sum')
 def convert_sum(ctx):
     input = ctx.method_args[0]
-    dim = get_arg(ctx, 'dim', pos=1, default=tuple(range(1, input.ndim)))
+    dim = get_arg(ctx, 'dim', pos=1, default=tuple(range(1, len(input.shape))))
     keepdim = get_arg(ctx, 'keepdim', pos=2, default=False)
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
