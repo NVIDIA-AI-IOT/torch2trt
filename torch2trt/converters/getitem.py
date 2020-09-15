@@ -31,7 +31,7 @@ def convert_tensor_getitem(ctx):
     
     # Step 1 - Replace ellipsis with expanded slices
     
-    num_ellipsis = input.ndim - num_slice_types(slices)
+    num_ellipsis = len(input.shape) - num_slice_types(slices)
     
     new_slices = []
     for s in slices:

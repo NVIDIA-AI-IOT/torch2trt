@@ -8,7 +8,7 @@ def convert_ReLU6(ctx):
     output = ctx.method_return
     
     input_a_trt, input_b_trt = add_missing_trt_tensors(ctx.network, [input, 6])
-    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], output.ndim - 1)
+    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape) - 1)
 
     layer = ctx.network.add_activation(
         input=input_a_trt, type=trt.ActivationType.RELU)
