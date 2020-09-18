@@ -426,10 +426,8 @@ class TRTModule(torch.nn.Module):
             bindings[idx] = output.data_ptr()
 
         for i, input_name in enumerate(self.input_names):
-            if not inputs[i].is_contiguous():
-                raise ValueError("Input %s is not contiguous" % input_name)
             idx = self.engine.get_binding_index(input_name)
-            bindings[idx] = inputs[i].data_ptr()
+            bindings[idx] = inputs[i].contiguous().data_ptr()
 
         self.context.execute_async(
             batch_size, bindings, torch.cuda.current_stream().cuda_stream
