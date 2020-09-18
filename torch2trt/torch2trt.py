@@ -426,6 +426,8 @@ class TRTModule(torch.nn.Module):
             bindings[idx] = output.data_ptr()
 
         for i, input_name in enumerate(self.input_names):
+            if not inputs[i].is_contiguous():
+                raise ValueError("Input %s is not contiguous" % input_name)
             idx = self.engine.get_binding_index(input_name)
             bindings[idx] = inputs[i].data_ptr()
 
