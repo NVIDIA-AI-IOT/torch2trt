@@ -9,11 +9,11 @@ def test_contiguous():
     test_tensor = torch.randn((1, 25, 25, 3)).cuda().permute((0, 3, 1, 2))
 
     with torch.no_grad():
-	test_out = net(test_tensor)
+        test_out = net(test_tensor)
 
     with torch.no_grad():
-	trt_net = torch2trt(net, [test_tensor])
-	test_trt_out = trt_net(test_tensor)
+        trt_net = torch2trt(net, [test_tensor])
+        test_trt_out = trt_net(test_tensor)
 
     delta = (test_out.contiguous() - test_trt_out.contiguous()).abs().sum()
     assert delta < 1e-3, f"Delta: {delta}"
