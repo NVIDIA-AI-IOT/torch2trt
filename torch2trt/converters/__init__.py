@@ -58,4 +58,4 @@ from .unary import *
 from .view import *
 
 from .QATConvBNRelu2D import *
-
+from .QATConvRelu2D import *
