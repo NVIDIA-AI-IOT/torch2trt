@@ -1,7 +1,7 @@
 import torch
 from torch.nn.intrinsic.qat.modules.conv_fused import ConvBnReLU2d as CBR
 from torch.nn.intrinsic.qat.modules.conv_fused import ConvReLU2d as CR
-
+import numpy as np 
 from torch2trt import torch2trt
 
 torch.manual_seed(58394)
@@ -12,10 +12,10 @@ class vanilla_cnn(torch.nn.Module):
         super().__init__()
         #self.layer1 = CBR(1,1,3,padding=1,qconfig=qconfig)
         self.layer1 = CR(1,1,3,padding=1,qconfig=qconfig)
-        self.layer1.weight_fake_quant.activation_post_process.min_val=torch.tensor([-2],dtype=torch.float32)
-        self.layer1.weight_fake_quant.activation_post_process.max_val=torch.tensor([2],dtype=torch.float32)
-        self.layer1.activation_post_process.activation_post_process.min_val=torch.tensor([-9],dtype=torch.float32)
-        self.layer1.activation_post_process.activation_post_process.max_val=torch.tensor([9],dtype=torch.float32)
+        self.layer1.weight_fake_quant.activation_post_process.min_val=torch.tensor([-64],dtype=torch.float32)
+        self.layer1.weight_fake_quant.activation_post_process.max_val=torch.tensor([64],dtype=torch.float32)
+        self.layer1.activation_post_process.activation_post_process.min_val=torch.tensor([-64],dtype=torch.float32)
+        self.layer1.activation_post_process.activation_post_process.max_val=torch.tensor([64],dtype=torch.float32)
         self.layer1.weight = torch.nn.Parameter(torch.ones([1,1,3,3]))
 
     def forward(self,inputs):
@@ -28,10 +28,11 @@ print("-------------")
 print(model)
 print("-------------")
 
-#input_t = torch.randint(32,[1,1,6,6],dtype=torch.float32)
+#input_t = torch.randint(16,[1,1,6,6],dtype=torch.float32)
 input_t = torch.ones([1,1,6,6],dtype=torch.float32)
 #converted_model = torch.quantization.convert(model)
 model_out = model(input_t)
+model_out = np.rint(model_out.detach().cpu().numpy())
 #cmodel_out = converted_model(input_t)
 print("---------------------")
 print(input_t)
@@ -48,5 +49,7 @@ trt_model = torch2trt(model,[input_t],int8_mode=True)
 
 print("MODEL CONVERSION COMPLETE")
 trt_out = trt_model(input_t)
-
+trt_out = trt_out.detach().cpu().numpy()
 print(trt_out)
+
+print(trt_out-model_out)
