@@ -517,6 +517,7 @@ def torch2trt(module,
             int8_calib_dataset = TensorBatchDataset(inputs_in)
 
         builder.int8_mode = True
+        builder.fp16_mode = True
 
         # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
         builder.int8_calibrator = DatasetCalibrator(
