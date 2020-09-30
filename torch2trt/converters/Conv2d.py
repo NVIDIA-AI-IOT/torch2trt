@@ -1,7 +1,6 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
-
 @tensorrt_converter("torch.nn.Conv2d.forward", enabled=trt_version() < '7.0')
 def convert_Conv2d(ctx):
     module = ctx.method_args[0]
@@ -41,9 +40,6 @@ def convert_Conv2d(ctx):
     layer.stride = stride
     layer.padding = padding
     layer.dilation = dilation
-    if qat_mode:
-        layer.precision = fallback_precision
-        layer.set_output_type(0, fallback_precision)
 
     if module.groups is not None:
         layer.num_groups = module.groups

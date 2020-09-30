@@ -11,7 +11,8 @@ from .calibration import (
 )
 
 # UTILITY FUNCTIONS
-
+#qat_mode= None
+#fallback_precision = None
 
 def trt_version():
     return trt.__version__
@@ -462,7 +463,8 @@ def torch2trt(module,
               use_onnx=False):
 
     # QAT mode settings
-    global qat_mode,fallback_precision
+    global qat_mode
+    global fallback_precision
     qat_mode = QAT_mode
     ## Determining fallback precision
     '''
@@ -475,6 +477,7 @@ def torch2trt(module,
         else:
             fallback_precision = trt.float32
 
+    print("inside torch2trt----------------------",fallback_precision,qat_mode)
     inputs_in = inputs
 
     # copy inputs to avoid modifications to source data
