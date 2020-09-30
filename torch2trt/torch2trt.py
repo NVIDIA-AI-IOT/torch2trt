@@ -454,11 +454,26 @@ def torch2trt(module,
               max_workspace_size=1<<25, 
               strict_type_constraints=False, 
               keep_network=True, 
-              int8_mode=False, 
+              int8_mode=False,
+              QAT_mode=False,
               int8_calib_dataset=None,
               int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
               int8_calib_batch_size=1,
               use_onnx=False):
+
+    # QAT mode settings
+    global qat_mode,fallback_precision
+    qat_mode = QAT_mode
+    ## Determining fallback precision
+    '''
+    If both int8 and fp16_mode = True, then precision of layer not converted to INT8 should be FP16
+    However, if fp16_mode = False, then fallback precision should be FP32
+    '''
+    if qat_mode:
+        if int8_mode and fp16_mode:
+            fallback_precision = trt.float16
+        else:
+            fallback_precision = trt.float32
 
     inputs_in = inputs
 

@@ -41,6 +41,9 @@ def convert_Conv2d(ctx):
     layer.stride = stride
     layer.padding = padding
     layer.dilation = dilation
+    if qat_mode:
+        layer.precision = fallback_precision
+        layer.set_output_type(0, fallback_precision)
 
     if module.groups is not None:
         layer.num_groups = module.groups
