@@ -477,7 +477,6 @@ def torch2trt(module,
         else:
             fallback_precision = trt.float32
 
-    print("inside torch2trt----------------------",fallback_precision,qat_mode)
     inputs_in = inputs
 
     # copy inputs to avoid modifications to source data
@@ -516,7 +515,8 @@ def torch2trt(module,
         with ConversionContext(network) as ctx:
 
             ctx.add_inputs(inputs, input_names)
-
+            ctx.qat_mode= qat_mode
+            ctx.fallback_precision = fallback_precision
             outputs = module(*inputs)
 
             if not isinstance(outputs, tuple) and not isinstance(outputs, list):

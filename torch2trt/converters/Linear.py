@@ -27,6 +27,11 @@ def convert_Linear(ctx):
     # reshape back to N
     layer = ctx.network.add_shuffle(layer.get_output(0))
     layer.reshape_dims = tuple(output.shape[1:])
+    qat_mode = ctx.qat_mode
+    fallback_precision = ctx.fallback_precision
+    if qat_mode:
+        layer.precision = fallback_precision
+        layer.set_output_type(0,fallback_precision)
 
     output._trt = layer.get_output(0)
 

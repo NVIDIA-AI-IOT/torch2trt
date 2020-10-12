@@ -20,6 +20,13 @@ def convert_batch_norm_trt7(ctx):
     power = np.ones_like(scale)
     
     layer = ctx.network.add_scale_nd(input_trt, trt.ScaleMode.CHANNEL, bias, scale, power, 0)
+
+    qat_mode = ctx.qat_mode
+    fallback_precision = ctx.fallback_precision
+    if qat_mode:
+        layer.precision = fallback_precision
+        layer.set_output_type(0,fallback_precision)
+
     output._trt = layer.get_output(0)
 
 

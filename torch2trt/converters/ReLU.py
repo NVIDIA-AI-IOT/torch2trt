@@ -8,4 +8,9 @@ def convert_ReLU(ctx):
     output = ctx.method_return
     layer = ctx.network.add_activation(
         input=input_trt, type=trt.ActivationType.RELU)
+    qat_mode = ctx.qat_mode
+    fallback_precision = ctx.fallback_precision
+    if qat_mode:
+        layer.precision = fallback_precision
+        layer.set_output_type(0,fallback_precision)
     output._trt = layer.get_output(0)

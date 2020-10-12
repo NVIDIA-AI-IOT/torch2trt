@@ -14,6 +14,12 @@ def convert_ReLU6(ctx):
         input=input_a_trt, type=trt.ActivationType.RELU)
     layer = ctx.network.add_elementwise(
         layer.get_output(0), input_b_trt, trt.ElementWiseOperation.MIN)
+    
+    qat_mode = ctx.qat_mode
+    fallback_precision = ctx.fallback_precision
+    if qat_mode:
+        layer.precision=fallback_precision
+        layer.set_output_type(0, fallback_precision)
 
     output._trt = layer.get_output(0)
     

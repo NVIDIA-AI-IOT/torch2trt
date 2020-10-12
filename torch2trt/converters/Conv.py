@@ -42,6 +42,8 @@ def convert_Conv_trt7(ctx):
     layer.stride_nd = stride
     layer.padding_nd = padding
     layer.dilation_nd = dilation
+    qat_mode = ctx.qat_mode
+    fallback_precision = ctx.fallback_precision
     print("inside converter----------------------",fallback_precision,qat_mode)
     if qat_mode:
         layer.precision = fallback_precision
