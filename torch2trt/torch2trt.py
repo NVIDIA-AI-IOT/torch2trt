@@ -528,7 +528,8 @@ def torch2trt(module,
     builder.max_batch_size = max_batch_size
     builder.strict_type_constraints = strict_type_constraints
 
-    if int8_mode:
+    ## When using QAT mode, we dont want to perform any calibration. 
+    if int8_mode and not qat:
 
         # default to use input tensors for calibration
         if int8_calib_dataset is None:
