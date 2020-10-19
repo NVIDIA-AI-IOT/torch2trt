@@ -85,7 +85,7 @@ def trt_num_outputs(engine):
 def torch_dim_to_trt_axes(dim):
     """Converts torch dim, or tuple of dims to a tensorrt axes bitmask"""
     if not isinstance(dim, tuple):
-        dim = (dim,)
+        dim = (dim, )
 
     # create axes bitmask for reduce layer
     axes = 0
@@ -110,12 +110,11 @@ def check_torch_dtype(*tensors):
                 dtype = t.dtype
             else:
                 assert dtype == t.dtype  # , 'Tensor data types must match')
-    assert (
-        dtype is not None
-    )  # , 'Data type could not be inferred from any item in list')
+    assert (dtype is not None
+            )  # , 'Data type could not be inferred from any item in list')
     return dtype
 
-    
+
 def add_missing_trt_tensors(network, tensors):
     """Creates missing TensorRT tensors as constants and attaches them to the Torch Tensors"""
     trt_tensors = [None] * len(tensors)
@@ -130,7 +129,7 @@ def add_missing_trt_tensors(network, tensors):
         # get tensor w/ _trt
         # or... add constant for scalar primitive
         if isinstance(t, float) or isinstance(t, int):
-            shape = (1,)
+            shape = (1, )
             scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
             trt_tensor = network.add_constant(shape, scalar).get_output(0)
         elif hasattr(t, "_trt"):
@@ -138,7 +137,7 @@ def add_missing_trt_tensors(network, tensors):
 
         # or... add constant for leaf tensor w/o _trt
         else:
-            
+
             # remove all preceding ones, these can be re-inserted later when broadcasting
             num_preceding_ones = 0
             for j in range(len(t.shape)):
@@ -147,25 +146,24 @@ def add_missing_trt_tensors(network, tensors):
                 else:
                     break
             shape = tuple(t.shape[num_preceding_ones:])
-            
+
             weight = t.detach().cpu().numpy()
             t._trt = network.add_constant(shape, weight).get_output(0)
             trt_tensor = t._trt
-
 
         assert trt_tensor is not None
 
         trt_tensors[i] = trt_tensor
 
     return trt_tensors
-    
+
 
 def broadcast_trt_tensors(network, trt_tensors, broadcast_ndim):
     """Broadcast TensorRT tensors to the specified dimension by pre-padding shape 1 dims"""
     broadcasted_trt_tensors = [None] * len(trt_tensors)
-    
+
     for i, t in enumerate(trt_tensors):
-        
+
         if len(t.shape) < broadcast_ndim:
             # append 1 size dims to front
             diff = broadcast_ndim - len(t.shape)
@@ -177,10 +175,10 @@ def broadcast_trt_tensors(network, trt_tensors, broadcast_ndim):
             trt_tensor = t
 
         broadcasted_trt_tensors[i] = trt_tensor
-        
+
     return broadcasted_trt_tensors
-    
-    
+
+
 def trt_(network, *tensors):
     """Creates missing TensorRT tensors and adds shuffle layers to make tensors broadcastable"""
     trt_tensors = [None] * len(tensors)
@@ -212,14 +210,15 @@ def trt_(network, *tensors):
         # or... add constant for leaf tensor w/o _trt
         elif isinstance(t, torch.Tensor) and not hasattr(t, "_trt"):
             # add leaf tensor
-            shape = tuple(t.shape)  #  don't exclude batch when adding constants...?
+            shape = tuple(
+                t.shape)  #  don't exclude batch when adding constants...?
             weight = t.detach().cpu().numpy()
             t._trt = network.add_constant(shape, weight).get_output(0)
             trt_tensor = t._trt
 
         # or... add constant for scalar primitive
         elif isinstance(t, float) or isinstance(t, int):
-            shape = (1,) * broadcast_num_dim
+            shape = (1, ) * broadcast_num_dim
             scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
             trt_tensor = network.add_constant(shape, scalar).get_output(0)
 
@@ -244,7 +243,6 @@ def trt_(network, *tensors):
 
 
 # CONVERSION REGISTRY AND HOOKS
-
 
 CONVERTERS = {}
 
@@ -296,7 +294,6 @@ def attach_converter(ctx, method, converter, method_str):
 
 class ConversionHook(object):
     """Attaches TensorRT converter to PyTorch method call"""
-
     def __init__(self, ctx, method, converter):
         self.ctx = ctx
         self.method_str = method
@@ -313,20 +310,25 @@ class ConversionHook(object):
 
         if self.method_impl:
             self._set_method(
-                attach_converter(
-                    self.ctx, self.method_impl, self.converter, self.method_str
-                )
-            )
+                attach_converter(self.ctx, self.method_impl, self.converter,
+                                 self.method_str))
 
     def __exit__(self, type, val, tb):
         if self.method_impl:
             self._set_method(self.method_impl)
 
+
 def default_input_names(num_inputs):
     return ["input_%d" % i for i in range(num_inputs)]
 
+
 def default_output_names(num_outputs):
     return ["output_%d" % i for i in range(num_outputs)]
+
+
+def layer_type_str(layer):
+    return str(layer.type).split('.')[-1]
+
 
 class LayerNamingNetworkWrapper(object):
     def __init__(self, ctx, network):
@@ -337,18 +339,24 @@ class LayerNamingNetworkWrapper(object):
     def _set_layer_name(self, layer):
         def arg_str(arg):
             if isinstance(arg, torch.Tensor):
-                return "tensor(shape=%s, dtype=%s)" % (str(list(arg.shape)), str(arg.dtype))
+                return "tensor(shape=%s, dtype=%s)" % (str(list(
+                    arg.shape)), str(arg.dtype))
             return str(arg)
 
-        self._layer_counts[layer.type] += 1
+        self._layer_counts[layer_type_str(layer)] += 1
         args = [arg_str(arg) for arg in self._ctx.method_args]
-        kwargs = ["%s=%s" % (key, arg_str(arg)) for key, arg in self._ctx.method_kwargs.items()]
-        layer.name = "[%s #%d] %s(%s)" % (layer.type.name, self._layer_counts[layer.type],
-                                          self._ctx.method_str, ", ".join(args + kwargs))
+        kwargs = [
+            "%s=%s" % (key, arg_str(arg))
+            for key, arg in self._ctx.method_kwargs.items()
+        ]
+        layer.name = "[%s #%d] %s(%s)" % (
+            layer.type.name, self._layer_counts[layer_type_str(layer)],
+            self._ctx.method_str, ", ".join(args + kwargs))
 
     def __getattr__(self, name):
         attr = getattr(self._network, name)
         if callable(attr):
+
             def wrapper(*args, **kwargs):
                 ret = attr(*args, **kwargs)
                 if isinstance(ret, trt.ILayer):
@@ -452,7 +460,7 @@ class TRTModule(torch.nn.Module):
         for i, output_name in enumerate(self.output_names):
             idx = self.engine.get_binding_index(output_name)
             dtype = torch_dtype_from_trt(self.engine.get_binding_dtype(idx))
-            shape = (batch_size,) + tuple(self.engine.get_binding_shape(idx))
+            shape = (batch_size, ) + tuple(self.engine.get_binding_shape(idx))
             device = torch_device_from_trt(self.engine.get_location(idx))
             output = torch.empty(size=shape, dtype=dtype, device=device)
             outputs[i] = output
@@ -462,9 +470,8 @@ class TRTModule(torch.nn.Module):
             idx = self.engine.get_binding_index(input_name)
             bindings[idx] = inputs[i].contiguous().data_ptr()
 
-        self.context.execute_async(
-            batch_size, bindings, torch.cuda.current_stream().cuda_stream
-        )
+        self.context.execute_async(batch_size, bindings,
+                                   torch.cuda.current_stream().cuda_stream)
 
         outputs = tuple(outputs)
         if len(outputs) == 1:
@@ -476,18 +483,18 @@ class TRTModule(torch.nn.Module):
         if not self.context.profiler:
             self.context.profiler = trt.Profiler()
 
-    
-def torch2trt(module, 
-              inputs, 
-              input_names=None, 
-              output_names=None, 
-              log_level=trt.Logger.ERROR, 
+
+def torch2trt(module,
+              inputs,
+              input_names=None,
+              output_names=None,
+              log_level=trt.Logger.ERROR,
               max_batch_size=1,
-              fp16_mode=False, 
-              max_workspace_size=1<<25, 
-              strict_type_constraints=False, 
-              keep_network=True, 
-              int8_mode=False, 
+              fp16_mode=False,
+              max_workspace_size=1 << 25,
+              strict_type_constraints=False,
+              keep_network=True,
+              int8_mode=False,
               int8_calib_dataset=None,
               int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
               int8_calib_batch_size=1,
@@ -496,36 +503,42 @@ def torch2trt(module,
     inputs_in = inputs
 
     # copy inputs to avoid modifications to source data
-    inputs = [tensor.clone()[0:1] for tensor in inputs]  # only run single entry
+    inputs = [tensor.clone()[0:1]
+              for tensor in inputs]  # only run single entry
 
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
-    
+
     if isinstance(inputs, list):
         inputs = tuple(inputs)
     if not isinstance(inputs, tuple):
-        inputs = (inputs,)
-        
+        inputs = (inputs, )
+
     # run once to get num outputs
     outputs = module(*inputs)
     if not isinstance(outputs, tuple) and not isinstance(outputs, list):
-        outputs = (outputs,)
-        
+        outputs = (outputs, )
+
     if input_names is None:
         input_names = default_input_names(len(inputs))
     if output_names is None:
         output_names = default_output_names(len(outputs))
-        
+
     if use_onnx:
-            
+
         f = io.BytesIO()
-        torch.onnx.export(module, inputs, f, input_names=input_names, output_names=output_names)
+        torch.onnx.export(module,
+                          inputs,
+                          f,
+                          input_names=input_names,
+                          output_names=output_names)
         f.seek(0)
         onnx_bytes = f.read()
-        network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
+        network = builder.create_network(
+            1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
         parser = trt.OnnxParser(network, logger)
         parser.parse(onnx_bytes)
-        
+
     else:
         network = builder.create_network()
         with ConversionContext(network) as ctx:
@@ -534,8 +547,9 @@ def torch2trt(module,
 
             outputs = module(*inputs)
 
-            if not isinstance(outputs, tuple) and not isinstance(outputs, list):
-                outputs = (outputs,)
+            if not isinstance(outputs, tuple) and not isinstance(
+                    outputs, list):
+                outputs = (outputs, )
             ctx.mark_outputs(outputs, output_names)
 
     builder.max_workspace_size = max_workspace_size
@@ -553,8 +567,10 @@ def torch2trt(module,
 
         # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
         builder.int8_calibrator = DatasetCalibrator(
-            inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
-        )
+            inputs,
+            int8_calib_dataset,
+            batch_size=int8_calib_batch_size,
+            algorithm=int8_calib_algorithm)
 
     engine = builder.build_cuda_engine(network)
 
@@ -570,7 +586,6 @@ def torch2trt(module,
 
 
 def tensorrt_converter(method, is_real=True, enabled=True):
-
     def register_converter(converter):
         CONVERTERS[method] = {"converter": converter, "is_real": is_real}
         return converter
