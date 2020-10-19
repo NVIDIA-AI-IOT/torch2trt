@@ -3,6 +3,7 @@ import tensorrt as trt
 from copy import copy
 import numpy as np
 import io
+from collections import defaultdict
 
 from .calibration import (
     TensorBatchDataset,
@@ -326,10 +327,43 @@ def default_input_names(num_inputs):
 
 def default_output_names(num_outputs):
     return ["output_%d" % i for i in range(num_outputs)]
-    
+
+
+class LayerNamingNetworkWrapper(object):
+    def __init__(self, ctx, network):
+        self._ctx = ctx
+        self._network = network
+        self._layer_counts = defaultdict(lambda: 0)
+
+    def _set_layer_name(self, layer):
+        def arg_str(arg):
+            if isinstance(arg, torch.Tensor):
+                return "tensor(shape=%s, dtype=%s)" % (str(list(arg.shape)), str(arg.dtype))
+            return str(arg)
+
+        self._layer_counts[layer.type.name] += 1
+        args = [arg_str(arg) for arg in self._ctx.method_args]
+        kwargs = ["%s=%s" % (key, arg_str(arg)) for key, arg in self._ctx.method_kwargs.items()]
+        layer.name = "[%s #%d] %s(%s)" % (layer.type.name, self._layer_counts[layer.type.name],
+                                          self._ctx.method_str, ", ".join(args + kwargs))
+
+    def __getattr__(self, name):
+        attr = getattr(self._network, name)
+        if callable(attr):
+            def wrapper(*args, **kwargs):
+                ret = attr(*args, **kwargs)
+                if isinstance(ret, trt.ILayer):
+                    self._set_layer_name(ret)
+                return ret
+
+            return wrapper
+        else:
+            return attr
+
+
 class ConversionContext(object):
     def __init__(self, network, converters=CONVERTERS):
-        self.network = network
+        self.network = LayerNamingNetworkWrapper(self, network)
         self.lock = False
         self.method_args = None
         self.method_kwargs = None
