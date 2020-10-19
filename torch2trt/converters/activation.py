@@ -21,6 +21,11 @@ def convert_leaky_relu(ctx):
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     layer = ctx.network.add_activation(input_trt, trt.ActivationType.LEAKY_RELU)
     layer.alpha = negative_slope
+    qat_mode = ctx.qat_mode
+    fallback_precision = ctx.fallback_precision
+    if qat_mode:
+        layer.precision = fallback_precision
+        layer.set_output_type(0, fallback_precision)
     
     output._trt = layer.get_output(0)
     

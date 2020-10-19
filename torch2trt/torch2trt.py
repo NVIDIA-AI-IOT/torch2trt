@@ -17,6 +17,8 @@ from .calibration import (
 def trt_version():
     return trt.__version__
 
+def torch_version():
+    return torch.__version__
 
 def torch_dtype_to_trt(dtype):
     if trt_version() >= '7.0' and dtype == torch.bool:

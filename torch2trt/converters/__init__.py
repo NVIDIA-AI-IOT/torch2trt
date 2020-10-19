@@ -1,7 +1,7 @@
 # dummy converters throw warnings method encountered
 import tensorrt as trt
 from .dummy_converters import *
-
+from torch2trt.torch2trt import torch_version
 # supported converters will override dummy converters
 
 from .AdaptiveAvgPool2d import *
@@ -57,5 +57,8 @@ from .transpose import *
 from .unary import *
 from .view import *
 
-from .QATConvBNRelu2D import *
-from .QATConvRelu2D import *
+## if torch version is greater than 1.6, register qat layers
+if torch_version() >= '1.6':
+    from .QATConvBNRelu2D import *
+    from .QATConvRelu2D import *
+
