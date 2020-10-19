@@ -328,6 +328,7 @@ def default_input_names(num_inputs):
 def default_output_names(num_outputs):
     return ["output_%d" % i for i in range(num_outputs)]
 
+
 class LayerNamingNetworkWrapper(object):
     def __init__(self, ctx, network):
         self._ctx = ctx
@@ -340,10 +341,10 @@ class LayerNamingNetworkWrapper(object):
                 return "tensor(shape=%s, dtype=%s)" % (str(list(arg.shape)), str(arg.dtype))
             return str(arg)
 
-        self._layer_counts[layer.type] += 1
+        self._layer_counts[layer.type.name] += 1
         args = [arg_str(arg) for arg in self._ctx.method_args]
         kwargs = ["%s=%s" % (key, arg_str(arg)) for key, arg in self._ctx.method_kwargs.items()]
-        layer.name = "[%s #%d] %s(%s)" % (layer.type.name, self._layer_counts[layer.type],
+        layer.name = "[%s #%d] %s(%s)" % (layer.type.name, self._layer_counts[layer.type.name],
                                           self._ctx.method_str, ", ".join(args + kwargs))
 
     def __getattr__(self, name):
