@@ -11,8 +11,9 @@ def trt_lib_dir():
 
 ext_modules = []
 
-plugins_ext_module = CUDAExtension(
-        name='plugins', 
+plugins_ext_module = [
+    CUDAExtension(
+        name='interpolate_plugin', 
         sources=[
             'torch2trt/plugins/interpolate.cpp'
         ],
@@ -29,10 +30,30 @@ plugins_ext_module = CUDAExtension(
             'cxx': ['-DUSE_DEPRECATED_INTLIST'] if torch.__version__ < "1.5" else [],
             'nvcc': []
         }
-)
+    ),
+    CUDAExtension(
+        name='group_norm_plugin', 
+        sources=[
+            'torch2trt/plugins/group_norm.cpp'
+            ],
+        include_dirs=[
+            trt_inc_dir()
+            ],
+        library_dirs=[
+            trt_lib_dir()
+            ],
+        libraries=[
+            'nvinfer'
+            ],
+        extra_compile_args={
+            'cxx': ['-DUSE_DEPRECATED_INTLIST'] if torch.__version__ < "1.5" else [],
+            'nvcc': []
+            }
+        ),
+]
 
 if '--plugins' in sys.argv:
-    ext_modules.append(plugins_ext_module)
+    ext_modules.extend(plugins_ext_module)
     sys.argv.remove('--plugins')
     
 
