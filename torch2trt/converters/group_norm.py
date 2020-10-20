@@ -5,16 +5,15 @@ import collections
 
 def has_group_norm_plugin():
     try:
-        #from torch2trt.plugins import GroupNormPlugin
-        from torch2trt.group_norm_plugin import GroupNormPlugin
+        from torch2trt.plugins import GroupNormPlugin
         return True
     except:
         return False
 
 
 def get_group_norm_plugin(num_groups): #, num_channels, height_width, eps):
-    #from torch2trt.plugins import GroupNormPlugin
-    from torch2trt.group_norm_plugin import GroupNormPlugin
+    from torch2trt.plugins import GroupNormPlugin
+    #from torch2trt.group_norm_plugin import GroupNormPlugin
     PLUGIN_NAME = 'group_norm'
     registry = trt.get_plugin_registry()
     creator = [c for c in registry.plugin_creator_list if c.name == PLUGIN_NAME and c.plugin_namespace == 'torch2trt'][0]
