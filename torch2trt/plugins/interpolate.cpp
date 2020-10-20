@@ -281,17 +281,4 @@ public:
 
 REGISTER_TENSORRT_PLUGIN(InterpolatePluginCreator);
     
-
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    py::class_<InterpolatePlugin>(m, "InterpolatePlugin")
-        .def(py::init<std::vector<int64_t>, std::string, bool>(), py::arg("size"), py::arg("mode"), py::arg("align_corners"))
-        .def(py::init<const std::string &>(), py::arg("data"))
-        .def("getSerializationSize", &InterpolatePlugin::getSerializationSize)
-        .def("deserializeFromString", &InterpolatePlugin::deserializeFromString)
-        .def("serializeToString", [](const InterpolatePlugin& plugin) {
-            std::string data = plugin.serializeToString();
-            return py::bytes(data);
-        });
-}
-    
 } // namespace torch2trt

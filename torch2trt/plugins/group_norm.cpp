@@ -256,19 +256,6 @@ public:
 
 REGISTER_TENSORRT_PLUGIN(GroupNormPluginCreator);
     
-
-PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    py::class_<GroupNormPlugin>(m, "GroupNormPlugin")
-	.def(py::init<int64_t>(), py::arg("num_groups"))
-        .def(py::init<const std::string &>(), py::arg("data"))
-        .def("getSerializationSize", &GroupNormPlugin::getSerializationSize)
-        .def("deserializeFromString", &GroupNormPlugin::deserializeFromString)
-        .def("serializeToString", [](const GroupNormPlugin& plugin) {
-            std::string data = plugin.serializeToString();
-            return py::bytes(data);
-        });
-}
-    
 } // namespace torch2trt
 
 
