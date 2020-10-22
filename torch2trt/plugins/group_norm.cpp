@@ -23,13 +23,14 @@ private:
 
     // configured by user
     int64_t num_groups;
+    double eps;
     
 
 public:
 
     // create from arguments
-    GroupNormPlugin(int64_t num_groups) : 
-            num_groups{num_groups}
+    GroupNormPlugin(int64_t num_groups, double eps) : 
+            num_groups{num_groups}, eps{eps}
     {}
 
     GroupNormPlugin(const char *data, size_t length) : GroupNormPlugin(std::string(data, length)) {}
@@ -51,7 +52,16 @@ public:
             num_groups = value.toInt();
 #endif  
         }
-                {
+        {
+            torch::IValue value;
+            input_archive.read("eps", value);
+#ifdef USE_DEPRECATED_INTLIST
+            eps = value.toDoubleListRef().vec();
+#else
+            eps = value.toDouble();
+#endif  
+        }
+	{
             torch::IValue value;
             input_archive.read("dtype", value);
             dtype = (DataType) value.toInt();
@@ -78,6 +88,7 @@ public:
     std::string serializeToString() const {
         torch::serialize::OutputArchive output_archive;
         output_archive.write("num_groups", torch::IValue(num_groups));
+        output_archive.write("eps", torch::IValue(eps));
         output_archive.write("dtype", torch::IValue((int) dtype));
         output_archive.write("input_sizes", torch::IValue(input_sizes));
         output_archive.write("output_sizes", torch::IValue(output_sizes));
@@ -187,7 +198,7 @@ public:
     cudaStreamWaitEvent(torch_stream.stream(), event, 0);
 
     // enqueue work
-    at::group_norm(input, num_groups); // height_width, num_groups, eps);
+    at::group_norm(input, num_groups, {}, {}, eps=eps); // height_width, num_groups, eps);
 
     // capture event on enqueued stream
     cudaEvent_t torch_event;
@@ -215,7 +226,7 @@ public:
   void destroy() override {}
 
   IPluginV2* clone() const override {
-    return new GroupNormPlugin(num_groups); //, num_channels, height_width, eps);
+    return new GroupNormPlugin(num_groups, eps); //, num_channels, height_width, eps);
   }
 
   void setPluginNamespace(const char* pluginNamespace) override {}
