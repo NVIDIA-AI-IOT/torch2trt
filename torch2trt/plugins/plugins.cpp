@@ -17,7 +17,7 @@ namespace torch2trt {
                     return py::bytes(data);
                     });
         py::class_<GroupNormPlugin>(m, "GroupNormPlugin")
-            .def(py::init<int64_t>(), py::arg("num_groups"))
+            .def(py::init<int64_t, double>(), py::arg("num_groups"), py::arg("eps"))
             .def(py::init<const std::string &>(), py::arg("data"))
             .def("getSerializationSize", &GroupNormPlugin::getSerializationSize)
             .def("deserializeFromString", &GroupNormPlugin::deserializeFromString)
