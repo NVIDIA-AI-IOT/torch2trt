@@ -39,7 +39,7 @@ def test_group_norm_trt_g2_fp32():
     return torch.nn.GroupNorm(2, 10)
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], has_group_norm_plugin())
-def test_group_norm_trt_g2_fp16():
+def test_group_norm_trt_g2_eps_fp32():
     return torch.nn.GroupNorm(2, 10, eps=1e-4)
 
 
