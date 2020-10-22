@@ -22,7 +22,9 @@ private:
     DataType dtype;
 
     // configured by user
+    // num_groups for GroupNorm
     int64_t num_groups;
+    // eps for GroupNorm
     double eps;
     
 
@@ -113,7 +115,6 @@ public:
       Dims dims;
       dims.nbDims = inputs->nbDims;
   
-      //dims.d[0] = inputs->d[0];
       for (int i = 0; i < inputs->nbDims; i++) {
         dims.d[i] = inputs->d[i];
       }
@@ -198,7 +199,8 @@ public:
     cudaStreamWaitEvent(torch_stream.stream(), event, 0);
 
     // enqueue work
-    at::group_norm(input, num_groups, {}, {}, eps=eps); // height_width, num_groups, eps);
+    // Group_norm function from PyTorch: https://pytorch.org/cppdocs/api/function_namespaceat_1a6bc1e9504ea440c6c96ff8a8b94333f2.html#exhale-function-namespaceat-1a6bc1e9504ea440c6c96ff8a8b94333f2
+    at::group_norm(input, num_groups, {}, {}, eps=eps);
 
     // capture event on enqueued stream
     cudaEvent_t torch_event;
@@ -226,7 +228,7 @@ public:
   void destroy() override {}
 
   IPluginV2* clone() const override {
-    return new GroupNormPlugin(num_groups, eps); //, num_channels, height_width, eps);
+    return new GroupNormPlugin(num_groups, eps); 
   }
 
   void setPluginNamespace(const char* pluginNamespace) override {}
