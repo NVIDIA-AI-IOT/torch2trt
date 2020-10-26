@@ -24,6 +24,10 @@ private:
     // configured by user
     // num_groups for GroupNorm
     int64_t num_groups;
+    // weight
+    std::vector<double> weight;
+    // bias
+    std::vector<double> bias; 
     // eps for GroupNorm
     double eps;
     
@@ -31,8 +35,8 @@ private:
 public:
 
     // create from arguments
-    GroupNormPlugin(int64_t num_groups, double eps) : 
-            num_groups{num_groups}, eps{eps}
+    GroupNormPlugin(int64_t num_groups, std::vector<double> weight, std::vector<double> bias, double eps) : 
+            num_groups{num_groups}, weight{weight}, bias{bias}, eps{eps}
     {}
 
     GroupNormPlugin(const char *data, size_t length) : GroupNormPlugin(std::string(data, length)) {}
@@ -54,6 +58,25 @@ public:
             num_groups = value.toInt();
 #endif  
         }
+	{
+            torch::IValue value;
+            input_archive.read("weight", value);
+#ifdef USE_DEPRECATED_INTLIST
+            weight = value.toDoubleListRef().vec();
+#else
+            weight = value.toDoubleVector();
+#endif  
+        }
+	{
+            torch::IValue value;
+            input_archive.read("bias", value);
+#ifdef USE_DEPRECATED_INTLIST
+            bias = value.toDoubleListRef().vec();
+#else
+            bias = value.toDoubleVector();
+#endif  
+        }
+
         {
             torch::IValue value;
             input_archive.read("eps", value);
@@ -90,6 +113,8 @@ public:
     std::string serializeToString() const {
         torch::serialize::OutputArchive output_archive;
         output_archive.write("num_groups", torch::IValue(num_groups));
+        output_archive.write("weight", torch::IValue(weight));
+        output_archive.write("bias", torch::IValue(bias));
         output_archive.write("eps", torch::IValue(eps));
         output_archive.write("dtype", torch::IValue((int) dtype));
         output_archive.write("input_sizes", torch::IValue(input_sizes));
@@ -184,7 +209,19 @@ public:
 
     // create tensor wrappers
     at::Tensor input = at::from_blob((void*) inputs[0], batch_input_sizes, [](void*){}, tensor_options);
-    at::Tensor output = at::from_blob(outputs[0], batch_output_sizes, [](void*){}, tensor_options);
+    at::Tensor output = at::from_blob(outputs[0], batch_output_sizes, [](void*){}, tensor_options); 
+    at::TensorOptions t_options;
+    t_options = t_options.device(c10::kCPU);
+    // set data type
+    if (dtype == DataType::kFLOAT) {
+        t_options = t_options.dtype(c10::kFloat);
+    } else if (dtype == DataType::kHALF) {
+        t_options = t_options.dtype(c10::kHalf);
+    }
+    at::Tensor weight_t = at::from_blob(weight.data(), {weight.size()}, [](void*){});
+    at::Tensor bias_t = at::from_blob(bias.data(), {bias.size()}, [](void*){});
+    weight_t = weight_t.to(device(c10::kCUDA));
+    bias_t = bias_t.to(device(c10::kCUDA));
 
     // create new torch cuda stream
     at::cuda::CUDAStream torch_stream = at::cuda::getStreamFromPool();
@@ -200,7 +237,8 @@ public:
 
     // enqueue work
     // Group_norm function from PyTorch: https://pytorch.org/cppdocs/api/function_namespaceat_1a6bc1e9504ea440c6c96ff8a8b94333f2.html#exhale-function-namespaceat-1a6bc1e9504ea440c6c96ff8a8b94333f2
-    at::group_norm(input, num_groups, {}, {}, eps=eps);
+    //at::group_norm(input, num_groups, weight_t, bias_t, eps=eps);
+    at::native_group_norm(input, weight, bias, batchSize, input_sizes[0], input_sizes[1]*input_sizes[2], num_groups, eps);
 
     // capture event on enqueued stream
     cudaEvent_t torch_event;
@@ -228,7 +266,7 @@ public:
   void destroy() override {}
 
   IPluginV2* clone() const override {
-    return new GroupNormPlugin(num_groups, eps); 
+    return new GroupNormPlugin(num_groups, weight, bias, eps); 
   }
 
   void setPluginNamespace(const char* pluginNamespace) override {}

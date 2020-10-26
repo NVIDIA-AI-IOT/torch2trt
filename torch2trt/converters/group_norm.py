@@ -10,12 +10,12 @@ def has_group_norm_plugin():
         return False
 
 
-def get_group_norm_plugin(num_groups, eps):
+def get_group_norm_plugin(num_groups, weight, bias, eps):
     from torch2trt.plugins import GroupNormPlugin
     PLUGIN_NAME = 'group_norm'
     registry = trt.get_plugin_registry()
     creator = [c for c in registry.plugin_creator_list if c.name == PLUGIN_NAME and c.plugin_namespace == 'torch2trt'][0]
-    torch2trt_plugin = GroupNormPlugin(num_groups=num_groups, eps=eps)
+    torch2trt_plugin = GroupNormPlugin(num_groups=num_groups, weight=weight, bias=bias, eps=eps)
     return creator.deserialize_plugin(PLUGIN_NAME, torch2trt_plugin.serializeToString())
 
 @tensorrt_converter('torch.nn.GroupNorm.forward', has_group_norm_plugin())
@@ -23,10 +23,12 @@ def convert_group_norm_trt(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     num_groups = module.num_groups
+    weight = module.weight
+    bias = module.bias
     eps = module.eps
     input_trt = add_missing_trt_tensors(ctx.network, [input])
     output = ctx.method_return
-    plugin = get_group_norm_plugin(num_groups, eps)
+    plugin = get_group_norm_plugin(num_groups, weight, bias, eps)
 
     layer = ctx.network.add_plugin_v2(input_trt, plugin)
     
