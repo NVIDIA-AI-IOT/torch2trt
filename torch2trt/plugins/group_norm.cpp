@@ -220,8 +220,8 @@ public:
     }
     at::Tensor weight_t = at::from_blob(weight.data(), {weight.size()}, [](void*){});
     at::Tensor bias_t = at::from_blob(bias.data(), {bias.size()}, [](void*){});
-    weight_t = weight_t.to(device(c10::kCUDA));
-    bias_t = bias_t.to(device(c10::kCUDA));
+    weight_t = weight_t.to(tensor_options);
+    bias_t = bias_t.to(tensor_options);
 
     // create new torch cuda stream
     at::cuda::CUDAStream torch_stream = at::cuda::getStreamFromPool();
@@ -237,8 +237,7 @@ public:
 
     // enqueue work
     // Group_norm function from PyTorch: https://pytorch.org/cppdocs/api/function_namespaceat_1a6bc1e9504ea440c6c96ff8a8b94333f2.html#exhale-function-namespaceat-1a6bc1e9504ea440c6c96ff8a8b94333f2
-    //at::group_norm(input, num_groups, weight_t, bias_t, eps=eps);
-    at::native_group_norm(input, weight, bias, batchSize, input_sizes[0], input_sizes[1]*input_sizes[2], num_groups, eps);
+    at::group_norm(input, num_groups, weight_t, bias_t, eps=eps);
 
     // capture event on enqueued stream
     cudaEvent_t torch_event;
