@@ -8,14 +8,12 @@ import collections
 def has_interpolate_plugin():
     try:
         from torch2trt.plugins import InterpolatePlugin
-        #from torch2trt.interpolate_plugin import InterpolatePlugin
         return True
     except:
         return False
     
 def get_interpolate_plugin(size, mode, align_corners):
     from torch2trt.plugins import InterpolatePlugin
-    #from torch2trt.interpolate_plugin import InterpolatePlugin
     PLUGIN_NAME = 'interpolate'
     registry = trt.get_plugin_registry()
     creator = [c for c in registry.plugin_creator_list if c.name == PLUGIN_NAME and c.plugin_namespace == 'torch2trt'][0]
