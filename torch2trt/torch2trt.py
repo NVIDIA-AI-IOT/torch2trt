@@ -4,6 +4,7 @@ from copy import copy
 import numpy as np
 import io
 from collections import defaultdict
+import pytorch_quantization
 
 from .calibration import (
     TensorBatchDataset,
