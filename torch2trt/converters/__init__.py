@@ -5,7 +5,7 @@ try:
     import pytorch_quantization
     from .QuantConv import *
 except:
-    print("Quantization Aware Library from {} not installed ".format(https://github.com/NVIDIA/TensorRT.git))
+    print("Quantization Aware Library from https://github.com/NVIDIA/TensorRT.git not installed")
 
 # supported converters will override dummy converters
 from .AdaptiveAvgPool2d import *
