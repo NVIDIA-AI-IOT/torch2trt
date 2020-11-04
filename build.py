@@ -5,6 +5,7 @@ from string import Template
 
 PLUGINS = [
     'interpolate',
+    'group_norm',
 ]
 
 BASE_FOLDER = 'torch2trt/converters'
