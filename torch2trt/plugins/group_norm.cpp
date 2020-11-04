@@ -21,14 +21,10 @@ private:
     std::vector<int64_t> output_sizes;
     DataType dtype;
 
-    // configured by user
-    // num_groups for GroupNorm
+    // group norm parameters, configured by user
     int64_t num_groups;
-    // weight
     at::Tensor weight;
     at::Tensor bias;
-    // bias
-    // eps for GroupNorm
     double eps;
     
 
