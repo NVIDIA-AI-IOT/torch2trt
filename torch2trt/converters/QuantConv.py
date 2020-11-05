@@ -2,7 +2,8 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 import tensorrt as trt
 
-@tensorrt_converter('pytorch_quantization.nn.modules.quant_conv.QuantConv2d.forward', enabled=trt_version() >= '7.0')
+#@tensorrt_converter('pytorch_quantization.nn.modules.quant_conv.QuantConv2d.forward', enabled=trt_version() >= '7.0')
+@tensorrt_converter('torch2trt.examples.layers.quant_conv.QuantConv2d.forward', enabled=trt_version() >= '7.0')
 #@tensorrt_converter('torch.nn.Conv3d.forward', enabled=trt_version() >= '7.0')
 def convert_Conv_trt7(ctx):
     module = ctx.method_args[0]

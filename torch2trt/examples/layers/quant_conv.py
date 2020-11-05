@@ -17,7 +17,7 @@ class QuantConv2d(torch.nn.Conv2d):
                 groups=1,
                 bias=True,
                 padding_mode='zeros'):
-        super().__init__(in_channels,out_channels,kernel_size,stride=stride,padding=padding,dilation=dilatio,groups=groups,bias=bias,padding_mode=padding_mode)
+        super().__init__(in_channels,out_channels,kernel_size,stride=stride,padding=padding,dilation=dilation,groups=groups,bias=bias,padding_mode=padding_mode)
         self.register_buffer('_input_quantizer.learned_amax',torch.tensor(1))
         self.register_buffer('_weight_quantizer.learned_amax',torch.tensor(1))
 
