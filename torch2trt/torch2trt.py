@@ -535,6 +535,8 @@ def torch2trt(module,
 
             ctx.add_inputs(inputs, input_names)
 
+            ctx.qat_mode=qat_mode
+       
             outputs = module(*inputs)
 
             if not isinstance(outputs, tuple) and not isinstance(outputs, list):
