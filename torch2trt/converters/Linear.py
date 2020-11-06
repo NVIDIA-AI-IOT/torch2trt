@@ -1,6 +1,6 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
-
+import tensorrt as trt
 
 @tensorrt_converter('torch.nn.Linear.forward')
 def convert_Linear(ctx):
@@ -10,7 +10,7 @@ def convert_Linear(ctx):
     output = ctx.method_return
     
     # setting dynamic range for input tensor
-    if ctx.quant_mode:
+    if ctx.qat_mode:
         iquant_amax = module._input_quantizer.learned_amax
         input_trt.dynamic_range=(-iquant_amax,iquant_amax)
 
@@ -33,12 +33,12 @@ def convert_Linear(ctx):
     layer = ctx.network.add_shuffle(layer.get_output(0))
     layer.reshape_dims = tuple(output.shape[1:])
     
-    if ctx.quant_mode:
+    if ctx.qat_mode:
         layer.precision = trt.int8
         layer.set_output_type(0,trt.int8) 
 
         linear_out = layer.get_output(0)
-        weight_amax = module._weight_quantizer._amax 
+        weight_amax = module._weight_quantizer.learned_amax 
         linear_out.dynamic_range = (-weight_amax,weight_amax) 
 
     output._trt = linear_out

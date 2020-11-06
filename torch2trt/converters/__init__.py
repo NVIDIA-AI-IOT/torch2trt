@@ -1,12 +1,6 @@
 # dummy converters throw warnings method encountered
 import tensorrt as trt
 from .dummy_converters import *
-try:
-    import pytorch_quantization
-    from .QuantConv import *
-    from .QuantLinear import *
-except:
-    print("Quantization Aware Library from https://github.com/NVIDIA/TensorRT.git not installed")
 
 # supported converters will override dummy converters
 from .AdaptiveAvgPool2d import *

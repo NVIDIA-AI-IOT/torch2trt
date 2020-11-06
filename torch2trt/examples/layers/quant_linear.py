@@ -22,6 +22,7 @@ class QuantMixin():
     def weight_quantizer(self):
         return self._weight_quantizer
 
+
 class QuantLinear(torch.nn.Linear,QuantMixin):
     '''
     mimicking inference side of things

@@ -1,6 +1,6 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
-
+import tensorrt as trt
 
 @tensorrt_converter('torch.nn.Conv2d.forward', enabled=trt_version() >= '7.0')
 @tensorrt_converter('torch.nn.Conv3d.forward', enabled=trt_version() >= '7.0')
