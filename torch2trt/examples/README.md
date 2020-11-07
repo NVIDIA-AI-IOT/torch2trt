@@ -15,7 +15,7 @@ This example is using QAT library open sourced by nvidia. [Github link](https://
 
 ## Environment
 
-I have an open PR for a change in nvidia library. In the meantime, please use the branch from my fork to run .
+**Filename** : pytorch_ngc_container_20.09     
 
 ```
 FROM nvcr.io/nvidia/pytorch:20.09-py3
@@ -25,6 +25,8 @@ RUN add-apt-repository ppa:git-core/ppa && \
 
 RUN pip install termcolor graphviz
 
+# I have an open PR for a change in nvidia library. In the meantime, please use the branch from my fork to run .
+
 RUN git clone https://github.com/SrivastavaKshitij/TensorRT-1.git /sw/TensorRT/ && \
     cd /sw/TensorRT/ && \
     git checkout store_learned_amax_state_dict && \
@@ -33,14 +35,25 @@ RUN git clone https://github.com/SrivastavaKshitij/TensorRT-1.git /sw/TensorRT/ 
     cd tools/pytorch-quantization/ && \
     python setup.py install 
 
-## I will update this command, once I generate the PR for torch2trt
-RUN git clone --recursive https://github.com/SrivastavaKshitij/torch2trt.git /sw/torch2trt && \
-    cd /sw/torch2trt && \
-    git checkout nvidia_quantization && \
+RUN git clone https://github.com/NVIDIA-AI-IOT/torch2trt.git /sw/TensorRT/ && \
+    cd /sw/TensorRT/ && \
+    git fetch origin pull/442/head:PR442 && \
+    git checkout PR442 && \
     python setup.py install --plugins
 
+## I will update this command, once I generate the PR for torch2trt
+#RUN git clone --recursive https://github.com/SrivastavaKshitij/torch2trt.git /sw/torch2trt && \
+#    cd /sw/torch2trt && \
+#    git checkout nvidia_quantization && \
+#    python setup.py install --plugins
 
 ```
+
+Docker build: `docker build -f pytorch_ngc_container_20.09 -t pytorch_ngc_container_20.09 .`
+
+`docker_image=pytorch_ngc_container_20.09`
+
+Docker run : `docker run -e NVIDIA_VISIBLE_DEVICES=0 --gpus 0 -it --shm-size=1g --ulimit memlock=-1  --rm  -v $PWD:/workspace/work $docker_image` 
 
 **Note** : Sparse checkout helps us in checking out a part of the github repo. 
 
