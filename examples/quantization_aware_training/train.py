@@ -5,11 +5,11 @@ import torchvision
 import argparse
 import os,sys 
 import torch.optim as optim 
-from torch2trt.examples.datasets.cifar10 import Cifar10Loaders
-from torch2trt.examples.models.models import vanilla_cnn
-from torch2trt.examples.models.resnet import resnet18
-from torch2trt.examples.utils.utilities import calculate_accuracy , add_missing_keys 
-from torch2trt.examples.parser import parse_args
+from datasets.cifar10 import Cifar10Loaders
+from models.models import vanilla_cnn
+from models.resnet import resnet18
+from utils.utilities import calculate_accuracy , add_missing_keys 
+from parser import parse_args
 import time
 
 def main():

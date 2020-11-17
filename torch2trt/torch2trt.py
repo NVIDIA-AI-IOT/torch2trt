@@ -590,3 +590,13 @@ def tensorrt_converter(method, is_real=True, enabled=True):
         return pass_converter
 
     return register_converter
+
+
+def tensorrt_method(converter):
+
+    def _attach_converter(method):
+        return attach_converter(method, converter)
+
+    return _attach_converter 
+
+

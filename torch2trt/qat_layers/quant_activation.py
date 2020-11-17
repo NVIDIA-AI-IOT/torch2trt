@@ -2,6 +2,7 @@ import torch
 from . import _utils
 from pytorch_quantization.nn.modules import _utils as utils
 from torch2trt.converters.QuantReLU import convert_QuantReLU
+from torch2trt.torch2trt import tensorrt_method
 
 class QuantReLU(torch.nn.ReLU,utils.QuantInputMixin):
     """

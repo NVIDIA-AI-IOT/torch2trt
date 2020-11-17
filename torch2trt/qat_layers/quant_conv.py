@@ -13,7 +13,7 @@ from torch.nn.modules.utils import _single, _pair, _triple
 from torch.nn.modules.conv import _ConvTransposeNd
 from torch2trt.converters.QuantConv import convert_QuantConv
 from pytorch_quantization import tensor_quant
-
+from torch2trt.torch2trt import tensorrt_method
 
 from . import _utils
 
