@@ -40,7 +40,7 @@ setup(
     name='torch2trt',
     version='0.1.0',
     description='An easy to use PyTorch to TensorRT converter',
-    packages=find_packages(),
+    packages=find_packages('torch2trt/examples'),#+find_packages('examples'),
     ext_package='torch2trt',
     ext_modules=ext_modules,
     cmdclass={'build_ext': BuildExtension}
