@@ -2,18 +2,11 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 import tensorrt as trt
 
-@tensorrt_converter('torch.nn.Conv2d.forward', enabled=trt_version() >= '7.0')
-@tensorrt_converter('torch.nn.Conv3d.forward', enabled=trt_version() >= '7.0')
-def convert_Conv_trt7(ctx):
+def convert_QuantConv(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
-
-    ##Dynamic range for input tensor
-    if ctx.qat_mode:
-        in_quant_amax = module._input_quantizer.learned_amax
-        input_trt.dynamic_range=(-in_quant_amax,in_quant_amax)
 
     input_dim = input.dim() - 2
 
@@ -53,12 +46,11 @@ def convert_Conv_trt7(ctx):
         layer.num_groups = module.groups
     
     #Setting dynamic range for conv
-    if ctx.qat_mode:
-        w_quant_amax = module._weight_quantizer.learned_amax
-        layer.precision = trt.int8
-        layer.set_output_type(0,trt.int8)
-        conv_out = layer.get_output(0)
-        conv_out.dynamic_range=(-w_quant_amax,w_quant_amax)
+    w_quant_amax = module._weight_quantizer.learned_amax
+    layer.precision = trt.int8
+    layer.set_output_type(0,trt.int8)
+    conv_out = layer.get_output(0)
+    conv_out.dynamic_range=(-w_quant_amax,w_quant_amax)
 
 
     output._trt = conv_out

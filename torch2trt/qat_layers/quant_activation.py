@@ -1,6 +1,7 @@
 import torch
 from . import _utils
 from pytorch_quantization.nn.modules import _utils as utils
+from torch2trt.converters.QuantReLU import convert_QuantReLU
 
 class QuantReLU(torch.nn.ReLU,utils.QuantInputMixin):
     """
@@ -20,6 +21,7 @@ class QuantReLU(torch.nn.ReLU,utils.QuantInputMixin):
         return output
 
 ## Inference class for quantized relu
+@tensorrt_method(convert_QuantReLU)
 class IQuantReLU(torch.nn.ReLU,_utils.QuantMixinInput):
     '''
     Mimicking inference side for relu followed by a quantized layer

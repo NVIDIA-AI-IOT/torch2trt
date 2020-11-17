@@ -5,6 +5,7 @@ These layers represent the inference side for nvidia qat library
 import torch
 from . import _utils
 from pytorch_quantization import tensor_quant
+from torch2trt.converters.QuantLinear import convert_QuantLinear
 
 class QuantLinear(nn.Linear, _utils.QuantWeightMixin):
     """
@@ -55,6 +56,7 @@ class QuantLinear(nn.Linear, _utils.QuantWeightMixin):
 
 
 ## inference class for quantized nn.Linear
+@tensorrt_method(convert_QuantLinear)
 class IQuantLinear(torch.nn.Linear,_utils.QuantMixinWeight):
     '''
     mimicking inference side of things

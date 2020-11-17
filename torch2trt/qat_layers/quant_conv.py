@@ -11,7 +11,7 @@ import torch.nn
 import torch.nn.functional as F
 from torch.nn.modules.utils import _single, _pair, _triple
 from torch.nn.modules.conv import _ConvTransposeNd
-
+from torch2trt.converters.QuantConv import convert_QuantConv
 from pytorch_quantization import tensor_quant
 
 
@@ -106,7 +106,7 @@ class QuantConv2d(_QuantConvNd):
 	return output
 
 ## Inference class for quantized conv2d
-
+@tensorrt_method(convert_QuantConv)
 class IQuantConv2d(torch.nn.Conv2d,_utils.QuantMixinWeight):
     '''
     mimicking inference side of things
