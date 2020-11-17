@@ -24,7 +24,7 @@ class qlinear(torch.nn.Module):
         super().__init__()
         if qat:
             if infer:
-                self.linear = quantlinear(in_features,out_features,bias)
+                self.linear = IQuantLinear(in_features,out_features,bias)
             else:
                 self.linear=QuantLinear(in_features=in_features,out_features=out_features,bias=bias,quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)
         else:
@@ -33,7 +33,15 @@ class qlinear(torch.nn.Module):
     def forward(self,inputs):
         return self.linear(inputs)
 
-## QAT wrapper for conv + bn + relu layer. as per nvidia qat library only the input of conv and weights are quantized.
+'''
+Wrapper for conv2d + bn + relu layer. 
+Toggles between QAT mode(on and off)
+Toggles between QAT training and inference
+
+In QAT mode:
+    conv(quantized_weight) + BN + ReLU + quantized op. 
+
+'''
 
 class qconv2d(torch.nn.Module):
     """
@@ -60,7 +68,7 @@ class qconv2d(torch.nn.Module):
         super().__init__()
         if qat:
             if infer:
-                layer_list = [quantconv2d(in_channels,
+                layer_list = [IQuantConv2d(in_channels,
                     out_channels,
                     kernel_size,
                     stride=stride,
@@ -84,7 +92,10 @@ class qconv2d(torch.nn.Module):
                 layer_list.append(nn.BatchNorm2d(out_channels))
            
             if act:
-                layer_list.append(nn.ReLU())
+                if infer:
+                    layer_list.append(IQuantReLU())
+                else:
+                    layer_list.append(QuantReLU())
             
             self.qconv = nn.Sequential(*layer_list)
     
