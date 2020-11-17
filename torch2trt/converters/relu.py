@@ -1,4 +1,5 @@
 from torch2trt.torch2trt import *
+from torch2trt.module_test import add_module_test
 
 
 @tensorrt_converter('torch.relu')
@@ -19,3 +20,16 @@ def convert_relu(ctx):
         input=input_trt, type=trt.ActivationType.RELU)
     output._trt = layer.get_output(0)
 
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5)])
+def test_relu_basic():
+    return torch.nn.ReLU()
+
+
+class FunctionalRelu(torch.nn.Module):
+    def forward(self, x):
+        return torch.nn.functional.relu(x)
+    
+    
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5)])
+def test_functional_relu_basic():
+    return FunctionalRelu()

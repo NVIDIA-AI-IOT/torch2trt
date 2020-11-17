@@ -28,3 +28,13 @@ def convert_relu6(ctx):
 def test_relu6_basic():
     return torch.nn.ReLU6()
 
+
+class FunctionalRelu6(torch.nn.Module):
+    def forward(self, x):
+        return torch.nn.functional.relu6(x)
+    
+    
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5)])
+def test_functional_relu6_basic():
+    return FunctionalRelu6()
+
