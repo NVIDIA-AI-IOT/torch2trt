@@ -10,6 +10,11 @@ def convert_Conv_trt7(ctx):
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
 
+    ##Dynamic range for input tensor
+    if ctx.qat_mode:
+        in_quant_amax = module._input_quantizer.learned_amax
+        input_trt.dynamic_range=(-in_quant_amax,in_quant_amax)
+
     input_dim = input.dim() - 2
 
     kernel_size = module.kernel_size
@@ -47,7 +52,16 @@ def convert_Conv_trt7(ctx):
     if module.groups is not None:
         layer.num_groups = module.groups
     
-    output._trt = layer.get_output(0)
+    #Setting dynamic range for conv
+    if ctx.qat_mode:
+        w_quant_amax = module._weight_quantizer.learned_amax
+        layer.precision = trt.int8
+        layer.set_output_type(0,trt.int8)
+        conv_out = layer.get_output(0)
+        conv_out.dynamic_range=(-w_quant_amax,w_quant_amax)
+
+
+    output._trt = conv_out
 
 
 
