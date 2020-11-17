@@ -5,7 +5,7 @@ from .dummy_converters import *
 # supported converters will override dummy converters
 from .QuantConv import *
 from .QuantLinear import *
-from .QuantReLU import *
+from .QuantRelu import *
 
 from .AdaptiveAvgPool2d import *
 from .BatchNorm1d import *
