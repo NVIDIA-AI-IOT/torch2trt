@@ -100,10 +100,10 @@ class QuantConv2d(_QuantConvNd):
                               quant_weight, self.bias, self.stride,
                               _pair(0), self.dilation, self.groups)
         else:
-            output = F.conv2d(input, quant_weight, self.bias, self.stride, self.padding, self.dilation,
-                              self.groups)
+            output = F.conv2d(input, quant_weight, self.bias, self.stride, self.padding, self.dilation,self.groups)
 	
-	return output
+        return output
+
 
 ## Inference class for quantized conv2d
 @tensorrt_method(convert_QuantConv)
