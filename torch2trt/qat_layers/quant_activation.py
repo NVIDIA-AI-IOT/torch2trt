@@ -29,4 +29,6 @@ class IQuantReLU(torch.nn.ReLU,_utils.QuantMixinInput):
         super().__init__(inplace)
         self.init_quantizer()
 
+    def forward(self,inputs):
+        return super(IQuantReLU,self).forward(inputs)
 
