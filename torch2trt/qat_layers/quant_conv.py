@@ -11,7 +11,6 @@ import torch.nn
 import torch.nn.functional as F
 from torch.nn.modules.utils import _single, _pair, _triple
 from torch.nn.modules.conv import _ConvTransposeNd
-from torch2trt.converters.QuantConv import convert_QuantConv
 from pytorch_quantization import tensor_quant
 
 from . import _utils

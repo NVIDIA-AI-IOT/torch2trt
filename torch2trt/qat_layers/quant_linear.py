@@ -7,7 +7,6 @@ import torch.nn as nn
 from torch.nn import functional as F
 from . import _utils
 from pytorch_quantization import tensor_quant
-from torch2trt.converters.QuantLinear import convert_QuantLinear
 
 class QuantLinear(nn.Linear, _utils.QuantWeightMixin):
     """
