@@ -8,7 +8,7 @@ import pytorch_quantization
 
 import torch2trt.qat_layers.quant_linear
 import torch2trt.qat_layers.quant_conv
-torch2trt.qat_layers.quant_activation
+import torch2trt.qat_layers.quant_activation
 
 from .calibration import (
     TensorBatchDataset,
