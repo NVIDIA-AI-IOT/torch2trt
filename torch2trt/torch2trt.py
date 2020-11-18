@@ -6,6 +6,10 @@ import io
 from collections import defaultdict
 import pytorch_quantization
 
+import torch2trt.qat_layers.quant_linear
+import torch2trt.qat_layers.quant_conv
+torch2trt.qat_layers.quant_activation
+
 from .calibration import (
     TensorBatchDataset,
     DatasetCalibrator,
@@ -592,11 +596,5 @@ def tensorrt_converter(method, is_real=True, enabled=True):
     return register_converter
 
 
-def tensorrt_method(converter):
-
-    def _attach_converter(method):
-        return attach_converter(None,method, converter,None)
-
-    return _attach_converter 
 
 
