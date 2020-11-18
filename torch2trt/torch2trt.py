@@ -595,7 +595,7 @@ def tensorrt_converter(method, is_real=True, enabled=True):
 def tensorrt_method(converter):
 
     def _attach_converter(method):
-        return attach_converter(method, converter)
+        return attach_converter(None,method, converter,None)
 
     return _attach_converter 
 

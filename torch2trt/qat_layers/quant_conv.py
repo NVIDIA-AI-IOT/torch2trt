@@ -39,7 +39,7 @@ class _QuantConvNd(torch.nn.modules.conv._ConvNd, _utils.QuantWeightMixin):
     default_quant_desc_weight = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
 
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, dilation, transposed, output_padding,
-                 groups, bias, padding_mode, quant_desc_input, quant_desc_weight):
+                 groups, bias, padding_mode, quant_desc_weight):
         super(_QuantConvNd, self).__init__(in_channels, out_channels, kernel_size, stride, padding, dilation,
                                            transposed, output_padding, groups, bias, padding_mode)
         self.init_quantizer(quant_desc_weight)
@@ -86,8 +86,7 @@ class QuantConv2d(_QuantConvNd):
 
         quant_desc_weight = _utils.pop_quant_desc_in_kwargs(self.__class__,weight_only=True, **kwargs)
         super(QuantConv2d, self).__init__(in_channels, out_channels, kernel_size, stride, padding, dilation, False,
-                                          _pair(0), groups, bias, padding_mode,
-                                          quant_desc_input=quant_desc_input, quant_desc_weight=quant_desc_weight)
+                                          _pair(0), groups, bias, padding_mode,quant_desc_weight=quant_desc_weight)
 
     def forward(self, input):
         # the actual quantization happens in the next level of the class hierarchy

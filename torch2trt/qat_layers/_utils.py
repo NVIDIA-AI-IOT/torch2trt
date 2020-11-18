@@ -45,7 +45,7 @@ class QuantWeightMixin():
 
         logging.info("Input is %squantized to %d bits in %s with axis %s!", ""
                      if not quant_desc_weight.fake_quant else "fake ",
-                     quant_desc_weight.num_bits, self.__class__.__name__, quant_desc_input.axis)
+                     quant_desc_weight.num_bits, self.__class__.__name__, quant_desc_weight.axis)
 
         self._weight_quantizer = TQ(quant_desc_weight)
 

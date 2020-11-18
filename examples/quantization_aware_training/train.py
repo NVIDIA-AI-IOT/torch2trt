@@ -81,6 +81,8 @@ def main():
             model.load_state_dict(checkpoint['model_state_dict'],strict=True)
     
     print(model)
+    for k,v in model.state_dict.items():
+        print(k)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, weight_decay=args.wd)

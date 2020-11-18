@@ -1,7 +1,8 @@
 import torch
 from . import _utils
+from pytorch_quantization import tensor_quant
 from pytorch_quantization.nn.modules import _utils as utils
-from torch2trt.converters.QuantReLU import convert_QuantReLU
+from torch2trt.converters.QuantRelu import convert_QuantReLU
 from torch2trt.torch2trt import tensorrt_method
 
 class QuantReLU(torch.nn.ReLU,utils.QuantInputMixin):
@@ -10,7 +11,7 @@ class QuantReLU(torch.nn.ReLU,utils.QuantInputMixin):
     """
     default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
 
-    def __init__(self,inplace=False):
+    def __init__(self,inplace=False,**kwargs):
         super(QuantReLU,self).__init__(inplace)
         quant_desc_input = _utils.pop_quant_desc_in_kwargs(self.__class__, input_only=True, **kwargs)
         self.init_quantizer(quant_desc_input)

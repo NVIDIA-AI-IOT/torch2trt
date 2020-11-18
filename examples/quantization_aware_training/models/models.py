@@ -4,7 +4,7 @@ Contains basic model definitions
 
 import torch 
 import torch.nn as nn
-from utils.utilities import qlinear,qconv2d
+from utils.utilities import qrelu,qlinear,qconv2d
 
 class vanilla_cnn(nn.Module):
     def __init__(self,qat_mode=False,infer=False):
@@ -17,9 +17,9 @@ class vanilla_cnn(nn.Module):
         self.layer5 = nn.MaxPool2d(kernel_size=2,stride=8)
         self.fcs = nn.Sequential(
                 qlinear(4096,1024,qat=qat_mode,infer=infer),
-                nn.ReLU(),
+                qrelu(qat=qat_mode,infer=infer),
                 qlinear(1024,512,qat=qat_mode,infer=infer),
-                nn.ReLU(),
+                qrelu(qat=qat_mode,infer=infer),
                 qlinear(512,10,qat=qat_mode,infer=infer))
 
     def forward(self,x):

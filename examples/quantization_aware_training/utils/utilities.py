@@ -18,7 +18,25 @@ def add_missing_keys(model_state,model_state_dict):
 
     return model_state_dict
     
+## QAT qrapper for ReLU layer: toggles between training and inference
+
+class qrelu(torch.nn.Module):
+    def __init__(self,inplace=False,qat=False,infer=False):
+        super().__init__()
+        if qat:
+            if infer:
+                self.relu = IQuantReLU(inplace)
+            else:
+                self.relu = QuantReLU(inplace)
+        else:
+            self.relu = nn.ReLU(inplace)
+
+    def forward(self,input):
+        return self.relu(input)
+
+
 ## QAT wrapper for linear layer : toggles between inference vs training
+
 class qlinear(torch.nn.Module):
     def __init__(self,in_features,out_features,bias=True,qat=False,infer=False):
         super().__init__()
