@@ -25,7 +25,7 @@ def convert_AdaptiveAvgPool2d(ctx):
     layer.set_output_type(0,trt.int8)
     out = layer.get_output(0)
     out.dynamic_range=(-amax,amax)
- 
+    print("adaptive avgpool") 
     output._trt = out  
 
 

@@ -19,7 +19,7 @@ def convert_add(ctx):
     layer.set_output_type(0,trt.int8)
     out = layer.get_output(0)
     out.dynamic_range=(-amax,amax)
- 
+    print("add") 
     output._trt = out 
     
 

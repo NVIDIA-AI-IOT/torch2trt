@@ -3,8 +3,8 @@ import torch.nn as nn
 import numpy as np 
 import argparse
 import os,sys 
-from .resnet import resnet18
-from .parser import parse_args
+from resnet import resnet18
+from parser import parse_args
 from torch2trt import torch2trt
 import tensorrt as trt
 

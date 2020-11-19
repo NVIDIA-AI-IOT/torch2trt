@@ -52,7 +52,7 @@ def convert_Conv_trt7(ctx):
     layer.set_output_type(0,trt.int8)
     conv_out = layer.get_output(0)
     conv_out.dynamic_range=(-amax,amax)
-
+    print("conv")
     output._trt = layer.get_output(0)
 
 

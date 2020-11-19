@@ -94,8 +94,8 @@ class Bottleneck(nn.Module):
 
     def forward(self, x):
         identity = x
-
-        out = self.conv1(x)
+        out = self.relu(x) ## added dummy relu so that first conv can go to int8
+        out = self.conv1(out)
         out = self.bn1(out)
         out = self.relu(out)
 
