@@ -5,7 +5,7 @@ import torchvision
 import argparse
 import os,sys 
 from datasets.cifar10 import Cifar10Loaders
-from models.models import vanilla_cnn
+from models.models import vanilla_cnn,vanilla_cnn2
 from utils.utilities import calculate_accuracy 
 from models.resnet import resnet18
 from parser import parse_args
@@ -31,6 +31,11 @@ def main():
             model=resnet18(qat_mode=True,infer=True)
         else:
             model=resnet18()
+    elif args.m == "vanilla_cnn2":
+        if args.netqat:
+            model =vanilla_cnn2(qat_mode=True,infer=True)
+        else:
+            model=vanilla_cnn2()
     elif args.m == "vanilla_cnn":
         if args.netqat:
             model=vanilla_cnn(qat_mode=True,infer=True)
@@ -51,11 +56,13 @@ def main():
         print("===>>> Checkpoint loaded successfully from {} ".format(args.load_ckpt))
     
     print(model)
-
+    for k,v in model.state_dict().items():
+        if 'learned_amax' in k:
+            print(v)
 
     test_accuracy = calculate_accuracy(model,test_loader)
     print(" Test accuracy: {0} ".format(test_accuracy))
-    rand_in = torch.randn([32,3,32,32],dtype=torch.float32).cuda()
+    rand_in = torch.randn([1,3,32,32],dtype=torch.float32).cuda()
     
     #Converting the model to TRT
 
