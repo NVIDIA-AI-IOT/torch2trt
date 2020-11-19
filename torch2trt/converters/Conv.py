@@ -46,7 +46,14 @@ def convert_Conv_trt7(ctx):
 
     if module.groups is not None:
         layer.num_groups = module.groups
-    
+
+    if hasattr(module,'_weight_quantizer'):
+        w_quant_amax = module._weight_quantizer.learned_amax
+        print(w_quant_amax)
+        layer.precision = trt.int8
+        layer.set_output_type(0,trt.int8)
+        conv_out = layer.get_output(0)
+        conv_out.dynamic_range=(-w_quant_amax,w_quant_amax)    
     output._trt = layer.get_output(0)
 
 

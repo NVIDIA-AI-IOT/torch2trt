@@ -16,11 +16,11 @@ class vanilla_cnn(nn.Module):
         self.layer4=qconv2d(128,256,padding=1,qat=qat_mode,infer=infer)
         self.layer5 = nn.MaxPool2d(kernel_size=2,stride=8)
         self.fcs = nn.Sequential(
-                qlinear(4096,1024,qat=qat_mode,infer=infer),
-                qrelu(qat=qat_mode,infer=infer),
-                qlinear(1024,512,qat=qat_mode,infer=infer),
-                qrelu(qat=qat_mode,infer=infer),
-                qlinear(512,10,qat=qat_mode,infer=infer))
+                nn.Linear(4096,1024),
+                nn.ReLU(),
+                nn.Linear(1024,512),
+                nn.ReLU(),
+                nn.Linear(512,10))
 
     def forward(self,x):
         x = self.layer1(x)
