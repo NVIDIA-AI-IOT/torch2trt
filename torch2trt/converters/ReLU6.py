@@ -14,6 +14,13 @@ def convert_ReLU6(ctx):
         input=input_a_trt, type=trt.ActivationType.RELU)
     layer = ctx.network.add_elementwise(
         layer.get_output(0), input_b_trt, trt.ElementWiseOperation.MIN)
+    
+    amax = 5
+    layer.precision = trt.int8
+    layer.set_output_type(0,trt.int8)
+    out = layer.get_output(0)
+    out.dynamic_range=(-amax,amax)
+    print("relu6")
 
     output._trt = layer.get_output(0)
     
