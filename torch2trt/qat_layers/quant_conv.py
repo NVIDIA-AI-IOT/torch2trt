@@ -120,6 +120,8 @@ class IQuantConv2d(torch.nn.Conv2d,_utils.QuantMixinWeight):
         super().__init__(in_channels,out_channels,kernel_size,stride=stride,padding=padding,dilation=dilation,groups=groups,bias=bias,padding_mode=padding_mode)
         self.init_quantizer()
 
+    def forward(self,inputs):
+        return super(IQuantConv2d,self).forward(inputs)
 
 #class QuantConv2d(torch.nn.Conv2d,_utils.QuantMixin):
 #    '''

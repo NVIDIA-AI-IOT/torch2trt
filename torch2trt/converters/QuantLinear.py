@@ -4,6 +4,7 @@ import tensorrt as trt
 
 @tensorrt_converter('torch2trt.qat_layers.quant_linear.IQuantLinear.forward')
 def convert_QuantLinear(ctx):
+    print("inside linear custom converter")
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]

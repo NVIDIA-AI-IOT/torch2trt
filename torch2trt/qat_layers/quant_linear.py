@@ -67,4 +67,5 @@ class IQuantLinear(torch.nn.Linear,_utils.QuantMixinWeight):
         super().__init__(in_features,out_features,bias)
         self.init_quantizer()
 
-
+    def forward(self,inputs):
+        return super(IQuantLinear,self).forward(inputs)
