@@ -12,7 +12,15 @@ def convert_Linear(ctx):
     # reshape to ...xNx1x1
     layer = ctx.network.add_shuffle(input_trt)
     layer.reshape_dims = tuple(input_trt.shape) + (1, 1) 
-
+    
+    if ctx.hack_dynamic_range:
+        amax = 5
+        layer.precision = trt.int8
+        layer.set_output_type(0,trt.int8)
+        out = layer.get_output(0)
+        out.dynamic_range=(-amax,amax)
+        print("shuffle")
+    
     bias = trt.Weights(torch_dtype_to_trt(module.weight.dtype))
     if module.bias is not None:
         bias = module.bias.detach().cpu().numpy()
@@ -24,10 +32,24 @@ def convert_Linear(ctx):
         kernel=module.weight.detach().cpu().numpy(),
         bias=bias)
 
+    amax = 5
+    layer.precision = trt.int8
+    layer.set_output_type(0,trt.int8)
+    out = layer.get_output(0)
+    out.dynamic_range=(-amax,amax)
+    print("fully connected")
+
     # reshape back to N
     layer = ctx.network.add_shuffle(layer.get_output(0))
     layer.reshape_dims = tuple(output.shape[1:])
-
+    
+    if ctx.hack_dynamic_range:
+        amax = 5
+        layer.precision = trt.int8
+        layer.set_output_type(0,trt.int8)
+        out = layer.get_output(0)
+        out.dynamic_range=(-amax,amax)
+        print("shuffle again")
     output._trt = layer.get_output(0)
 
 

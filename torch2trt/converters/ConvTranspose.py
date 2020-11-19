@@ -44,7 +44,13 @@ def convert_ConvTranspose2d_trt7(ctx):
     
     if module.groups is not None:
         layer.num_groups = module.groups
-
+    
+    amax = 5
+    layer.precision = trt.int8
+    layer.set_output_type(0,trt.int8)
+    out = layer.get_output(0)
+    out.dynamic_range=(-amax,amax)
+    print("ConvTranspose")
     output._trt = layer.get_output(0)
 
 

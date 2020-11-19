@@ -20,7 +20,16 @@ def convert_batch_norm_trt7(ctx):
     power = np.ones_like(scale)
     
     layer = ctx.network.add_scale_nd(input_trt, trt.ScaleMode.CHANNEL, bias, scale, power, 0)
+    if ctx.hack_dynamic_range:
+        amax = 4
+        layer.precision = trt.int8
+        layer.set_output_type(0,trt.int8)
+        out = layer.get_output(0)
+        out.dynamic_range=(-amax,amax)
+        print("BN")
+
     output._trt = layer.get_output(0)
+
 
 
 

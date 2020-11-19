@@ -15,14 +15,14 @@ def convert_view(ctx):
     output = ctx.method_return
     layer = ctx.network.add_shuffle(input_trt)
     layer.reshape_dims = tuple(output.shape[1:])
-    
-    amax = 5
-    layer.precision = trt.int8
-    layer.set_output_type(0,trt.int8)
-    out = layer.get_output(0)
-    out.dynamic_range=(-amax,amax)
-    print("view")
-    output._trt = out
+    if ctx.hack_dynamic_range:    
+        amax = 5
+        layer.precision = trt.int8
+        layer.set_output_type(0,trt.int8)
+        out = layer.get_output(0)
+        out.dynamic_range=(-amax,amax)
+        print("view")
+    output._trt = layer.get_output(0)
 
 
 class View(torch.nn.Module):

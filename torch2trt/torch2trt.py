@@ -490,6 +490,7 @@ def torch2trt(module,
               keep_network=True, 
               int8_mode=False,
               qat_mode=False,
+              hack_dynamic_range=False,
               int8_calib_dataset=None,
               int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
               int8_calib_batch_size=1,
@@ -533,7 +534,7 @@ def torch2trt(module,
         with ConversionContext(network) as ctx:
 
             ctx.add_inputs(inputs, input_names)
-
+            ctx.hack_dynamic_range=hack_dynamic_range
             outputs = module(*inputs)
 
             if not isinstance(outputs, tuple) and not isinstance(outputs, list):
