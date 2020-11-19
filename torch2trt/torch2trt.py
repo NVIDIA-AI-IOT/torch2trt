@@ -6,9 +6,9 @@ import io
 from collections import defaultdict
 import pytorch_quantization
 
-import torch2trt.qat_layers.quant_linear
-import torch2trt.qat_layers.quant_conv
-import torch2trt.qat_layers.quant_activation
+from torch2trt.qat_layers.quant_linear import IQuantLinear
+from torch2trt.qat_layers.quant_conv import IQuantConv2d
+from torch2trt.qat_layers.quant_activation import IQuantReLU
 
 from .calibration import (
     TensorBatchDataset,
