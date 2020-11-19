@@ -4,7 +4,7 @@ def parse_args():
     """
     """
     parser = argparse.ArgumentParser(description='PyTorch QAT')
-    parser.add_argument('--m','--model_name',default='vanilla_cnn',help="Name of the model")
+    parser.add_argument('--m','--model_name',default='resnet18',help="Name of the model")
     parser.add_argument('--b', '--batch_size', default=32, type=int, help='mini-batch size (default: 32)')
     parser.add_argument('--optimizer', default='Adam', type=str,help='type of optimizer (default=Adam)')
     parser.add_argument( '--wd','--weight-decay', default=1e-5, type=float, help='weight decay (default: 1e-5)')

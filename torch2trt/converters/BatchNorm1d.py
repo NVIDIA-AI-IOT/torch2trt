@@ -27,7 +27,14 @@ def convert_BatchNorm2d(ctx):
     layer = ctx.network.add_shuffle(layer.get_output(0))
     layer.reshape_dims = tuple(output.shape[1:])
     
-    output._trt = layer.get_output(0)
+    amax = 4
+    layer.precision = trt.int8
+    layer.set_output_type(0,trt.int8)
+    out = layer.get_output(0)
+    out.dynamic_range=(-amax,amax)
+    print("BN1d")
+    
+    output._trt = out
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10)])

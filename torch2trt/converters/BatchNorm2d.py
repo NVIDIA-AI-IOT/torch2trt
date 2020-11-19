@@ -25,5 +25,5 @@ def convert_BatchNorm2d(ctx):
     layer.set_output_type(0,trt.int8)
     out = layer.get_output(0)
     out.dynamic_range=(-amax,amax)
-    print("BN")
+    print("BN2d")
     output._trt = out 
