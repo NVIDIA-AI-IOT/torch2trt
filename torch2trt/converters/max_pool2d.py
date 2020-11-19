@@ -37,8 +37,14 @@ def convert_max_pool2d(ctx):
     
     if ceil_mode:
         layer.padding_mode = trt.PaddingMode.EXPLICIT_ROUND_UP
-
-    output._trt = layer.get_output(0)
+    
+    amax = 5 
+    layer.precision = trt.int8
+    layer.set_output_type(0,trt.int8)
+    out = layer.get_output(0)
+    out.dynamic_range=(-amax,amax)
+ 
+    output._trt = out 
     
     
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 6)])

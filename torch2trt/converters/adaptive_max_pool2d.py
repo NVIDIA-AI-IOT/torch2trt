@@ -17,8 +17,14 @@ def convert_adaptive_max_pool2d(ctx):
     layer = ctx.network.add_pooling(
         input=input._trt, type=trt.PoolingType.MAX, window_size=kernel_size)
     layer.stride = stride
-
-    output._trt = layer.get_output(0)
+    
+    amax = 5 
+    layer.precision = trt.int8
+    layer.set_output_type(0,trt.int8)
+    out = layer.get_output(0)
+    out.dynamic_range=(-amax,amax)
+ 
+    output._trt = out 
 
     
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224)])

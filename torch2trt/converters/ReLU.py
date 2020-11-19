@@ -8,4 +8,11 @@ def convert_ReLU(ctx):
     output = ctx.method_return
     layer = ctx.network.add_activation(
         input=input_trt, type=trt.ActivationType.RELU)
-    output._trt = layer.get_output(0)
+    
+    amax = 5 
+    layer.precision = trt.int8
+    layer.set_output_type(0,trt.int8)
+    out = layer.get_output(0)
+    out.dynamic_range=(-amax,amax)
+ 
+    output._trt = out

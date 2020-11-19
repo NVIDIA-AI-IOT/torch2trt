@@ -19,5 +19,11 @@ def convert_BatchNorm2d(ctx):
     power = np.ones_like(scale)
 
     layer = ctx.network.add_scale(input_trt, trt.ScaleMode.CHANNEL, bias, scale, power)
+    
+    amax = 4 
+    layer.precision = trt.int8
+    layer.set_output_type(0,trt.int8)
+    out = layer.get_output(0)
+    out.dynamic_range=(-amax,amax)
 
-    output._trt = layer.get_output(0)
+    output._trt = out 
