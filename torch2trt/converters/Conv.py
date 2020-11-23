@@ -47,13 +47,14 @@ def convert_Conv_trt7(ctx):
     if module.groups is not None:
         layer.num_groups = module.groups
     
-    amax = 5
-    layer.precision = trt.int8
-    layer.set_output_type(0,trt.int8)
-    conv_out = layer.get_output(0)
-    conv_out.dynamic_range=(-amax,amax)
-    print("conv")
-    output._trt = layer.get_output(0)
+    if ctx.qat_mode:
+        amax = 5
+        layer.precision = trt.int8
+        layer.set_output_type(0,trt.int8)
+        conv_out = layer.get_output(0)
+        conv_out.dynamic_range=(-amax,amax)
+        print("conv")
+        output._trt = layer.get_output(0)
 
 
 

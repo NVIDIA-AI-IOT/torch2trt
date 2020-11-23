@@ -534,6 +534,7 @@ def torch2trt(module,
         with ConversionContext(network) as ctx:
 
             ctx.add_inputs(inputs, input_names)
+            ctx.qat_mode=qat_mode
             ctx.hack_dynamic_range=hack_dynamic_range
             outputs = module(*inputs)
 
