@@ -47,7 +47,7 @@ def convert_Conv_trt7(ctx):
     if module.groups is not None:
         layer.num_groups = module.groups
 
-    if hasattr(module,'_weight_quantizer'):
+    if ctx.qat_mode and hasattr(module,'_weight_quantizer'):
         w_quant_amax = module._weight_quantizer.learned_amax
         print(w_quant_amax)
         layer.precision = trt.int8

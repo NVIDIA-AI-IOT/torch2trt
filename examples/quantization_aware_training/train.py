@@ -8,9 +8,10 @@ import torch.optim as optim
 from datasets.cifar10 import Cifar10Loaders
 from models.models import vanilla_cnn
 from models.resnet import resnet18
-from utils.utilities import calculate_accuracy , add_missing_keys 
+from utils.utilities import calculate_accuracy , add_missing_keys, transfer_learning_resnet18, mapping_names 
 from parser import parse_args
 import time
+from torch.optim.lr_scheduler import StepLR
 
 def main():
     args = parse_args()
@@ -53,8 +54,10 @@ def main():
             model=vanilla_cnn(qat_mode=True)
         else:
             model=vanilla_cnn()
+    elif args.m == "resnet18-tl": ## resnet18 transfer learning
+        model=transfer_learning_resnet18()
     else:
-        raise NotImplementedError("{} model not found".format(args.m))
+        raise NotImplementedError("model {} is not defined".format(args.m))
 
     if args.cuda:
         model = model.cuda()
@@ -74,7 +77,8 @@ def main():
                 print("====>>>>> keys present in the ckpt state dict")
                 for k,_ in model_state.items():
                     print(k)
-
+            if args.tl:
+                model_state = mapping_names(model_state)
             new_state_dict = add_missing_keys(model.state_dict(),model_state)
             model.load_state_dict(new_state_dict,strict=True)
         else:
@@ -85,14 +89,14 @@ def main():
         print(k)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, weight_decay=args.wd)
+    optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, momentum=0.9)
     if args.load_ckpt:
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         epoch = checkpoint['epoch']
         loss = checkpoint['loss']
         print("===>>> Checkpoint loaded successfully from {} at epoch {} ".format(args.load_ckpt,epoch))
 
-
+    #scheduler = StepLR(optimizer, step_size=7)
     print("===>> Training started")
     for epoch in range(args.start_epoch, args.start_epoch + args.num_epochs):
         running_loss=0.0
@@ -111,6 +115,7 @@ def main():
             loss = criterion(outputs,labels)
             loss.backward()
             optimizer.step()
+            #scheduler.step()
 
             running_loss +=loss.item()
         

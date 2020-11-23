@@ -6,6 +6,38 @@ from pytorch_quantization import tensor_quant
 from torch2trt.qat_layers.quant_conv import QuantConv2d,IQuantConv2d
 from torch2trt.qat_layers.quant_linear import QuantLinear,IQuantLinear
 from torch2trt.qat_layers.quant_activation import QuantReLU, IQuantReLU
+import torchvision.models as models  
+import re
+import timeit
+
+def transfer_learning_resnet18():
+    resnet18 = models.resnet18(pretrained=True)
+    #for param in resnet18.parameters():
+    #    param.requires_grad = False
+    num_ftrs = resnet18.fc.in_features
+    resnet18.fc = nn.Linear(num_ftrs, 10)
+    return resnet18
+
+def mapping_names(state_dict):
+    '''
+    func to map new names
+    '''
+    new_list = collections.OrderedDict()
+
+    for k,v in state_dict.items():
+        if re.search(r'conv\d.weight',k):
+            item = re.sub('weight','qconv.0.weight',k)
+            print("replacing {} to {}".format(k,item))
+            new_list[item]=v
+        elif re.search(r'downsample.0.weight',k):
+            item = re.sub('weight','qconv.0.weight',k)
+            print("replacing {} to {}".format(k,item))
+            new_list[item]=v
+        else:
+            print("adding {} to the new list".format(k))
+            new_list[k]=v
+
+    return new_list
 
 def add_missing_keys(model_state,model_state_dict):
     """
@@ -14,7 +46,7 @@ def add_missing_keys(model_state,model_state_dict):
     for k,v in model_state.items():
         if k not in model_state_dict.keys():
             print("adding {} to the model state dict".format(k))
-            model_state_dict[k]= torch.tensor(1)
+            model_state_dict[k]= torch.tensor(127)
 
     return model_state_dict
     
@@ -156,4 +188,47 @@ def calculate_accuracy(model,data_loader, is_cuda=True):
     return acc 
 
 
-            
+def timeGraph(model, input_t, num_loops):
+    print("Warm up ...")
+    with torch.no_grad():
+        for _ in range(20):
+            features = model(input_t)
+
+    torch.cuda.synchronize()
+
+    print("Start timing ...")
+    timings = []
+    with torch.no_grad():
+        for i in range(num_loops):
+            start_time = timeit.default_timer()
+            features = model(input_t)
+            torch.cuda.synchronize()
+            end_time = timeit.default_timer()
+            timings.append(end_time - start_time)
+            #print("Iteration {}: {:.6f} s".format(i, end_time - start_time))
+    print("Input shape:", input_t.size())
+    print("Output features size:", features.size())
+    return timings
+
+def printStats(graphName, timings, batch_size):
+    times = np.array(timings)
+    steps = len(times)
+    speeds = batch_size / times
+    time_mean = np.mean(times)
+    time_med = np.median(times)
+    time_99th = np.percentile(times, 99)
+    time_std = np.std(times, ddof=0)
+    speed_mean = np.mean(speeds)
+    speed_med = np.median(speeds)
+
+    msg = ("\n%s =================================\n"
+            "batch size=%d, num iterations=%d\n"
+            "  Median FPS: %.1f, mean: %.1f\n"
+            "  Median latency: %.6f, mean: %.6f, 99th_p: %.6f, std_dev: %.6f\n"
+            ) % (graphName,
+                batch_size, steps,
+                speed_med, speed_mean,
+                time_med, time_mean, time_99th, time_std)
+    print(msg)
+
+ 

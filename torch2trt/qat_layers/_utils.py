@@ -104,7 +104,7 @@ can be mapped to TRT layers at INT8.
 class TensorQuantizer(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.register_buffer('learned_amax',torch.tensor(1))
+        self.register_buffer('learned_amax',torch.tensor(1.0))
 
 class QuantMixin():
     def init_quantizer(self):

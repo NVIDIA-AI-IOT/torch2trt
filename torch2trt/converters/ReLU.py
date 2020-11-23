@@ -10,7 +10,7 @@ def convert_ReLU(ctx):
     layer = ctx.network.add_activation(
         input=input_trt, type=trt.ActivationType.RELU)
 
-    if hasattr(module,'_input_quantizer'):
+    if ctx.qat_mode and hasattr(module,'_input_quantizer'):
         w_quant_amax = module._input_quantizer.learned_amax
         print(w_quant_amax)
         layer.precision = trt.int8

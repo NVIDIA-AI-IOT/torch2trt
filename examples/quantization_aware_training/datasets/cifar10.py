@@ -6,7 +6,7 @@ class Cifar10Loaders:
     """
     Data loaders for cifar 10 dataset
     """
-    def __init__(self, data_dir='/tmp/cifar10', download=True, batch_size=32, pin_memory=True, num_workers=4):
+    def __init__(self, data_dir='/tmp/cifar10', download=True, batch_size=128, pin_memory=True, num_workers=4):
         self.data_dir = data_dir
         self.download = download
         self.batch_size= batch_size
