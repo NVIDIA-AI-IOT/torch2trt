@@ -2,7 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 import tensorrt as trt
 
-@tensorrt_converter('torch2trt.qat_layers.quant_linear.IQuantLinear.forward')
+@tensorrt_converter('IQuantLinear.forward', enabled=trt_version() >= '7.0')
 def convert_QuantLinear(ctx):
     print("inside linear custom converter")
     module = ctx.method_args[0]

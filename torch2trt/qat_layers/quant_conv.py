@@ -121,7 +121,8 @@ class IQuantConv2d(torch.nn.Conv2d,_utils.QuantMixinWeight):
         self.init_quantizer()
 
     def forward(self,inputs):
-        return super(IQuantConv2d,self).forward(inputs)
+        print("inside forward func of IQuantConv2d")
+        return super(IQuantConv2d, self).forward(inputs)
 
 #class QuantConv2d(torch.nn.Conv2d,_utils.QuantMixin):
 #    '''

@@ -22,14 +22,6 @@ def convert_batch_norm_trt7(ctx):
     layer = ctx.network.add_scale_nd(input_trt, trt.ScaleMode.CHANNEL, bias, scale, power, 0)
     output._trt = layer.get_output(0)
 
-    if ctx.qat_mode: 
-        w_quant_amax = np.max(scale) 
-        print("bn",w_quant_amax)
-        layer.precision = trt.int8
-        layer.set_output_type(0,trt.int8)
-        conv_out = layer.get_output(0)
-        conv_out.dynamic_range=(-w_quant_amax,w_quant_amax)
-
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)], enabled=trt_version() >= '7.0')
 def test_batch_norm_2d_trt7():

@@ -1,8 +1,9 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 import tensorrt as trt
+from torch2trt.qat_layers.quant_conv import IQuantConv2d
 
-@tensorrt_converter('torch2trt.qat_layers.quant_conv.IQuantConv2d.forward') 
+@tensorrt_converter('IQuantConv2d.forward', enabled=trt_version() >= '7.0') 
 def convert_QuantConv(ctx):
     print("Inside conv custom converter")
     module = ctx.method_args[0]
@@ -61,9 +62,9 @@ def convert_QuantConv(ctx):
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 224, 224)], enabled=trt_version() >= '7.0')
 def test_Conv2d_basic_trt7():
-    return torch.nn.Conv2d(10, 5, kernel_size=1, stride=1, padding=0)
+    return IQuantConv2d(10, 5, kernel_size=1, stride=1, padding=0)
 
-
+'''
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 224, 224)], enabled=trt_version() >= '7.0')
 def test_Conv2d_stride2_trt7():
     return torch.nn.Conv2d(10, 5, kernel_size=1, stride=2, padding=0)
@@ -97,3 +98,5 @@ def test_Conv3d_kernel3_trt7():
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 64, 64, 64)], enabled=trt_version() >= '7.0')
 def test_Conv3d_dilation2_trt7():
     return torch.nn.Conv3d(10, 5, kernel_size=3, stride=1, padding=1, dilation=2)
+    
+'''

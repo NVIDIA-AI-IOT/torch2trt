@@ -6,6 +6,7 @@ import re
 import runpy
 import traceback
 from termcolor import colored
+from torch2trt.qat_layers.quant_conv import IQuantConv2d
 
 
 def run(self):
