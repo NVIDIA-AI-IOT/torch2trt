@@ -13,7 +13,7 @@ def convert_adaptive_max_pool2d(ctx):
 
     stride = (input._trt.shape[-2] // output_size[-2], input._trt.shape[-1] // output_size[-1])
 
-    kernel_size = stride
+    kernel_size = (input.trt.shape[-2] - (output_size[-2] - 1) * stride[-2], input.trt.shape[-1] - (output_size[-1] - 1) * stride[-1])
     layer = ctx.network.add_pooling(
         input=input._trt, type=trt.PoolingType.MAX, window_size=kernel_size)
     layer.stride = stride
