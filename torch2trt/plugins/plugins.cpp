@@ -1,6 +1,8 @@
 #include <torch/extension.h>
 #include "interpolate.cpp"
 #include "group_norm.cpp"
+#include "adaptive_avg_pool2d.cpp"
+#include "adaptive_max_pool2d.cpp"
 
 
 using namespace nvinfer1;
@@ -22,6 +24,24 @@ namespace torch2trt {
             .def("getSerializationSize", &GroupNormPlugin::getSerializationSize)
             .def("deserializeFromString", &GroupNormPlugin::deserializeFromString)
             .def("serializeToString", [](const GroupNormPlugin& plugin) {
+                    std::string data = plugin.serializeToString();
+                    return py::bytes(data);
+                    });
+        py::class_<AdaptiveAvgPool2dPlugin>(m, "AdaptiveAvgPool2dPlugin")
+            .def(py::init<std::vector<int64_t>>(), py::arg("output_size"))
+            .def(py::init<const std::string &>(), py::arg("data"))
+            .def("getSerializationSize", &AdaptiveAvgPool2dPlugin::getSerializationSize)
+            .def("deserializeFromString", &AdaptiveAvgPool2dPlugin::deserializeFromString)
+            .def("serializeToString", [](const AdaptiveAvgPool2dPlugin& plugin) {
+                    std::string data = plugin.serializeToString();
+                    return py::bytes(data);
+                    });
+        py::class_<AdaptiveMaxPool2dPlugin>(m, "AdaptiveMaxPool2dPlugin")
+            .def(py::init<std::vector<int64_t>>(), py::arg("output_size"))
+            .def(py::init<const std::string &>(), py::arg("data"))
+            .def("getSerializationSize", &AdaptiveMaxPool2dPlugin::getSerializationSize)
+            .def("deserializeFromString", &AdaptiveMaxPool2dPlugin::deserializeFromString)
+            .def("serializeToString", [](const AdaptiveMaxPool2dPlugin& plugin) {
                     std::string data = plugin.serializeToString();
                     return py::bytes(data);
                     });

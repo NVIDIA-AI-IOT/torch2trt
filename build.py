@@ -6,6 +6,8 @@ from string import Template
 PLUGINS = [
     'interpolate',
     'group_norm',
+    'adaptive_avg_pool2d',
+    'adaptive_max_pool2d'
 ]
 
 BASE_FOLDER = 'torch2trt/converters'
