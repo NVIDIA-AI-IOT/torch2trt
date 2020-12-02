@@ -9,6 +9,7 @@ import pytorch_quantization
 from torch2trt.qat_layers.quant_linear import IQuantLinear
 from torch2trt.qat_layers.quant_conv import IQuantConv2d, IQuantConvBN2d
 from torch2trt.qat_layers.quant_activation import IQuantReLU
+from torch2trt.qat_layers.quant_pooling import IQuantMaxPool2d
 
 from .calibration import (
     TensorBatchDataset,

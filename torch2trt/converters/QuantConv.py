@@ -5,7 +5,6 @@ from torch2trt.qat_layers.quant_conv import IQuantConv2d
 
 @tensorrt_converter('IQuantConv2d.forward', enabled=trt_version() >= '7.0') 
 def convert_QuantConv(ctx):
-    print("Inside conv custom converter")
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
@@ -48,15 +47,16 @@ def convert_QuantConv(ctx):
     if module.groups is not None:
         layer.num_groups = module.groups
     
+    if ctx.qat_mode:
     #Setting dynamic range for conv
-    w_quant_amax = module._weight_quantizer.learned_amax
-    layer.precision = trt.int8
-    layer.set_output_type(0,trt.int8)
-    conv_out = layer.get_output(0)
-    conv_out.dynamic_range=(-w_quant_amax,w_quant_amax)
+        w_quant_amax = module._weight_quantizer.learned_amax
+        layer.precision = trt.int8
+        layer.set_output_type(0,trt.int8)
+        conv_out = layer.get_output(0)
+        conv_out.dynamic_range=(-w_quant_amax,w_quant_amax)
 
 
-    output._trt = conv_out
+    output._trt = layer.get_output(0)
 
 
 

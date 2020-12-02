@@ -6,6 +6,7 @@ from pytorch_quantization import tensor_quant
 from torch2trt.qat_layers.quant_conv import QuantConvBN2d,QuantConv2d,IQuantConv2d, IQuantConvBN2d
 from torch2trt.qat_layers.quant_linear import QuantLinear,IQuantLinear
 from torch2trt.qat_layers.quant_activation import QuantReLU, IQuantReLU
+from torch2trt.qat_layers.quant_pooling import IQuantMaxPool2d, QuantMaxPool2d
 import torchvision.models as models  
 import re
 import timeit
@@ -49,7 +50,24 @@ def add_missing_keys(model_state,model_state_dict):
             model_state_dict[k]= torch.tensor(127)
 
     return model_state_dict
-    
+
+## QAT wrapper for MaxPool2d layer
+
+class qmaxpool2d(torch.nn.Module):
+    def __init__(self,kernel_size, stride=None, padding=0, dilation=1,return_indices=False, ceil_mode=False,qat=False,infer=False,**kwargs):
+        super().__init__()
+        if qat:
+            if infer:
+                self.maxpool2d = IQuantMaxPool2d(kernel_size,stride,padding,dilation,return_indices,ceil_mode,**kwargs)
+            else:
+                self.maxpool2d = QuantMaxPool2d(kernel_size,stride,padding,dilation,return_indices,ceil_mode,**kwargs)
+        else:
+            self.maxpool2d = torch.nn.MaxPool2d(kernel_size,stride,padding,dilation,return_indices,ceil_mode)
+
+    def forward(self,input):
+        return self.maxpool2d(input)
+
+
 ## QAT qrapper for ReLU layer: toggles between training and inference
 
 class qrelu(torch.nn.Module):
