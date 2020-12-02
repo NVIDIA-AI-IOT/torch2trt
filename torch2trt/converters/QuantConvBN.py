@@ -5,7 +5,6 @@ from torch2trt.qat_layers.quant_conv import IQuantConvBN2d
 
 @tensorrt_converter('IQuantConvBN2d.forward', enabled=trt_version() >= '7.0') 
 def convert_QuantConv(ctx):
-    print("Inside conv bn custom converter")
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
@@ -33,7 +32,6 @@ def convert_QuantConv(ctx):
     
     bias = None #trt.Weights(torch_dtype_to_trt(module.weight.dtype))
     if hasattr(module,'folded_bias'):
-        print("folded bias found")
         bias = module.folded_bias.detach().cpu().numpy()
 
     layer = ctx.network.add_convolution_nd(

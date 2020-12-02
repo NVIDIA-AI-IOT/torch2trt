@@ -74,7 +74,7 @@ def main():
     timings = timeGraph(trt_model_int8, rand_in, args.iter)
     printStats('int8 trt model', timings, args.b)
 
-    trt_model_fp16 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_mode=False,max_batch_size=128,qat_mode=False,strict_type_constraints=True)
+    trt_model_fp16 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_mode=False,max_batch_size=128,qat_mode=False,strict_type_constraints=False)
     test_accuracy = calculate_accuracy(trt_model_fp16,test_loader)
     print(" TRT test accuracy: {0}".format(test_accuracy))
     timings = timeGraph(trt_model_fp16, rand_in, args.iter)
