@@ -7,7 +7,7 @@ from collections import defaultdict
 import pytorch_quantization
 
 from torch2trt.qat_layers.quant_linear import IQuantLinear
-from torch2trt.qat_layers.quant_conv import IQuantConv2d
+from torch2trt.qat_layers.quant_conv import IQuantConv2d, IQuantConvBN2d
 from torch2trt.qat_layers.quant_activation import IQuantReLU
 
 from .calibration import (

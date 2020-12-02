@@ -24,14 +24,14 @@ model_urls = {
 }
 
 
-def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1,qat_mode=False,infer=False):
+def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1,norm=False,act=False,qat_mode=False,infer=False):
     """3x3 convolution with padding"""
-    return qconv2d(in_channels=in_planes,out_channels=out_planes,kernel_size=3,stride=stride,groups=groups,padding=dilation,dilation=dilation,bias=False,act=False,norm=False,qat=qat_mode,infer=infer)
+    return qconv2d(in_channels=in_planes,out_channels=out_planes,kernel_size=3,stride=stride,groups=groups,padding=dilation,dilation=dilation,bias=False,act=act,norm=norm,qat=qat_mode,infer=infer)
 
 
-def conv1x1(in_planes, out_planes, stride=1,qat_mode=False,infer=False):
+def conv1x1(in_planes, out_planes, stride=1,norm=False,act=False,qat_mode=False,infer=False):
     """1x1 convolution"""
-    return qconv2d(in_channels=in_planes,out_channels=out_planes,kernel_size=1,stride=stride,bias=False,act=False,norm=False,qat=qat_mode,infer=infer)
+    return qconv2d(in_channels=in_planes,out_channels=out_planes,kernel_size=1,stride=stride,bias=False,act=act,norm=norm,qat=qat_mode,infer=infer)
 
 
 class BasicBlock(nn.Module):
@@ -47,12 +47,12 @@ class BasicBlock(nn.Module):
         if dilation > 1:
             raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
-        self.conv1 = conv3x3(inplanes, planes, stride,qat_mode=qat_mode,infer=infer)
-        self.bn1 = norm_layer(planes)
+        self.conv1 = conv3x3(inplanes, planes, stride,norm=True,qat_mode=qat_mode,infer=infer)
+        #self.bn1 = norm_layer(planes)
         self.relu1 = qrelu(inplace=True,qat=qat_mode,infer=infer)
+        self.conv2 = conv3x3(planes, planes,norm=True,qat_mode=qat_mode,infer=infer)
+        #self.bn2 = norm_layer(planes)
         self.relu2 = qrelu(inplace=True,qat=qat_mode,infer=infer)
-        self.conv2 = conv3x3(planes, planes,qat_mode=qat_mode,infer=infer)
-        self.bn2 = norm_layer(planes)
         self.downsample = downsample
         self.stride = stride
 
@@ -60,11 +60,11 @@ class BasicBlock(nn.Module):
         identity = x
 
         out = self.conv1(x)
-        out = self.bn1(out)
+        #out = self.bn1(out)
         out = self.relu1(out)
 
         out = self.conv2(out)
-        out = self.bn2(out)
+        #out = self.bn2(out)
 
         if self.downsample is not None:
             identity = self.downsample(x)
@@ -138,8 +138,8 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = qconv2d(in_channels=3, out_channels=self.inplanes, kernel_size=7, stride=2, padding=3,bias=False,norm=False,act=False,qat=qat_mode,infer=infer)
-        self.bn1 = norm_layer(self.inplanes)
+        self.conv1 = qconv2d(in_channels=3, out_channels=self.inplanes, kernel_size=7, stride=2,padding=3,bias=False,norm=True,act=False,qat=qat_mode,infer=infer)
+        #self.bn1 = norm_layer(self.inplanes)
         self.relu = qrelu(inplace=True,qat=qat_mode,infer=infer)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0],qat_mode=qat_mode,infer=infer)
@@ -178,8 +178,8 @@ class ResNet(nn.Module):
             stride = 1
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                conv1x1(self.inplanes, planes * block.expansion,stride= stride,qat_mode=qat_mode,infer=infer),
-                norm_layer(planes * block.expansion),
+                conv1x1(self.inplanes, planes * block.expansion,stride= stride,norm=True,qat_mode=qat_mode,infer=infer),
+                #norm_layer(planes * block.expansion),
             )
 
         layers = []
@@ -195,7 +195,7 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         x = self.conv1(x)
-        x = self.bn1(x)
+        #x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
 

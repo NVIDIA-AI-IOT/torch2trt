@@ -6,7 +6,7 @@ from .dummy_converters import *
 from .QuantConv import *
 from .QuantLinear import *
 from .QuantRelu import *
-
+from .QuantConvBN import *
 from .AdaptiveAvgPool2d import *
 from .BatchNorm1d import *
 from .BatchNorm2d import *

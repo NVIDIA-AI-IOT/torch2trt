@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 import collections
 from pytorch_quantization import tensor_quant
-from torch2trt.qat_layers.quant_conv import QuantConv2d,IQuantConv2d
+from torch2trt.qat_layers.quant_conv import QuantConvBN2d,QuantConv2d,IQuantConv2d, IQuantConvBN2d
 from torch2trt.qat_layers.quant_linear import QuantLinear,IQuantLinear
 from torch2trt.qat_layers.quant_activation import QuantReLU, IQuantReLU
 import torchvision.models as models  
@@ -118,28 +118,51 @@ class qconv2d(torch.nn.Module):
         super().__init__()
         if qat:
             if infer:
-                layer_list = [IQuantConv2d(in_channels,
-                    out_channels,
-                    kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    groups=groups,
-                    dilation=dilation,
-                    bias=bias,
-                    padding_mode=padding_mode)]
+                if norm:
+                    layer_list = [IQuantConvBN2d(in_channels,
+                        out_channels,
+                        kernel_size,
+                        stride=stride,
+                        padding=padding,
+                        groups=groups,
+                        dilation=dilation,
+                        bias=bias,
+                        padding_mode=padding_mode)]
+
+                else:
+                    layer_list = [IQuantConv2d(in_channels,
+                        out_channels,
+                        kernel_size,
+                        stride=stride,
+                        padding=padding,
+                        groups=groups,
+                        dilation=dilation,
+                        bias=bias,
+                        padding_mode=padding_mode)]
             else:
-                layer_list = [QuantConv2d(in_channels,
-                    out_channels,
-                    kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    groups=groups,
-                    dilation=dilation,
-                    bias=bias,
-                    padding_mode=padding_mode,
-                    quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)]
-            if norm:
-                layer_list.append(nn.BatchNorm2d(out_channels))
+                if norm:
+                    layer_list=[QuantConvBN2d(in_channels,
+                        out_channels,
+                        kernel_size,
+                        stride=stride,
+                        padding=padding,
+                        groups=groups,
+                        dilation=dilation,
+                        bias=bias,
+                        padding_mode=padding_mode,
+                        quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)]
+
+                else:
+                    layer_list = [QuantConv2d(in_channels,
+                        out_channels,
+                        kernel_size,
+                        stride=stride,
+                        padding=padding,
+                        groups=groups,
+                        dilation=dilation,
+                        bias=bias,
+                        padding_mode=padding_mode,
+                        quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)]
            
             if act:
                 if infer:
