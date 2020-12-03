@@ -4,7 +4,7 @@ Resnet implementation from Pytorch
 
 import torch
 import torch.nn as nn
-from utils.utilities import qrelu,qconv2d,qlinear,qmaxpool2d
+from utils.utilities import qrelu,qconv2d
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
@@ -141,7 +141,7 @@ class ResNet(nn.Module):
         self.conv1 = qconv2d(in_channels=3, out_channels=self.inplanes, kernel_size=7, stride=2,padding=3,bias=False,norm=True,act=False,qat=qat_mode,infer=infer)
         #self.bn1 = norm_layer(self.inplanes)
         self.relu = qrelu(inplace=True,qat=qat_mode,infer=infer)
-        self.maxpool = qmaxpool2d(kernel_size=3, stride=2, padding=1,qat=qat_mode,infer=infer)   
+        self.maxpool = nn.maxpool2d(kernel_size=3, stride=2, padding=1)   
         self.layer1 = self._make_layer(block, 64, layers[0],qat_mode=qat_mode,infer=infer)
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
                                        dilate=replace_stride_with_dilation[0],qat_mode=qat_mode,infer=infer)
