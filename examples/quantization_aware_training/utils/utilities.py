@@ -17,6 +17,42 @@ def transfer_learning_resnet18():
     resnet18.fc = nn.Linear(num_ftrs, 10)
     return resnet18
 
+
+def mapping_names(state_dict):
+    '''
+    func to map new names
+    '''
+    new_list = collections.OrderedDict()
+    for k,v in state_dict.items():
+        if re.search(r'conv\d.weight',k):
+            item = re.sub('weight','qconv.0.weight',k)
+            print("replacing {} to {}".format(k,item))
+            new_list[item]=v
+        elif re.search(r'bn\d.\w+',k):
+            m = re.search(r'bn\d.\w+',k).group(0)
+            word=m.split(".")[-1]
+            num = re.search(r'\d+',k).group(0)
+            new_name = "conv"+num+".qconv.0.bn."+word
+            item = re.sub(r'bn\d.\w+',new_name,k)
+            print("replacing {} to {}".format(k,item))
+            new_list[item]=v
+        elif re.search(r'downsample.0.weight',k):
+            item = re.sub('weight','qconv.0.weight',k)
+            print("replacing {} to {}".format(k,item))
+            new_list[item]=v
+        elif re.search(r'downsample.1.\w+',k):
+            m = re.search(r'downsample.1.\w+',k).group(0)
+            word = m.split(".")[-1]
+            new_name = "downsample.0.qconv.0.bn."+word
+            item = re.sub(r'downsample.1.\w+',new_name,k)
+            print("replacing {} to {}".format(k,item))
+            new_list[item]=v
+        else:
+            print("adding {} to the new list".format(k))
+            new_list[k]=v 
+    return new_list
+
+
 def mapping_names(state_dict):
     '''
     func to map new names
