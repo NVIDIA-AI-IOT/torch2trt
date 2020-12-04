@@ -76,11 +76,27 @@ def main():
     timings = timeGraph(trt_model_int8, rand_in, args.iter)
     printStats('int8 trt model', timings, args.b)
 
+    del trt_model_int8
+    
+    ##preparing calib dataset
+    calib_dataset = list()
+    for i, sam in enumerate(test_loader):
+        calib_dataset.extend(sam[0])
+        if i ==5:
+            break
+
+    trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=128,qat_mode=False,strict_type_constraints=False)
+    test_accuracy = calculate_accuracy(trt_model_calib_int8,test_loader)
+    print(" TRT test accuracy: {0}".format(test_accuracy))
+
+    del trt_model_calib_int8
+
     trt_model_fp16 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_mode=False,max_batch_size=128,qat_mode=False,strict_type_constraints=False)
     test_accuracy = calculate_accuracy(trt_model_fp16,test_loader)
     print(" TRT test accuracy: {0}".format(test_accuracy))
     timings = timeGraph(trt_model_fp16, rand_in, args.iter)
     printStats('fp16 trt model', timings, args.b)
+    
 
 
 

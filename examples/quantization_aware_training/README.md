@@ -62,13 +62,23 @@ Docker run : `docker run -e NVIDIA_VISIBLE_DEVICES=0 --gpus 0 -it --shm-size=1g 
 Workflow consists of three parts. 
 1. Train without quantization:
 
-`python train.py --m resnet18/vanilla_cnn --num_epochs 30`
+Here pretrained weights from imagenet are used. 
 
-2. Train with quantization
+`python train.py --m resnet34-tl / resnet18-tl --num_epochs 25`
 
-`python train.py --m resnet18/vanilla_cnn --netqat --partial_ckpt --load_ckpt /tmp/pytorch_exp/ckpt_{}`
+2. Train with quantization (weights are mapped using a custom function to make sure that each weight is loaded correctly)
+
+`python train.py --m resnet34/ resnet18 --netqat --partial_ckpt --tl --load_ckpt /tmp/pytorch_exp/{} --num_epochs 15 --verbose`
 
 3. Infer with and without TRT
 
-`python infer.py --m resnet18/vanilla_cnn --load_ckpt /tmp/pytorch_exp_1/ckpt_{} --netqat`
+`python infer.py --m resnet34/resnet18 --load_ckpt /tmp/pytorch_exp_1/ckpt_{} --netqat`
+
+
+## Accuracy Results 
+
+| Model | FP32 | FP16 | INT8 (QAT) | INT(PTC) |
+|-------|------|------|------------|----------|
+| Resnet18 | 83.08 | 83.12 | 83.12 | 83.06 |
+| Resnet34 | 84.65 | 84.65 | 83.26 | 84.5 |  
 

@@ -7,7 +7,7 @@ import os,sys
 import torch.optim as optim 
 from datasets.cifar10 import Cifar10Loaders
 from models.models import vanilla_cnn
-from models.resnet import resnet18,resnet34
+from models.resnet import resnet18 , resnet34
 from utils.utilities import calculate_accuracy , add_missing_keys, transfer_learning_resnet18,transfer_learning_resnet34, mapping_names 
 from parser import parse_args
 import time
@@ -49,19 +49,16 @@ def main():
             model=resnet18(qat_mode=True)
         else:
             model=resnet18()
-    
-    if args.m =="resnet34":
+    elif args.m =="resnet34":
         if args.netqat:
             model=resnet34(qat_mode=True)
         else:
             model=resnet34()
-
     elif args.m == "vanilla_cnn":
         if args.netqat:
             model=vanilla_cnn(qat_mode=True)
         else:
             model=vanilla_cnn()
-
     elif args.m == 'resnet34-tl':
         model = transfer_learning_resnet34()
     elif args.m == "resnet18-tl": ## resnet18 transfer learning
