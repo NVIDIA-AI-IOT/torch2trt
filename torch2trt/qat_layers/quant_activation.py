@@ -28,6 +28,12 @@ class IQuantReLU(torch.nn.ReLU,_utils.QuantMixinInput):
     def __init__(self,inplace=False):
         super().__init__(inplace)
         self.init_quantizer()
+    
+    def __repr__(self):
+        s = super().__repr__()
+        s = "(" + s + "dynamic_range amax {0:.4f})".format(self._input_quantizer.learned_amax)
+        return s
+
 
     def forward(self,inputs):
         return super(IQuantReLU,self).forward(inputs)

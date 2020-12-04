@@ -1,4 +1,4 @@
-## Quant Layers (Inference)
+## IQuant Layers (Inference)
 
 Once the training is done using nvidia qat library, we just need `amax` stats from the training run as trt only supports scale quantization with zero point = 0
 

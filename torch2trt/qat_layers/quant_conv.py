@@ -200,6 +200,10 @@ class IQuantConvBN2d(torch.nn.Conv2d,_utils.QuantMixinWeight):
         self.register_buffer('folded_weight',torch.ones_like(self.weight))
         self.register_buffer('folded_bias',torch.ones_like(self.bn.running_mean))
 
+    def __repr__(self):
+        s = super().__repr__()
+        s = "(" + s + "dynamic_range amax {0:.4f})".format(self._weight_quantizer.learned_amax)
+        return s
 
     def forward(self,inputs):
         output = F.conv2d(inputs,self.folded_weight,self.folded_bias,self.stride,self.padding,self.dilation,self.groups)
