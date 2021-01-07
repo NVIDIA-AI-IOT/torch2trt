@@ -328,12 +328,13 @@ def default_output_names(num_outputs):
     return ["output_%d" % i for i in range(num_outputs)]
     
 class ConversionContext(object):
-    def __init__(self, network, converters=CONVERTERS):
+    def __init__(self, network, converters=CONVERTERS, torch2trt_kwargs=None):
         self.network = network
         self.lock = False
         self.method_args = None
         self.method_kwargs = None
         self.method_return = None
+        self.torch2trt_kwargs = torch2trt_kwargs
         self.hooks = [
             ConversionHook(self, method, converter)
             for method, converter in converters.items()
@@ -458,7 +459,12 @@ def torch2trt(module,
               int8_calib_dataset=None,
               int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
               int8_calib_batch_size=1,
-              use_onnx=False):
+              use_onnx=False,
+              **kwargs):
+    
+    # capture arguments to provide to context
+    kwargs.update(locals())
+    kwargs.pop('kwargs')
 
     inputs_in = inputs
 
@@ -495,7 +501,7 @@ def torch2trt(module,
         
     else:
         network = builder.create_network()
-        with ConversionContext(network) as ctx:
+        with ConversionContext(network, torch2trt_kwargs=kwargs) as ctx:
 
             ctx.add_inputs(inputs, input_names)
 
