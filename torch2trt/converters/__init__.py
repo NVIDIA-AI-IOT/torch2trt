@@ -25,6 +25,7 @@ from .chunk import *
 from .clamp import *
 from .compare import *
 from .div import *
+from .expand import *
 from .getitem import *
 from .identity import *
 from .instance_norm import *
