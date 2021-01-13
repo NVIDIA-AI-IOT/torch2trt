@@ -4,6 +4,7 @@
 
 ### Added 
 
+- Added converter for ``torch.Tensor.expand``
 - Added support for custom converters for methods defined outside of ``torch`` module
 - Added names for TensorRT layers
 - Added GroupNorm plugin which internally uses PyTorch aten::group_norm
