@@ -6,6 +6,7 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.relu_')
 @tensorrt_converter('torch.nn.functional.relu')
 @tensorrt_converter('torch.nn.functional.relu_')
+@tensorrt_converter('torch.Tensor.relu')
 def convert_functional_relu(ctx):
     ctx.method_args = (torch.nn.ReLU(),) + ctx.method_args
     convert_relu(ctx)
