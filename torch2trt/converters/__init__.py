@@ -26,6 +26,7 @@ from .clamp import *
 from .compare import *
 from .div import *
 from .expand import *
+from .floordiv import *
 from .getitem import *
 from .identity import *
 from .instance_norm import *
@@ -35,8 +36,10 @@ from .max import *
 from .max_pool2d import *
 from .mean import *
 from .min import *
+from .mod import *
 from .mul import *
 from .normalize import *
+from .ne import *
 from .narrow import *
 from .pad import *
 from .permute import *
@@ -52,6 +55,7 @@ from .stack import *
 from .sub import *
 from .sum import *
 from .tanh import *
+from .tensor import *
 from .transpose import *
 from .unary import *
 from .view import *
