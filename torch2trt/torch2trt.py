@@ -490,6 +490,8 @@ def torch2trt(module,
               int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
               int8_calib_batch_size=1,
               use_onnx=False,
+              default_device_type=trt.DeviceType.GPU,
+              dla_core=0,
               **kwargs):
     
     # capture arguments to provide to context
@@ -503,6 +505,8 @@ def torch2trt(module,
 
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
+    config = builder.create_builder_config()
+    
     
     if isinstance(inputs, list):
         inputs = tuple(inputs)
@@ -541,10 +545,20 @@ def torch2trt(module,
                 outputs = (outputs,)
             ctx.mark_outputs(outputs, output_names)
 
+    # workspace size
     builder.max_workspace_size = max_workspace_size
+    config.max_workspace_size = max_workspace_size
+    
+    # fp16 mode
     builder.fp16_mode = fp16_mode
+    config.flags |= (1 << int(trt.BuilderFlag.FP16))
+    
+    # batch size
     builder.max_batch_size = max_batch_size
+    
+    # strict type constraints
     builder.strict_type_constraints = strict_type_constraints
+    config.flags |= (1 << int(trt.BuilderFlag.STRICT_TYPES))
 
     if int8_mode:
 
@@ -553,13 +567,17 @@ def torch2trt(module,
             int8_calib_dataset = TensorBatchDataset(inputs_in)
 
         builder.int8_mode = True
+        config.flags |= (1 << int(trt.BuilderFlag.INT8))
 
         # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
-        builder.int8_calibrator = DatasetCalibrator(
+        calibrator = DatasetCalibrator(
             inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
         )
+        builder.int8_calibrator = calibrator
+        config.int8_calibrator = calibrator
 
-    engine = builder.build_cuda_engine(network)
+
+    engine = builder.build_engine(network, config)
 
     module_trt = TRTModule(engine, input_names, output_names)
 
