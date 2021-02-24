@@ -492,6 +492,7 @@ def torch2trt(module,
               use_onnx=False,
               default_device_type=trt.DeviceType.GPU,
               dla_core=0,
+              gpu_fallback=False,
               **kwargs):
     
     # capture arguments to provide to context
@@ -545,6 +546,11 @@ def torch2trt(module,
                 outputs = (outputs,)
             ctx.mark_outputs(outputs, output_names)
 
+    # device type
+    config.default_device_type = default_device_type
+    if gpu_fallback:
+        config.set_flag(trt.BuilderFlag.GPU_FALLBACK)
+    config.DLA_core = dla_core
     
     # workspace size
     builder.max_workspace_size = max_workspace_size
