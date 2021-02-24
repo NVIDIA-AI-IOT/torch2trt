@@ -549,20 +549,23 @@ def torch2trt(module,
                 outputs = (outputs,)
             ctx.mark_outputs(outputs, output_names)
 
+    
     # workspace size
     builder.max_workspace_size = max_workspace_size
     config.max_workspace_size = max_workspace_size
     
     # fp16 mode
     builder.fp16_mode = fp16_mode
-    config.flags |= (1 << int(trt.BuilderFlag.FP16))
+    if fp16_mode:
+        config.set_flag(trt.BuilderFlag.FP16)
     
     # batch size
     builder.max_batch_size = max_batch_size
     
     # strict type constraints
     builder.strict_type_constraints = strict_type_constraints
-    config.flags |= (1 << int(trt.BuilderFlag.STRICT_TYPES))
+    if strict_type_constraints:
+        config.set_flag(trt.BuilderFlag.STRICT_TYPES)
 
     if int8_mode:
 
@@ -571,7 +574,7 @@ def torch2trt(module,
             int8_calib_dataset = TensorBatchDataset(inputs_in)
 
         builder.int8_mode = True
-        config.flags |= (1 << int(trt.BuilderFlag.INT8))
+        config.set_flag(trt.BuilderFlag.INT8)
 
         # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
         calibrator = DatasetCalibrator(
@@ -579,7 +582,6 @@ def torch2trt(module,
         )
         builder.int8_calibrator = calibrator
         config.int8_calibrator = calibrator
-
 
     engine = builder.build_engine(network, config)
 
