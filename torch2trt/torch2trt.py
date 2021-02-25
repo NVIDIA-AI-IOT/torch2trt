@@ -19,6 +19,10 @@ def trt_version():
     return trt.__version__
 
 
+def torch_version():
+    return torch.__version__
+
+
 def torch_dtype_to_trt(dtype):
     if trt_version() >= '7.0' and dtype == torch.bool:
         return trt.bool
@@ -593,7 +597,10 @@ def tensorrt_converter(method, is_real=True, enabled=True, imports=[]):
     else:
         module, module_name, qual_name = importlib.import_module(method.__module__), method.__module__, method.__qualname__
         
-    method_impl = eval('copy.deepcopy(module.%s)' % qual_name)
+    try:
+        method_impl = eval('copy.deepcopy(module.%s)' % qual_name)
+    except:
+        enabled = False
     
     def register_converter(converter):
         CONVERTERS[method] = {
