@@ -323,32 +323,47 @@ def default_input_names(num_inputs):
 def default_output_names(num_outputs):
     return ["output_%d" % i for i in range(num_outputs)]
 
+def device_type_str(device_type):
+    if device_type == trt.DeviceType.GPU:
+        return 'GPU'
+    elif device_type == trt.DeviceType.DLA:
+        return 'DLA'
+    
 
-class LayerNamingNetworkWrapper(object):
+class NetworkWrapper(object):
     def __init__(self, ctx, network):
         self._ctx = ctx
         self._network = network
         self._layer_counts = defaultdict(lambda: 0)
 
-    def _set_layer_name(self, layer):
+    def _configure_layer(self, layer):
+        
+        # set layer device type
+        device_type = self._ctx.current_device_type()
+        self._ctx.builder_config.set_device_type(layer, device_type)
+        if not self._ctx.builder_config.can_run_on_DLA(layer) and device_type == trt.DeviceType.DLA:
+            if self._ctx.torch2trt_kwargs['gpu_fallback']:
+                device_type = trt.DeviceType.GPU  # layer will fall back to GPU
+        
+        # set layer name
         def arg_str(arg):
             if isinstance(arg, torch.Tensor):
                 return "tensor(shape=%s, dtype=%s)" % (str(list(arg.shape)), str(arg.dtype))
             return str(arg)
-
         self._layer_counts[layer.type.name] += 1
         args = [arg_str(arg) for arg in self._ctx.method_args]
         kwargs = ["%s=%s" % (key, arg_str(arg)) for key, arg in self._ctx.method_kwargs.items()]
-        layer.name = "[%s #%d] %s(%s)" % (layer.type.name, self._layer_counts[layer.type.name],
+        layer.name = "%s [%s #%d, %s] %s(%s)" % (self._ctx.current_module_name(), layer.type.name, self._layer_counts[layer.type.name], device_type_str(device_type),
                                           self._ctx.method_str, ", ".join(args + kwargs))
-
+    
+        
     def __getattr__(self, name):
         attr = getattr(self._network, name)
         if callable(attr):
             def wrapper(*args, **kwargs):
                 ret = attr(*args, **kwargs)
                 if isinstance(ret, trt.ILayer):
-                    self._set_layer_name(ret)
+                    self._configure_layer(ret)
                 return ret
 
             return wrapper
@@ -358,26 +373,86 @@ class LayerNamingNetworkWrapper(object):
 
 class ConversionContext(object):
     
-    def __init__(self, network, converters=CONVERTERS, torch2trt_kwargs=None):
-        self.network = LayerNamingNetworkWrapper(self, network)
+    def __init__(self, network, converters=CONVERTERS, torch2trt_kwargs=None, builder_config=None):
+        self.network = NetworkWrapper(self, network)
         self.lock = False
         self.method_args = None
         self.method_kwargs = None
         self.method_return = None
         self.torch2trt_kwargs = torch2trt_kwargs
+        self.builder_config = builder_config
         self.hooks = [
             ConversionHook(self, key, converter)
             for key, converter in converters.items()
         ]
-
+        
+        self.module_stack = []
+        self.module_handles = []
+        self.device_type_stack = []
+        self.module_name_map = {}
+        for name, module in torch2trt_kwargs['module'].named_modules():
+            self.module_name_map[module] = name
+        
+    def current_module_name(self):
+        return self.get_module_name(self.current_module())
+    
+    def current_module(self):
+        return self.module_stack[-1]
+    
+    def get_module_name(self, module):
+        return self.module_name_map[module]
+    
+    def _module_pre_hook(self, module, input):
+        # TODO(@jwelsh): add logging to show module entry / exit
+        self.module_stack.append(module)
+        
+        # hook that is attached to modulee using register_forward_pre_hook, which is called before module is executed
+        if module in self.torch2trt_kwargs['device_types']:
+            device_type = self.torch2trt_kwargs['device_types'][module]
+            self.device_type_stack.append((module, device_type))
+        
+    def _module_post_hook(self, module, input, output):
+        
+        # if module was used to set the current device type, pop device type from stack
+        if self.current_device_type_module() == module:
+            self.device_type_stack.pop()
+            
+        self.module_stack.pop()
+        
+    def current_device_type(self):
+        """Returns the current device type"""
+        if len(self.device_type_stack) > 0:
+            return self.device_type_stack[-1][1]
+        else:
+            return self.torch2trt_kwargs['default_device_type']
+        
+    def current_device_type_module(self):
+        """Returns the module which controls the current device type"""
+        if len(self.device_type_stack) > 0:
+            return self.device_type_stack[-1][0]
+        else:
+            return None
+        
     def __enter__(self):
+        
+        # attach hooks which add converters to methods
         for hook in self.hooks:
             hook.__enter__()
+        
+        # attach hooks which control the current device type
+        for name, module in self.torch2trt_kwargs['module'].named_modules():
+            pre_hook_handle = module.register_forward_pre_hook(self._module_pre_hook)
+            post_hook_handle = module.register_forward_hook(self._module_post_hook)
+            self.module_handles.append(pre_hook_handle)
+            self.module_handles.append(post_hook_handle)
+            
         return self
 
     def __exit__(self, type, val, tb):
         for hook in self.hooks:
             hook.__exit__(type, val, tb)
+        for handle in self.module_handles:
+            handle.remove()
 
     def add_inputs(self, torch_inputs, names=None):
         if names is None:
@@ -492,7 +567,8 @@ def torch2trt(module,
               use_onnx=False,
               default_device_type=trt.DeviceType.GPU,
               dla_core=0,
-              gpu_fallback=False,
+              gpu_fallback=True,
+              device_types={},
               **kwargs):
     
     # capture arguments to provide to context
@@ -536,7 +612,7 @@ def torch2trt(module,
         
     else:
         network = builder.create_network()
-        with ConversionContext(network, torch2trt_kwargs=kwargs) as ctx:
+        with ConversionContext(network, torch2trt_kwargs=kwargs, builder_config=config) as ctx:
 
             ctx.add_inputs(inputs, input_names)
 
