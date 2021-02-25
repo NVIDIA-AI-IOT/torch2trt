@@ -2,9 +2,9 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter('torch.Tensor.__floordiv__', enabled=torch_version() >= '1.6')
-@tensorrt_converter('torch.Tensor.__ifloordiv__', enabled=torch_version() >= '1.6')
-@tensorrt_converter('torch.floor_divide', enabled=torch_version() >= '1.6')
+@tensorrt_converter('torch.Tensor.__floordiv__')
+@tensorrt_converter('torch.Tensor.__ifloordiv__')
+@tensorrt_converter('torch.floor_divide')
 def convert_floordiv(ctx):
     input_a = ctx.method_args[0]
     input_b = ctx.method_args[1]
@@ -36,7 +36,7 @@ class FloorDiv(torch.nn.Module):
         return x // y
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 40, 20), (1, 3, 1, 20)], enabled=torch_version() >= '1.6')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 40, 20), (1, 3, 1, 20)])
 def test_floordiv_op():
     return FloorDiv()
 
@@ -50,7 +50,7 @@ class FloorDivAssign (torch.nn.Module):
         return x
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 40, 20), (1, 3, 1, 20)], enabled=torch_version() >= '1.6')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 40, 20), (1, 3, 1, 20)])
 def test_floordiv_op_assign():
     return FloorDivAssign()
 
@@ -63,7 +63,7 @@ class FloorDivConst(torch.nn.Module):
         return x // 2.
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 40, 20)], enabled=torch_version() >= '1.6')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 40, 20)])
 def test_floordiv_op_const():
     return FloorDivConst()
 
@@ -76,6 +76,6 @@ class TorchFloorDiv(torch.nn.Module):
         return torch.floor_divide(x, y)
 
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 40, 20), (1, 3, 1, 20)], enabled=torch_version() >= '1.6')
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 40, 20), (1, 3, 1, 20)])
 def test_floordiv_func():
     return TorchFloorDiv()
