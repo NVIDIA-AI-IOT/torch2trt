@@ -65,6 +65,8 @@ def convert_avg_pool_trt7(ctx):
         kernel_size = (kernel_size, ) * input_dim
 
     # get stride
+    if stride is None:
+        stride = kernel
     if not isinstance(stride, tuple):
         stride = (stride, ) * input_dim
 
