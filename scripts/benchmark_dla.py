@@ -226,6 +226,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_cache_dir', type=str, default='model_cache')
     parser.add_argument('--nvvp_output_dir', type=str, default='nvvp')
     parser.add_argument('--nvvp', action='store_true')
+    parser.add_argument('--dla_core', type=int, default=0)
     args = parser.parse_args()
 
     if args.use_cache and not os.path.exists(args.model_cache_dir):
@@ -236,12 +237,13 @@ if __name__ == '__main__':
     
     torch_nvvp_path = os.path.join(args.nvvp_output_dir, args.model + '_torch.nvvp')
     trt_nvvp_path = os.path.join(args.nvvp_output_dir, args.model + '_trt.nvvp')
-    model_path = os.path.join(args.model_cache_dir, args.model + '_trt_bs{bs}.pth'.format(bs=args.batch_size))
+    model_path = os.path.join(args.model_cache_dir, args.model + '_trt_bs{bs}_dlacore{dla}.pth'.format(bs=args.batch_size, dla=args.dla_core))
 
     model, kwargs = get_benchmark_config(args.model)
 
     kwargs.update({
-        'max_batch_size': args.batch_size
+        'max_batch_size': args.batch_size,
+        'dla_core': args.dla_core
     })
 
 
