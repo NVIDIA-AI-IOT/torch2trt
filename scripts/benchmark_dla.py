@@ -8,6 +8,7 @@ import os
 import torch
 import torchvision
 import time
+import torch.distributed as dist  # used to test concurrent model execution
 from torch2trt import torch2trt, trt, device_type_str, TRTModule
 
 
@@ -208,6 +209,7 @@ def get_benchmark_config(name):
     
     return model, torch2trt_kwargs
 
+
 def device_types_string(model, device_types):
     str_repr = {}
     for module_a, device_type in device_types.items():
@@ -215,6 +217,7 @@ def device_types_string(model, device_types):
             if module_b == module_a:
                 str_repr[name] = device_type_str(device_type)
     return str(str_repr)
+
 
 if __name__ == '__main__':
 
@@ -227,6 +230,9 @@ if __name__ == '__main__':
     parser.add_argument('--nvvp_output_dir', type=str, default='nvvp')
     parser.add_argument('--nvvp', action='store_true')
     parser.add_argument('--dla_core', type=int, default=0)
+    parser.add_argument('--distributed', action='store_true')
+    parser.add_argument('--world_size', type=int, default=1)
+    parser.add_argument('--rank', type=int, default=0)
     args = parser.parse_args()
 
     if args.use_cache and not os.path.exists(args.model_cache_dir):
@@ -246,6 +252,13 @@ if __name__ == '__main__':
         'dla_core': args.dla_core
     })
 
+    if args.distributed:
+        dist.init_process_group(
+            backend='gloo',
+            init_method='file:///distributed_test',
+            world_size=args.world_size,
+            rank=args.rank
+        )
 
     model = model.cuda().eval()
     data = torch.randn(args.batch_size, 3, 224, 224).cuda()
@@ -258,7 +271,14 @@ if __name__ == '__main__':
         if args.use_cache:
             torch.save(model_trt.state_dict(), model_path)
 
+
     fps_torch = benchmark(data, model, args.benchmark_iters, torch_nvvp_path, args.nvvp) * args.batch_size
+
+    # wait for processes to join if we're running concurrent models
+    if args.distributed:
+        dist.barrier()
+        print('joined process %d' % args.rank)
+
     fps_trt = benchmark(data, model_trt, args.benchmark_iters, trt_nvvp_path, args.nvvp) * args.batch_size
 
     if 'device_types' in kwargs:
