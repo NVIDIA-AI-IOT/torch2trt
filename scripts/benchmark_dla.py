@@ -4,13 +4,15 @@ sys.path.append('..')
 
 # other imports
 import argparse
+import os
 import torch
 import torchvision
 import time
-from torch2trt import torch2trt, trt, device_type_str
+from torch2trt import torch2trt, trt, device_type_str, TRTModule
 
 
-def benchmark(data, model, iterations):
+def benchmark(data, model, iterations, nvvp_output_path, use_nvvp):
+
     output = model(data)
     torch.cuda.current_stream().synchronize()
 
@@ -20,6 +22,14 @@ def benchmark(data, model, iterations):
         output = model(data)
     torch.cuda.current_stream().synchronize()
     t1 = time.monotonic()
+
+    if use_nvvp:
+        torch.cuda.profiler.init(nvvp_output_path, output_mode='csv')
+        torch.cuda.current_stream().synchronize()
+        with torch.cuda.profiler.profile():
+            output = model(data)
+            torch.cuda.current_stream().synchronize()
+
     return float(iterations / (t1 - t0))
 
 
@@ -108,6 +118,90 @@ def get_benchmark_config(name):
                 model.layer3: trt.DeviceType.DLA
             }
         }
+    elif name == 'resnet50_fp16_gpu':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'fp16_mode': True,
+            'default_device_type': trt.DeviceType.GPU
+        }
+    elif name == 'resnet50_int8_gpu':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'int8_mode': True,
+            'default_device_type': trt.DeviceType.GPU
+        }
+    elif name == 'resnet50_fp16_dla':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'fp16_mode': True,
+            'default_device_type': trt.DeviceType.DLA
+        }
+    elif name == 'resnet50_int8_dla':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'int8_mode': True,
+            'default_device_type': trt.DeviceType.DLA
+        }
+    elif name == 'resnet50_fp16_gpu_dla1':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'fp16_mode': True,
+            'default_device_type': trt.DeviceType.GPU,
+            'device_types': {
+                model.layer1: trt.DeviceType.DLA
+            }
+        }
+    elif name == 'resnet50_fp16_gpu_dla12':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'fp16_mode': True,
+            'default_device_type': trt.DeviceType.GPU,
+            'device_types': {
+                model.layer1: trt.DeviceType.DLA,
+                model.layer2: trt.DeviceType.DLA
+            }
+        }
+    elif name == 'resnet50_fp16_gpu_dla123':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'fp16_mode': True,
+            'default_device_type': trt.DeviceType.GPU,
+            'device_types': {
+                model.layer1: trt.DeviceType.DLA,
+                model.layer2: trt.DeviceType.DLA,
+                model.layer3: trt.DeviceType.DLA
+            }
+        }
+    elif name == 'resnet50_int8_gpu_dla1':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'int8_mode': True,
+            'default_device_type': trt.DeviceType.GPU,
+            'device_types': {
+                model.layer1: trt.DeviceType.DLA
+            }
+        }
+    elif name == 'resnet50_int8_gpu_dla12':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'int8_mode': True,
+            'default_device_type': trt.DeviceType.GPU,
+            'device_types': {
+                model.layer1: trt.DeviceType.DLA,
+                model.layer2: trt.DeviceType.DLA
+            }
+        }
+    elif name == 'resnet50_int8_gpu_dla123':
+        model = torchvision.models.resnet50(pretrained=True)
+        torch2trt_kwargs = {
+            'int8_mode': True,
+            'default_device_type': trt.DeviceType.GPU,
+            'device_types': {
+                model.layer1: trt.DeviceType.DLA,
+                model.layer2: trt.DeviceType.DLA,
+                model.layer3: trt.DeviceType.DLA
+            }
+        }
     else:
         raise RuntimeError('Module configuration is not recognized.')
 
@@ -128,7 +222,21 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='resnet18_fp16_gpu')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--benchmark_iters', type=float, default=50)
+    parser.add_argument('--use_cache', action='store_true')
+    parser.add_argument('--model_cache_dir', type=str, default='model_cache')
+    parser.add_argument('--nvvp_output_dir', type=str, default='nvvp')
+    parser.add_argument('--nvvp', action='store_true')
     args = parser.parse_args()
+
+    if args.use_cache and not os.path.exists(args.model_cache_dir):
+        os.makedirs(args.model_cache_dir)
+
+    if args.nvvp and not os.path.exists(args.nvvp_output_dir):
+        os.makedirs(args.nvvp_output_dir)
+    
+    torch_nvvp_path = os.path.join(args.nvvp_output_dir, args.model + '_torch.nvvp')
+    trt_nvvp_path = os.path.join(args.nvvp_output_dir, args.model + '_trt.nvvp')
+    model_path = os.path.join(args.model_cache_dir, args.model + '_trt_bs{bs}.pth'.format(bs=args.batch_size))
 
     model, kwargs = get_benchmark_config(args.model)
 
@@ -140,11 +248,16 @@ if __name__ == '__main__':
     model = model.cuda().eval()
     data = torch.randn(args.batch_size, 3, 224, 224).cuda()
 
+    if args.use_cache and os.path.exists(model_path):
+        model_trt = TRTModule()
+        model_trt.load_state_dict(torch.load(model_path))
+    else:
+        model_trt = torch2trt(model, [data], **kwargs)
+        if args.use_cache:
+            torch.save(model_trt.state_dict(), model_path)
 
-    model_trt = torch2trt(model, [data], **kwargs)
-
-    fps_torch = benchmark(data, model, args.benchmark_iters) * args.batch_size
-    fps_trt = benchmark(data, model_trt, args.benchmark_iters) * args.batch_size
+    fps_torch = benchmark(data, model, args.benchmark_iters, torch_nvvp_path, args.nvvp) * args.batch_size
+    fps_trt = benchmark(data, model_trt, args.benchmark_iters, trt_nvvp_path, args.nvvp) * args.batch_size
 
     if 'device_types' in kwargs:
         kwargs.update({'device_types': device_types_string(model, kwargs['device_types'])})
@@ -155,3 +268,4 @@ if __name__ == '__main__':
         fps_torch=fps_torch,
         fps_trt=fps_trt
     ))
+    
