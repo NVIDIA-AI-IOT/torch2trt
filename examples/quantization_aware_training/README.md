@@ -83,6 +83,8 @@ Here pretrained weights from imagenet are used.
 | Resnet34 | 84.65 | 84.65 | 83.26 | 84.5 |  
 
 
+**Please note that the idea behind these experiments is to see if TRT conversion is working properly rather than achieving industry standard accuracy results**
+
 ## Future Work
 
 - Add results for Resnet50, EfficientNet and Mobilenet
