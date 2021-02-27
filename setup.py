@@ -10,6 +10,7 @@ def trt_lib_dir():
     return "/usr/lib/aarch64-linux-gnu"
 
 ext_modules = []
+exclude_dir = ["torch2trt_contrib","torch2trt_contrib.*"]
 
 plugins_ext_module = CUDAExtension(
         name='plugins', 
@@ -33,13 +34,16 @@ plugins_ext_module = CUDAExtension(
 if '--plugins' in sys.argv:
     ext_modules.append(plugins_ext_module)
     sys.argv.remove('--plugins')
-    
+
+if '--experimental' in sys.argv:
+    exclude_dir=[] 
+    sys.argv.remove('--experimental')
 
 setup(
     name='torch2trt',
     version='0.1.0',
     description='An easy to use PyTorch to TensorRT converter',
-    packages=find_packages(),
+    packages=find_packages(exclude=exclude_dir),
     ext_package='torch2trt',
     ext_modules=ext_modules,
     cmdclass={'build_ext': BuildExtension}
