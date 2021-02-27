@@ -510,7 +510,6 @@ def torch2trt(module,
     # capture arguments to provide to context
     kwargs.update(locals())
     kwargs.pop('kwargs')
-
     inputs_in = inputs
 
     # copy inputs to avoid modifications to source data
@@ -568,12 +567,14 @@ def torch2trt(module,
             int8_calib_dataset = TensorBatchDataset(inputs_in)
 
         builder.int8_mode = True
-
+        
+        #Making sure not to run calibration with QAT mode on 
+        if not 'qat_mode' in kwargs:
         # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
-        builder.int8_calibrator = DatasetCalibrator(
-            inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
-        )
-
+            builder.int8_calibrator = DatasetCalibrator(
+                inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
+            )
+        
     engine = builder.build_cuda_engine(network)
 
     module_trt = TRTModule(engine, input_names, output_names)
