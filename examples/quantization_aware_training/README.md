@@ -40,8 +40,8 @@ RUN cd /sw/TensorRT/ && \
 
 RUN git clone https://github.com/NVIDIA-AI-IOT/torch2trt.git /sw/TensorRT/ && \
     cd /sw/TensorRT/ && \
-    git fetch origin pull/442/head:PR442 && \
-    git checkout PR442 && \
+    git fetch origin pull/514/head:PR514 && \
+    git checkout PR514 && \
     python setup.py install --plugins
 
 ```
