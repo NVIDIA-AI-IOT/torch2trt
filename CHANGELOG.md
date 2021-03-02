@@ -2,6 +2,8 @@
 
 ## [Master]
 
+## [0.2.0] - 03/02/2021
+
 ### Added 
 
 - Added converter for ``torch.Tensor.expand``
