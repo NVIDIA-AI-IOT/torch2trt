@@ -224,7 +224,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='resnet18_fp16_gpu')
     parser.add_argument('--batch_size', type=int, default=1)
-    parser.add_argument('--benchmark_iters', type=float, default=50)
+    parser.add_argument('--benchmark_iters', type=float, default=100)
     parser.add_argument('--use_cache', action='store_true')
     parser.add_argument('--model_cache_dir', type=str, default='model_cache')
     parser.add_argument('--nvvp_output_dir', type=str, default='nvvp')
@@ -273,6 +273,10 @@ if __name__ == '__main__':
 
 
     fps_torch = benchmark(data, model, args.benchmark_iters, torch_nvvp_path, args.nvvp) * args.batch_size
+
+    # run model once before concurrent execution to ensure runtimes overlap
+    output = model_trt(data)
+    torch.cuda.current_stream().synchronize()
 
     # wait for processes to join if we're running concurrent models
     if args.distributed:
