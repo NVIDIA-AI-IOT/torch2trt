@@ -6,7 +6,7 @@ can utilize the DLA(s) on your device with torch2trt.
 
 !!! note
 
-    We've benchmarked resnet18 running on Jetson Xavier NX under varying configurations.  You can find the results [here](/benchmarks/dla_benchmarks.html).  This may help you understand if DLA is applicable for your use case.
+    We've benchmarked resnet18 running on Jetson Xavier NX under varying configurations.  You can find the results [here](../benchmarks/dla_benchmarks.html).  This may help you understand if DLA is applicable for your use case.
 
 ## Enable DLA Globally
 
