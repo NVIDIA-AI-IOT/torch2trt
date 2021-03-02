@@ -1,5 +1,5 @@
 From fa12201005e221fc6de8b0d836fdd60c0a107aaa Mon Sep 17 00:00:00 2001
-From: Kshitij Srivastava <kshitij@udel.edu>
+From: Kshitij Srivastava <kshitij.srivastava@uber.com>
 Date: Wed, 4 Nov 2020 18:01:14 -0500
 Subject: [PATCH] saving learned amax as a part of state dict
 
