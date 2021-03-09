@@ -9,16 +9,14 @@ import torchvision.models as models
 import re
 import timeit
 
-def transfer_learning_resnet18():
-    resnet18 = models.resnet18(pretrained=True)
-    #for param in resnet18.parameters():
-    #    param.requires_grad = False
+def transfer_learning_resnet18(pretrained=True):
+    resnet18 = models.resnet18(pretrained=pretrained)
     num_ftrs = resnet18.fc.in_features
     resnet18.fc = nn.Linear(num_ftrs, 10)
     return resnet18
 
-def transfer_learning_resnet34():
-    resnet34 = models.resnet34(pretrained=True)
+def transfer_learning_resnet34(pretrained=True):
+    resnet34 = models.resnet34(pretrained=pretrained)
     num_ftrs = resnet34.fc.in_features
     resnet34.fc = nn.Linear(num_ftrs,10)
     return resnet34

@@ -64,7 +64,7 @@ Workflow consists of three parts.
 
 Here pretrained weights from imagenet are used. 
 
-`python train.py --m resnet34-tl / resnet18-tl --num_epochs 25`
+`python train.py --m resnet34-tl / resnet18-tl --num_epochs 25 --test_trt --FP16 --INT8PTC`
 
 2. Train with quantization (weights are mapped using a custom function to make sure that each weight is loaded correctly)
 

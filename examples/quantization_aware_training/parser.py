@@ -22,6 +22,10 @@ def parse_args():
     parser.add_argument('--netqat',action='store_true',help = 'quantize model using custom layer')
     parser.add_argument('--partial_ckpt',action='store_true',help = 'load_partial checkpoint')
     parser.add_argument('--v','--verbose',action='store_true')
+    parser.add_argument('--FP16',action='store_true',help='run TRT engine at FP16')
+    parser.add_argument('--test_trt',action='store_true',help='gather metrics using trt')
+    parser.add_argument('--INT8PTC',action='store_true',help='run TRT engine at INT8 with Post Training Cal')
+    parser.add_argument('--INT8QAT',action='store_true',help='run TRT engine at INT8 with QAT')
     args = parser.parse_args()
     return args
 
