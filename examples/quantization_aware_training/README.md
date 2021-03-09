@@ -72,7 +72,7 @@ Here pretrained weights from imagenet are used.
 
 3. Infer with and without TRT
 
-`python infer.py --m resnet34/resnet18 --load_ckpt /tmp/pytorch_exp_1/ckpt_{} --netqat`
+`python infer.py --m resnet34/resnet18 --load_ckpt /tmp/pytorch_exp_1/ckpt_{} --netqat --INT8QAT`
 
 
 ## Accuracy Results 
