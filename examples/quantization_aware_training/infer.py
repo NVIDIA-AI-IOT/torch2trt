@@ -1,4 +1,3 @@
-
 import timeit
 import torch 
 import torch.nn as nn
@@ -7,12 +6,13 @@ import torchvision
 import argparse
 import os,sys 
 from datasets.cifar10 import Cifar10Loaders
-from utils.utilities import calculate_accuracy, timeGraph,printStats,mapping_names_resnets 
+from utils.utilities import calculate_accuracy, timeGraph,printStats
 from models.resnet import resnet18,resnet34
 from parser import parse_args
 from torch2trt import torch2trt
 import tensorrt as trt
 torch.set_printoptions(precision=5)
+
 def main():
     args = parse_args()
 

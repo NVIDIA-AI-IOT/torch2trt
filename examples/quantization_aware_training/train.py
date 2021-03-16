@@ -8,10 +8,9 @@ import torch.optim as optim
 from datasets.cifar10 import Cifar10Loaders
 from models.models import vanilla_cnn
 from models.resnet import resnet18 , resnet34
-from utils.utilities import calculate_accuracy , add_missing_keys, transfer_learning_resnet18,transfer_learning_resnet34, mapping_names,mapping_names_resnets 
+from utils.utilities import calculate_accuracy , add_missing_keys, transfer_learning_resnet18,transfer_learning_resnet34, mapping_names
 from parser import parse_args
 import time
-from torch.optim.lr_scheduler import StepLR
 from torch2trt import torch2trt
 import tensorrt as trt 
 
@@ -96,7 +95,6 @@ def main():
         loss = checkpoint['loss']
         print("===>>> Checkpoint loaded successfully from {} at epoch {} ".format(args.load_ckpt,epoch))
 
-    #scheduler = StepLR(optimizer, step_size=7)
     print("===>> Training started")
     for epoch in range(args.start_epoch, args.start_epoch + args.num_epochs):
         running_loss=0.0
@@ -115,7 +113,6 @@ def main():
             loss = criterion(outputs,labels)
             loss.backward()
             optimizer.step()
-            #scheduler.step()
 
             running_loss +=loss.item()
         
