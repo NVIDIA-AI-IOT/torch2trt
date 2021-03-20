@@ -1,5 +1,7 @@
 # torch2trt
 
+> What models are you using, or hoping to use, with TensorRT?  Feel free to join the discussion [here](https://github.com/NVIDIA-AI-IOT/torch2trt/discussions/531).
+ 
 <a href="https://nvidia-ai-iot.github.io/torch2trt"><img src="https://img.shields.io/badge/-Documentation-brightgreen"/></a>
 
 torch2trt is a PyTorch to TensorRT converter which utilizes the 
