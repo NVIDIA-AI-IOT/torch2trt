@@ -7,6 +7,7 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.Tensor.view')
 @tensorrt_converter('torch.Tensor.squeeze')
 @tensorrt_converter('torch.Tensor.unsqueeze')
+@tensorrt_converter('torch.Tensor.flatten')
 @tensorrt_converter('torch.squeeze')
 @tensorrt_converter('torch.unsqueeze')
 def convert_view(ctx):
