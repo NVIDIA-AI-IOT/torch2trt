@@ -16,3 +16,4 @@ __pycache__/
 *.ipynb_checkpoints
 *.pth
 docs/converters.md
+site

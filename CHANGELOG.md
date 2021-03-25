@@ -4,6 +4,9 @@
 
 ## [0.2.0] - 03/02/2021
 
+- Added converter for ``torch.Tensor.flatten``
+- Added converter for ``torch.nn.functional.conv2d`` and ``torch.nn.functional.conv3d``
+
 ### Added 
 
 - Added converter for ``torch.Tensor.expand``
