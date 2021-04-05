@@ -25,6 +25,9 @@ RUN add-apt-repository ppa:git-core/ppa && \
 
 RUN pip install termcolor graphviz
 
+## If you have followed instructions on main README.md file to install torch2trt using scripts/build_contrib.sh
+## You dont require rest of the steps
+
 RUN git clone https://github.com/NVIDIA/TensorRT.git /sw/TensorRT/
 
 ##Make sure that patch file is under the same folder where dockerfile is being called

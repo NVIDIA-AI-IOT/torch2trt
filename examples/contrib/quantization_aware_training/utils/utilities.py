@@ -3,8 +3,8 @@ import torch.nn as nn
 import numpy as np
 import collections
 from pytorch_quantization import tensor_quant
-from torch2trt_contrib.qat.layers.quant_conv import QuantConvBN2d,QuantConv2d,IQuantConv2d, IQuantConvBN2d
-from torch2trt_contrib.qat.layers.quant_activation import QuantReLU, IQuantReLU
+from torch2trt.contrib.qat.layers.quant_conv import QuantConvBN2d,QuantConv2d,IQuantConv2d, IQuantConvBN2d
+from torch2trt.contrib.qat.layers.quant_activation import QuantReLU, IQuantReLU
 import torchvision.models as models  
 import re
 import timeit

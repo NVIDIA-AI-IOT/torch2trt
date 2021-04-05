@@ -1,7 +1,7 @@
 from torch2trt.torch2trt import *
 import tensorrt as trt
 
-@tensorrt_converter('torch2trt_contrib.qat.layers.quant_activation.IQuantReLU.forward',enabled=trt_version() >= '7.0')
+@tensorrt_converter('torch2trt.contrib.qat.layers.quant_activation.IQuantReLU.forward',enabled=trt_version() >= '7.0')
 def convert_QuantReLU(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
