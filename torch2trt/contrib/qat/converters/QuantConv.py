@@ -2,7 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 import tensorrt as trt
 
-@tensorrt_converter('torch2trt_contrib.qat.layers.quant_conv.IQuantConvBN2d.forward', enabled=trt_version() >= '7.0') 
+@tensorrt_converter('torch2trt.contrib.qat.layers.quant_conv.IQuantConv2d.forward', enabled=trt_version() >= '7.0') 
 def convert_QuantConv(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
@@ -27,11 +27,11 @@ def convert_QuantConv(ctx):
     if not isinstance(dilation, tuple):
         dilation = (dilation, ) * input_dim
 
-    kernel = module.folded_weight.detach().cpu().numpy()
+    kernel = module.weight.detach().cpu().numpy()
     
     bias = None #trt.Weights(torch_dtype_to_trt(module.weight.dtype))
-    if hasattr(module,'folded_bias'):
-        bias = module.folded_bias.detach().cpu().numpy()
+    if module.bias is not None:
+        bias = module.bias.detach().cpu().numpy()
 
     layer = ctx.network.add_convolution_nd(
         input=input_trt,
@@ -47,7 +47,7 @@ def convert_QuantConv(ctx):
         layer.num_groups = module.groups
     
     if 'qat_mode' in ctx.torch2trt_kwargs:
-        #Setting dynamic range for conv
+    #Setting dynamic range for conv
         w_quant_amax = module._weight_quantizer.learned_amax
         layer.precision = trt.int8
         layer.set_output_type(0,trt.int8)

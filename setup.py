@@ -10,7 +10,7 @@ def trt_lib_dir():
     return "/usr/lib/aarch64-linux-gnu"
 
 ext_modules = []
-exclude_dir = ["torch2trt_contrib","torch2trt_contrib.*"]
+exclude_dir = ["torch2trt/contrib","torch2trt/contrib.*"]
 
 plugins_ext_module = CUDAExtension(
         name='plugins', 
@@ -35,9 +35,9 @@ if '--plugins' in sys.argv:
     ext_modules.append(plugins_ext_module)
     sys.argv.remove('--plugins')
 
-if '--experimental' in sys.argv:
+if '--contrib' in sys.argv:
     exclude_dir=[] 
-    sys.argv.remove('--experimental')
+    sys.argv.remove('--contrib')
 
 setup(
     name='torch2trt',

@@ -133,13 +133,9 @@ To install with `torch2trt_contrib` to play with QAT workflow that is supported 
 
 ```bash
 git clone https://github.com/NVIDIA-AI-IOT/torch2trt
-cd torch2trt
-sudo python setup.py install --plugins --experimental
+cd torch2trt/scripts    
+bash build_contrib.sh   
 ```
-
-Please note that you will have to install Nvidia open source QAT workflow for training in your env.
-Please see `examples/quantization_aware_training/README.md` file for instructions 
-
 
 ## How does it work?
 
