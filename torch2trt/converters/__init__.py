@@ -57,6 +57,7 @@ from .sub import *
 from .sum import *
 from .tanh import *
 from .tensor import *
+from .topk import *
 from .transpose import *
 from .unary import *
 from .view import *
