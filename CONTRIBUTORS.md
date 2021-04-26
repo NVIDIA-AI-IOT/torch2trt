@@ -3,12 +3,13 @@
 Below is a list of developers who have contributed to torch2trt.  This is also used to track contributors
 who have agreed to torch2trt's Contributor License Agreement.
 
+- [John Welsh](https://github.com/jaybdub)
 
 ## Becoming a Contributor
 
 If you've made a notable contribution to torch2trt and wish to be listed as a contributor, simply do the following.
 
-1. Modify ``CONTRIBUTORS.md`` and add your name with a hyperlink to your GitHub account.  
+1. Modify ``CONTRIBUTORS.md`` and add your name with a hyperlink to your GitHub account to the end of the contributors list.
 
     ```md
     - [<Full name or GitHub account>](https://github.com/<GitHub account>)
@@ -23,7 +24,7 @@ If you've made a notable contribution to torch2trt and wish to be listed as a co
 3. Make a signed commit with the following message text
 
     ```md
-    git commit -S -m "Added <Full name or GitHub account> to CONTRIBUTORS.md."
+    git commit -m "Added <Full name or GitHub account> to CONTRIBUTORS.md"
     ```
 
 ## Signing Contributor License Agreement (CLA)
