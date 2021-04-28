@@ -2,6 +2,8 @@
 
 ## [Master]
 
+- Added support for using DLA
+
 ## [0.2.0] - 03/02/2021
 
 - Added converter for ``torch.Tensor.flatten``

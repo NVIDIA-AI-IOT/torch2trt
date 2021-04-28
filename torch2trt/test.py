@@ -101,6 +101,7 @@ if __name__ == '__main__':
     parser.add_argument('--tolerance', help='Maximum error to print warning for entry', type=float, default='-1')
     parser.add_argument('--include', help='Addition python file to include defining additional tests', action='append', default=[])
     parser.add_argument('--use_onnx', help='Whether to test using ONNX or torch2trt tracing', action='store_true')
+    parser.add_argument('--use_dla', help='Enable to use DLA during testing', action='store_true')
     args = parser.parse_args()
     
     for include in args.include:
@@ -119,6 +120,10 @@ if __name__ == '__main__':
         try:
             if args.use_onnx:
                 test.torch2trt_kwargs.update({'use_onnx': True})
+            if args.use_dla:
+                test.torch2trt_kwargs.update({'default_device_type': trt.DeviceType.DLA})
+                if 'int8_mode' not in test.torch2trt_kwargs or test.torch2trt_kwargs['int8_mode'] == False:
+                    test.torch2trt_kwargs.update({'fp16_mode': True})  # either fp16 or int8 mode are required for DLA
                 
             max_error, fps, fps_trt, ms, ms_trt = run(test)
 

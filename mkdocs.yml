@@ -37,10 +37,12 @@ nav:
       - Basic Usage: usage/basic_usage.md
       - Reduced Precision: usage/reduced_precision.md
       - Custom Converter: usage/custom_converter.md
+      - DLA Usage: usage/dla_usage.md
   - Converters: converters.md
   - Benchmarks: 
       - Jetson Nano: benchmarks/jetson_nano.md
       - Jetson Xavier: benchmarks/jetson_xavier.md
+      - DLA Benchmarks: benchmarks/dla_benchmarks.md
   - Contributing: CONTRIBUTING.md
   - See Also: see_also.md
 
