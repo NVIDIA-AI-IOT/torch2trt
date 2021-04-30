@@ -10,8 +10,8 @@ This contrib folder provides layers and converters for Quantization Aware Traini
  
 ### Future Support for Layers
 
- -Pooling layers
- -Linear layer
+ -Pooling layers    
+ -Linear layer    
 
 ### Supported Quantization Techniques
 
