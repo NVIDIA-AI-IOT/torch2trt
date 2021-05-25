@@ -547,9 +547,9 @@ def torch2trt(module,
 
     config = builder.create_builder_config()
     config.max_workspace_size = max_workspace_size
-    config.flags = 1 << int(trt.BuilderFlag.FP16)
+    config.flags = fp16_mode << int(trt.BuilderFlag.FP16)
+    config.flags = strict_type_constraints << int(trt.BuilderFlag.STRICT_TYPES)
     builder.max_batch_size = max_batch_size
-    builder.strict_type_constraints = strict_type_constraints
 
     if int8_mode:
 
