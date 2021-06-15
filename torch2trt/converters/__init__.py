@@ -28,11 +28,13 @@ from .compare import *
 from .div import *
 from .expand import *
 from .floordiv import *
+from .gelu import *
 from .getitem import *
+from .group_norm import *
 from .identity import *
 from .instance_norm import *
 from .interpolate import *
-from .group_norm import *
+from .layer_norm import *
 from .max import *
 from .max_pool2d import *
 from .mean import *
@@ -50,6 +52,7 @@ from .prod import *
 from .relu import *
 from .relu6 import *
 from .sigmoid import *
+from .silu import *
 from .softmax import *
 from .split import *
 from .stack import *

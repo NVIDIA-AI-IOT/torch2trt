@@ -2,10 +2,11 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter('torch.nn.Linear.forward')
+@tensorrt_converter('torch.nn.functional.linear')
 def convert_Linear(ctx):
-    module = ctx.method_args[0]
-    input = ctx.method_args[1]
+    input = ctx.method_args[0]
+    weight = get_arg(ctx, 'weight', 1, None)
+    bias = get_arg(ctx, 'bias', 2, None)
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
 
@@ -13,23 +14,23 @@ def convert_Linear(ctx):
     layer = ctx.network.add_shuffle(input_trt)
     layer.reshape_dims = tuple(input_trt.shape) + (1, 1) 
 
-    bias = trt.Weights(torch_dtype_to_trt(module.weight.dtype))
-    if module.bias is not None:
-        bias = module.bias.detach().cpu().numpy()
+    bias_trt = trt.Weights(torch_dtype_to_trt(weight.dtype))
+    if bias is not None:
+        bias_trt = bias.detach().cpu().numpy()
         
     # add fully connected
     layer = ctx.network.add_fully_connected(
         input=layer.get_output(0),
-        num_outputs=module.out_features,
-        kernel=module.weight.detach().cpu().numpy(),
-        bias=bias)
+        num_outputs=int(weight.shape[0]),
+        kernel=weight.detach().cpu().numpy(),
+        bias=bias_trt)
 
     # reshape back to N
     layer = ctx.network.add_shuffle(layer.get_output(0))
     layer.reshape_dims = tuple(output.shape[1:])
 
     output._trt = layer.get_output(0)
-
+    
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 10)])
