@@ -2,6 +2,11 @@
 
 ## [Master]
 
+- Added converter for ``torch.nn.functional.layer_norm``
+- Added converter for ``torch.nn.functional.gelu``
+- Added converter for ``torch.nn.functional.linear``
+- Added converter for ``torch.nn.functional.silu``
+
 ## [0.2.0] - 03/02/2021
 
 - Added converter for ``torch.Tensor.flatten``
