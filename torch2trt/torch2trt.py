@@ -556,10 +556,11 @@ def torch2trt(module,
                 outputs = (outputs,)
             ctx.mark_outputs(outputs, output_names)
 
-    builder.max_workspace_size = max_workspace_size
-    builder.fp16_mode = fp16_mode
+    config = builder.create_builder_config()
+    config.max_workspace_size = max_workspace_size
+    config.flags = fp16_mode << int(trt.BuilderFlag.FP16)
+    config.flags = strict_type_constraints << int(trt.BuilderFlag.STRICT_TYPES)
     builder.max_batch_size = max_batch_size
-    builder.strict_type_constraints = strict_type_constraints
 
     if int8_mode:
 
@@ -574,7 +575,7 @@ def torch2trt(module,
             inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
         )
 
-    engine = builder.build_cuda_engine(network)
+    engine = builder.build_engine(network, config)
 
     module_trt = TRTModule(engine, input_names, output_names)
 
