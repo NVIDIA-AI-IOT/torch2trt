@@ -370,8 +370,13 @@ class LayerNamingNetworkWrapper(object):
         else:
             return attr
 
+def active_context():
+    return ConversionContext._ACTIVE_CONTEXT
+
 
 class ConversionContext(object):
+    
+    _ACTIVE_CONTEXT = None
     
     def __init__(self, network, converters=CONVERTERS, torch2trt_kwargs=None):
         self.network = LayerNamingNetworkWrapper(self, network)
@@ -388,12 +393,14 @@ class ConversionContext(object):
     def __enter__(self):
         for hook in self.hooks:
             hook.__enter__()
+        ConversionContext._ACTIVE_CONTEXT = self
         return self
 
     def __exit__(self, type, val, tb):
         for hook in self.hooks:
             hook.__exit__(type, val, tb)
-
+        ConversionContext._ACTIVE_CONTEXT = None
+    
     def add_inputs(self, torch_inputs, names=None):
         if names is None:
             names = default_input_names(len(torch_inputs))

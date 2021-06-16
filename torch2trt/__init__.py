@@ -1,5 +1,6 @@
 from .torch2trt import *
 from .converters import *
+from .einsum_backend import tensordot, transpose
 import tensorrt as trt
 
 
