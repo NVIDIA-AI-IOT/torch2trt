@@ -2,6 +2,7 @@
 
 ## [Master]
 
+- Added converter for ``torch.einsum``
 - Added converter for ``torch.nn.functional.layer_norm``
 - Added converter for ``torch.nn.functional.gelu``
 - Added converter for ``torch.nn.functional.linear``
