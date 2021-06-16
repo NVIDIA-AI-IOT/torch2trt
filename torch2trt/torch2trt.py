@@ -329,7 +329,7 @@ class ConversionHook(object):
             )
         )
 
-    def __exit__(self, type, val, tb):
+    def __exit__(self, *args, **kwargs):
         self._set_method(self.converter['method_impl'])
 
 def default_input_names(num_inputs):
@@ -396,9 +396,9 @@ class ConversionContext(object):
         ConversionContext._ACTIVE_CONTEXT = self
         return self
 
-    def __exit__(self, type, val, tb):
+    def __exit__(self, *args, **kwargs):
         for hook in self.hooks:
-            hook.__exit__(type, val, tb)
+            hook.__exit__(*args, **kwargs)
         ConversionContext._ACTIVE_CONTEXT = None
     
     def add_inputs(self, torch_inputs, names=None):

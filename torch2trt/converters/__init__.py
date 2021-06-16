@@ -26,7 +26,7 @@ from .chunk import *
 from .clamp import *
 from .compare import *
 from .div import *
-from .einsum import *
+from .einsum_converter import *
 from .expand import *
 from .floordiv import *
 from .gelu import *
