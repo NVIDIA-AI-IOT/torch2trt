@@ -51,6 +51,7 @@ from .prelu import *
 from .prod import *
 from .relu import *
 from .relu6 import *
+from .roll import *
 from .sigmoid import *
 from .silu import *
 from .softmax import *
