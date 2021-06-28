@@ -3,6 +3,7 @@
 Below is a list of developers who have contributed to torch2trt.  This is also used to track contributors
 who have agreed to torch2trt's Contributor License Agreement.
 
+- John Welsh
 
 ## Becoming a Contributor
 
