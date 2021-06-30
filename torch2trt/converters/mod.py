@@ -64,7 +64,7 @@ class ModAssign(torch.nn.Module):
         super(ModAssign, self).__init__()
 
     def forward(self, x, y):
-        x %= y
+        x = x % y
         return x
 
 
