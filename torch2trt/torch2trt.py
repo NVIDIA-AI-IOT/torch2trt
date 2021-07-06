@@ -163,7 +163,6 @@ def add_missing_trt_tensors(network, tensors):
                 else:
                     break
             shape = tuple(t.shape[num_preceding_ones:])
-            
             weight = t.detach().cpu().numpy()
             t._trt = network.add_constant(shape, weight).get_output(0)
             trt_tensor = t._trt

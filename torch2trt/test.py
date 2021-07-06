@@ -45,6 +45,8 @@ def run(self):
         if outputs[i].dtype == torch.bool:
             max_error_i = torch.sum(outputs[i] ^ outputs_trt[i])
         else:
+            print("under test.py")
+            print("pytorch op",outputs[i].size(),"trt op",outputs_trt[i].size())
             max_error_i = torch.max(torch.abs(outputs[i] - outputs_trt[i]))
 
         if max_error_i > max_error:
