@@ -146,15 +146,18 @@ def add_missing_trt_tensors(network, tensors):
         # get tensor w/ _trt
         # or... add constant for scalar primitive
         if isinstance(t, float) or isinstance(t, int):
+            print("if")
             shape = (1,)
             scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
             trt_tensor = network.add_constant(shape, scalar).get_output(0)
         elif hasattr(t, "_trt"):
+            print("elif")
+            print(t.shape,t._trt.shape)
             trt_tensor = t._trt
 
         # or... add constant for leaf tensor w/o _trt
         else:
-            
+            print("else condition") 
             # remove all preceding ones, these can be re-inserted later when broadcasting
             num_preceding_ones = 0
             for j in range(len(t.shape)):
@@ -169,7 +172,7 @@ def add_missing_trt_tensors(network, tensors):
 
 
         assert trt_tensor is not None
-
+        print(trt_tensor.shape)
         trt_tensors[i] = trt_tensor
 
     return trt_tensors
@@ -513,8 +516,9 @@ def torch2trt(module,
     inputs_in = inputs
 
     # copy inputs to avoid modifications to source data
-    inputs = [tensor.clone()[0:1] for tensor in inputs]  # only run single entry
-
+    inputs = [tensor.clone() for tensor in inputs]  # only run single entry
+    for tensor in inputs:
+        print(tensor.shape)
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
     
