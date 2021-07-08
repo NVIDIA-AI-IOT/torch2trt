@@ -17,7 +17,9 @@ from .Linear import *
 from .LogSoftmax import *
 from .activation import *
 from .adaptive_avg_pool2d import *
+from .adaptive_avg_pool3d import *
 from .adaptive_max_pool2d import *
+from .adaptive_max_pool3d import *
 from .add import *
 from .avg_pool import *
 from .batch_norm import *
@@ -37,6 +39,7 @@ from .interpolate import *
 from .layer_norm import *
 from .max import *
 from .max_pool2d import *
+from .max_pool3d import *
 from .mean import *
 from .min import *
 from .mod import *
