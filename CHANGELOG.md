@@ -2,7 +2,7 @@
 
 ## [Master]
 
-- Added Quantization Aware Training (QAT) to contrib examples
+- Added Quantization Aware Training (QAT) workflow to contrib
 - Added converter for ``torch.roll``
 - Added converter for ``torch.nn.functional.layer_norm``
 - Added converter for ``torch.nn.functional.gelu``
