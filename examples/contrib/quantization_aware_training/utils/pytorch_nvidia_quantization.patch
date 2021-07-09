@@ -1,0 +1,35 @@
+From fa12201005e221fc6de8b0d836fdd60c0a107aaa Mon Sep 17 00:00:00 2001
+From: Kshitij Srivastava <kshitij.srivastava@uber.com>
+Date: Wed, 4 Nov 2020 18:01:14 -0500
+Subject: [PATCH] saving learned amax as a part of state dict
+
+---
+ .../pytorch_quantization/nn/modules/tensor_quantizer.py      | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/tools/pytorch-quantization/pytorch_quantization/nn/modules/tensor_quantizer.py b/tools/pytorch-quantization/pytorch_quantization/nn/modules/tensor_quantizer.py
+index fd3f32c..d26c585 100644
+--- a/tools/pytorch-quantization/pytorch_quantization/nn/modules/tensor_quantizer.py
++++ b/tools/pytorch-quantization/pytorch_quantization/nn/modules/tensor_quantizer.py
+@@ -87,6 +87,10 @@ class TensorQuantizer(nn.Module):
+ 
+         if quant_desc.amax is not None:
+             self.register_buffer('_amax', torch.tensor(quant_desc.amax))
++        
++        ##dynamic amax needs to be stored as a part of state dict to be used at inference time to map dynamic range to
++        # TRT layer
++        self.register_buffer('learned_amax',torch.tensor(1))
+ 
+         # Clip module consumes a lot of memory, so only create it if learn_amax is True
+         if self._learn_amax:
+@@ -273,6 +277,7 @@ class TensorQuantizer(nn.Module):
+         if self._scale_amax is not None:
+             amax = amax.detach() * self._scale_amax
+ 
++        self.learned_amax = amax
+         return amax
+ 
+     def _fb_fake_quant(self, inputs, amax):
+-- 
+2.29.2
+

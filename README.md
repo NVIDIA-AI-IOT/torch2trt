@@ -115,7 +115,7 @@ cd torch2trt
 python setup.py install
 ```
 
-### Option 2 - With plugins (experimental)
+### Option 2 - With plugins 
 
 To install with plugins to support some operations in PyTorch that are not natviely supported with TensorRT, call the following
 
@@ -126,6 +126,19 @@ git clone https://github.com/NVIDIA-AI-IOT/torch2trt
 cd torch2trt
 sudo python setup.py install --plugins
 ```
+
+### Option 3 - With support for experimental community contributed features
+
+To install torch2trt with experimental community contributed features under ``torch2trt.contrib``, like Quantization Aware Training (QAT)(`requires TensorRT>=7.0`), call the following,      
+
+```bash
+git clone https://github.com/NVIDIA-AI-IOT/torch2trt
+cd torch2trt/scripts    
+bash build_contrib.sh   
+```
+  
+This enables you to run the QAT example located [here](examples/contrib/quantization_aware_training).   
+    
 
 ## How does it work?
 
