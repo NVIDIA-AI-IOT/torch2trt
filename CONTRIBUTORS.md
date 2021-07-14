@@ -3,6 +3,7 @@
 Below is a list of developers who have contributed to torch2trt.  This is also used to track contributors
 who have agreed to torch2trt's Contributor License Agreement.
 
+- [John Welsh](https://github.com/jaybdub) (CLA)
 - John Welsh
 
 ## Becoming a Contributor
@@ -42,6 +43,6 @@ In some instances, you may be requested to sign torch2trt's Contributor License 
 4. Make a signed commit with the following text
 
    ```md
-   git commit -S -m "I have read and agree to the Contributor License Agreement as written in the file CLA.pdf of this project.  Signed, <Full Name>"
+   git commit -S -m "I have read and agree to the Contributor License Agreement as written in the file CLA.md of this project.  Signed, <Full Name>"
    ```
 

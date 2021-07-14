@@ -510,7 +510,6 @@ def torch2trt(module,
     # capture arguments to provide to context
     kwargs.update(locals())
     kwargs.pop('kwargs')
-
     inputs_in = inputs
 
     # copy inputs to avoid modifications to source data
@@ -569,10 +568,12 @@ def torch2trt(module,
 
         config.flags = config.flags | int8_mode << int(trt.BuilderFlag.INT8)
 
-        # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
-        config.int8_calibrator = DatasetCalibrator(
-            inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
-        )
+        #Making sure not to run calibration with QAT mode on 
+        if not 'qat_mode' in kwargs:
+            # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
+            config.int8_calibrator = DatasetCalibrator(
+                inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
+            )
 
     engine = builder.build_engine(network, config)
 
