@@ -2,6 +2,8 @@
 
 ## [Master]
 
+## [0.3.0] - 07/15/2021
+
 - Added converter for ``torch.nn.functional.adaptive_avg_pool3d``
 - Added converter for ``torch.nn.functional.adaptive_max_pool3d``
 - Added converter for ``torch.maxpool3d`` and ``torch.nn.functional.max_pool3d``
