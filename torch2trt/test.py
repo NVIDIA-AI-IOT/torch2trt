@@ -157,7 +157,7 @@ if __name__ == '__main__':
             max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt = run(test)
 
             # write entry
-            line = '| %s | %s | %s | %s | %.2E | %.4f | %.4f | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt)
+            line = '| %70s | %s | %25s | %s | %.2E | %.4f | %.4f | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt)
         
             if args.tolerance >= 0 and max_error > args.tolerance:
                 print(colored(line, 'yellow'))
