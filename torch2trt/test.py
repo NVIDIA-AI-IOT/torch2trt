@@ -6,6 +6,22 @@ import re
 import runpy
 import traceback
 from termcolor import colored
+import math
+import numpy as np
+
+def pSNR(model_op,trt_op):
+    #model_op = model_op.cpu().detach().numpy().flatten()
+    #trt_op = trt_op.cpu().detach().numpy().flatten()
+
+    # Calculating Mean Squared Error
+    mse = np.sum(np.square(model_op - trt_op)) / len(model_op)
+    # Calcuating peak signal to noise ratio
+    try:
+    	psnr_db = 20 * math.log10(np.max(abs(model_op))) - 10 * math.log10(mse)
+    except:
+        psnr_db = np.nan
+    return mse,psnr_db
+
 
 
 def run(self):
@@ -49,6 +65,24 @@ def run(self):
 
         if max_error_i > max_error:
             max_error = max_error_i
+
+	## calculate peak signal to noise ratio
+    assert(len(outputs) == len(outputs_trt))
+	
+    ## Check if output is boolean
+    # if yes, then dont calculate psnr
+    if outputs[0].dtype == torch.bool:
+        mse = np.nan
+        psnr_db = np.nan
+    else:
+        model_op = []
+        trt_op = []
+        for i in range(len(outputs)):
+            model_op.extend(outputs[i].detach().cpu().numpy().flatten())
+            trt_op.extend(outputs_trt[i].detach().cpu().numpy().flatten())
+        model_op = np.array(model_op)
+        trt_op = np.array(trt_op)
+        mse,psnr_db = pSNR(model_op,trt_op)
     
     # benchmark pytorch throughput
     torch.cuda.current_stream().synchronize()
@@ -90,7 +124,7 @@ def run(self):
     
     ms_trt = 1000.0 * (t1 - t0) / 50.0
     
-    return max_error, fps, fps_trt, ms, ms_trt
+    return max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt
         
         
 if __name__ == '__main__':
@@ -120,10 +154,10 @@ if __name__ == '__main__':
             if args.use_onnx:
                 test.torch2trt_kwargs.update({'use_onnx': True})
                 
-            max_error, fps, fps_trt, ms, ms_trt = run(test)
+            max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt = run(test)
 
             # write entry
-            line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt, ms, ms_trt)
+            line = '| %s | %s | %s | %s | %.2E | %.4f | %.4f | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt)
         
             if args.tolerance >= 0 and max_error > args.tolerance:
                 print(colored(line, 'yellow'))
