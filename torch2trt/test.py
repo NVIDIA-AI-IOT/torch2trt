@@ -140,7 +140,7 @@ if __name__ == '__main__':
     for include in args.include:
         runpy.run_module(include)
         
-    num_tests, num_success, num_tolerance, num_error = 0, 0, 0, 0
+    num_tests, num_success, num_tolerance, num_error, num_tolerance_psnr = 0, 0, 0, 0, 0
     for test in MODULE_TESTS:
         
         # filter by module name
@@ -162,6 +162,9 @@ if __name__ == '__main__':
             if args.tolerance >= 0 and max_error > args.tolerance:
                 print(colored(line, 'yellow'))
                 num_tolerance += 1
+            elif psnr_db < 100:
+                print(colored(line, 'magenta'))
+                num_tolerance_psnr +=1
             else:
                 print(line)
             num_success += 1
@@ -179,3 +182,4 @@ if __name__ == '__main__':
     print('NUM_SUCCESSFUL_CONVERSION: %d' % num_success)
     print('NUM_FAILED_CONVERSION: %d' % num_error)
     print('NUM_ABOVE_TOLERANCE: %d' % num_tolerance)
+    print('NUM_pSNR_TOLERANCE: %d' %num_tolerance_psnr)
