@@ -6,6 +6,22 @@ import re
 import runpy
 import traceback
 from termcolor import colored
+import math
+import numpy as np
+
+def pSNR(model_op,trt_op):
+    #model_op = model_op.cpu().detach().numpy().flatten()
+    #trt_op = trt_op.cpu().detach().numpy().flatten()
+
+    # Calculating Mean Squared Error
+    mse = np.sum(np.square(model_op - trt_op)) / len(model_op)
+    # Calcuating peak signal to noise ratio
+    try:
+    	psnr_db = 20 * math.log10(np.max(abs(model_op))) - 10 * math.log10(mse)
+    except:
+        psnr_db = np.nan
+    return mse,psnr_db
+
 
 
 def run(self):
@@ -49,6 +65,24 @@ def run(self):
 
         if max_error_i > max_error:
             max_error = max_error_i
+
+	## calculate peak signal to noise ratio
+    assert(len(outputs) == len(outputs_trt))
+	
+    ## Check if output is boolean
+    # if yes, then dont calculate psnr
+    if outputs[0].dtype == torch.bool:
+        mse = np.nan
+        psnr_db = np.nan
+    else:
+        model_op = []
+        trt_op = []
+        for i in range(len(outputs)):
+            model_op.extend(outputs[i].detach().cpu().numpy().flatten())
+            trt_op.extend(outputs_trt[i].detach().cpu().numpy().flatten())
+        model_op = np.array(model_op)
+        trt_op = np.array(trt_op)
+        mse,psnr_db = pSNR(model_op,trt_op)
     
     # benchmark pytorch throughput
     torch.cuda.current_stream().synchronize()
@@ -90,7 +124,7 @@ def run(self):
     
     ms_trt = 1000.0 * (t1 - t0) / 50.0
     
-    return max_error, fps, fps_trt, ms, ms_trt
+    return max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt
         
         
 if __name__ == '__main__':
@@ -106,7 +140,7 @@ if __name__ == '__main__':
     for include in args.include:
         runpy.run_module(include)
         
-    num_tests, num_success, num_tolerance, num_error = 0, 0, 0, 0
+    num_tests, num_success, num_tolerance, num_error, num_tolerance_psnr = 0, 0, 0, 0, 0
     for test in MODULE_TESTS:
         
         # filter by module name
@@ -120,14 +154,17 @@ if __name__ == '__main__':
             if args.use_onnx:
                 test.torch2trt_kwargs.update({'use_onnx': True})
                 
-            max_error, fps, fps_trt, ms, ms_trt = run(test)
+            max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt = run(test)
 
             # write entry
-            line = '| %s | %s | %s | %s | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error, fps, fps_trt, ms, ms_trt)
+            line = '| %70s | %s | %25s | %s | %.2E | %.2f | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt)
         
             if args.tolerance >= 0 and max_error > args.tolerance:
                 print(colored(line, 'yellow'))
                 num_tolerance += 1
+            elif psnr_db < 100:
+                print(colored(line, 'magenta'))
+                num_tolerance_psnr +=1
             else:
                 print(line)
             num_success += 1
@@ -145,3 +182,4 @@ if __name__ == '__main__':
     print('NUM_SUCCESSFUL_CONVERSION: %d' % num_success)
     print('NUM_FAILED_CONVERSION: %d' % num_error)
     print('NUM_ABOVE_TOLERANCE: %d' % num_tolerance)
+    print('NUM_pSNR_TOLERANCE: %d' %num_tolerance_psnr)
