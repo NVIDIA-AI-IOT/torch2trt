@@ -30,9 +30,6 @@ def convert_bool(ctx):
     convert_cast(ctx)
 
 
-# Used for torch.Tensor.<cast> tests
-# --------------------------------------------
-
 class DotFloat(torch.nn.Module):
     def __init__(self):
         super(DotFloat, self).__init__()
