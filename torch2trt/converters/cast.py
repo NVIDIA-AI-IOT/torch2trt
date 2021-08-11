@@ -71,5 +71,5 @@ def test_torch_int_cast():
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.int32, torch.device('cuda'), [(1, 3, 3)])
-def test_torch_bool_casting():
+def test_torch_bool_cast():
     return DotBool()
