@@ -20,12 +20,12 @@ def convert_float(ctx):
     convert_cast(ctx)
 
 
-@tensorrt_converter("torch.Tensor.bool")
-def convert_bool(ctx):
+@tensorrt_converter("torch.Tensor.int")
+def convert_int(ctx):
     convert_cast(ctx)
 
 
-@tensorrt_converter("torch.Tensor.float")
+@tensorrt_converter("torch.Tensor.bool")
 def convert_bool(ctx):
     convert_cast(ctx)
 
