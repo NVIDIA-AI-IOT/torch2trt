@@ -33,43 +33,43 @@ def convert_bool(ctx):
 # Used for torch.Tensor.<cast> tests
 # --------------------------------------------
 
-class TorchFloat(torch.nn.Module):
+class DotFloat(torch.nn.Module):
     def __init__(self):
-        super(TorchFloat, self).__init__()
+        super(DotFloat, self).__init__()
 
     def forward(self, x):
-        return torch.float(x)
+        return x.float()
 
 
-class TorchInt(torch.nn.Module):
+class DotInt(torch.nn.Module):
     def __init__(self):
-        super(TorchInt, self).__init__()
+        super(DotInt, self).__init__()
 
     def forward(self, x):
-        return torch.int(x)
+        return x.int()
 
 
-class TorchBool(torch.nn.Module):
+class DotBool(torch.nn.Module):
     def __init__(self):
-        super(TorchBool, self).__init__()
+        super(DotBool, self).__init__()
 
     def forward(self, x):
-        return torch.bool(x)
+        return x.bool()
 
 
 @add_module_test(torch.bool, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.int32, torch.device('cuda'), [(1, 3, 3)])
 def test_torch_float_cast():
-    return TorchFloat()
+    return DotFloat()
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.int32, torch.device('cuda'), [(1, 3, 3)])
 def test_torch_int_cast():
-    return TorchInt()
+    return DotInt()
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.int32, torch.device('cuda'), [(1, 3, 3)])
 def test_torch_bool_casting():
-    return TorchBool()
+    return DotBool()
