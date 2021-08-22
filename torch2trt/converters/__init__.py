@@ -29,6 +29,7 @@ from .clamp import *
 from .compare import *
 from .div import *
 from .expand import *
+from .expand_as import *
 from .floordiv import *
 from .gelu import *
 from .getitem import *
