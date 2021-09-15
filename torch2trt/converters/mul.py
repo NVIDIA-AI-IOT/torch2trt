@@ -3,6 +3,7 @@ from torch2trt.module_test import add_module_test
 
 
 @tensorrt_converter('torch.mul')
+@tensorrt_converter('torch.Tensor.mul_')
 @tensorrt_converter('torch.Tensor.__imul__')
 @tensorrt_converter('torch.Tensor.__mul__')
 @tensorrt_converter('torch.Tensor.__rmul__')
