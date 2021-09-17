@@ -576,7 +576,7 @@ def torch2trt(module,
                     inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
                 )
         
-    engine = builder.build_cuda_engine(network)
+    engine = builder.build_engine(network)
 
     module_trt = TRTModule(engine, input_names, output_names)
 
