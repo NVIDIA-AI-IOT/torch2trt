@@ -65,5 +65,6 @@ from .sum import *
 from .tanh import *
 from .tensor import *
 from .transpose import *
+from .tril_indices import *
 from .unary import *
 from .view import *
