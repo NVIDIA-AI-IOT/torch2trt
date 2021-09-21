@@ -575,7 +575,11 @@ def torch2trt(module,
                 inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
             )
         
+    del inputs
+    del outputs
+    torch.cuda.empty_cache()
     engine = builder.build_cuda_engine(network)
+    torch.cuda.empty_cache()
 
     module_trt = TRTModule(engine, input_names, output_names)
 
