@@ -2,16 +2,39 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
+def _set_layer_precision(ctx, layer):
+    # Supported TRT precisions as given by torch2trt_kwargs.
+    INT8_MODE = "int8_mode"
+    FP16_MODE = "fp16_mode"
+
+    # Check that args exist as expected in torch2trt_kwargs.
+    trt_kwargs = ctx.torch2trt_kwargs
+    assert INT8_MODE in trt_kwargs
+    assert FP16_MODE in trt_kwargs
+
+    is_int8 = trt_kwargs.get(INT8_MODE, False)
+    is_fp16 = trt_kwargs.get(FP16_MODE, False)
+
+    if is_int8:
+        layer.precision = trt.int8
+        layer.set_output_type(0, trt.int8)
+    elif is_fp16:
+        layer.precision = trt.float16
+        layer.set_output_type(0, trt.float16)
+
+
 @tensorrt_converter('torch.clone')
 @tensorrt_converter('torch.Tensor.clone')
 def convert_clone(ctx):
     input = ctx.method_args[0]
     input_trt = trt_(ctx.network, input)
-    output = ctx.method_return
 
     # Clone by making identity layer.
     layer = ctx.network.add_identity(input_trt)
-    output._trt =  layer.get_output(0)
+    _set_layer_precision(ctx, layer)
+
+    output = ctx.method_return
+    output._trt = layer.get_output(0)
 
 
 class Clone(torch.nn.Module):
@@ -27,20 +50,14 @@ def test_clone_basic():
     return Clone()
 
 
-# This fails with the below error:
-# [TensorRT] ERROR: ../builder/cudnnBuilder2.cpp (2072) - Assertion Error in getSupportedFormats: 0 (!formats.empty())
-#
-#  @add_module_test(torch.float16, torch.device('cuda'), [(1, 64, 64)])
-#  def test_clone_float16():
-    #  return Clone()
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 64, 64)], fp16_mode=True)
+def test_clone_fp16_mode():
+    return Clone()
 
 
-# This fails with the below error:
-# [TensorRT] ERROR: ../builder/cudnnBuilder2.cpp (2072) - Assertion Error in getSupportedFormats: 0 (!formats.empty())
-#
-#  @add_module_test(torch.int8, torch.device('cuda'), [(1, 64, 64)])
-#  def test_clone_int8():
-    #  return Clone()
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 64, 64)], int8_mode=True)
+def test_clone_int8_mode():
+    return Clone()
 
 
 class TorchClone(torch.nn.Module):
@@ -56,17 +73,11 @@ def test_torch_clone_basic():
     return TorchClone()
 
 
-# This fails with the below error:
-# [TensorRT] ERROR: ../builder/cudnnBuilder2.cpp (2072) - Assertion Error in getSupportedFormats: 0 (!formats.empty())
-#
-#  @add_module_test(torch.float16, torch.device('cuda'), [(1, 64, 64)])
-#  def test_torch_clone_float16():
-    #  return TorchClone()
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 64, 64)], fp16_mode=True)
+def test_torch_clone_fp16_mode():
+    return TorchClone()
 
 
-# This fails with the below error:
-# [TensorRT] ERROR: ../builder/cudnnBuilder2.cpp (2072) - Assertion Error in getSupportedFormats: 0 (!formats.empty())
-#
-#  @add_module_test(torch.int8, torch.device('cuda'), [(1, 64, 64)])
-#  def test_torch_clone_int8():
-    #  return TorchClone()
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 64, 64)], int8_mode=True)
+def test_torch_clone_int8_mode():
+    return TorchClone()
