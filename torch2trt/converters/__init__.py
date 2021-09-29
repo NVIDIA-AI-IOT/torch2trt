@@ -39,6 +39,7 @@ from .instance_norm import *
 from .interpolate import *
 from .layer_norm import *
 from .max import *
+from .max_pool1d import *
 from .max_pool2d import *
 from .max_pool3d import *
 from .mean import *
