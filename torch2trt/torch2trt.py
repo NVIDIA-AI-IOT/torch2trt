@@ -480,7 +480,9 @@ class TRTModule(torch.nn.Module):
             bindings[idx] = inputs[i].contiguous().data_ptr()
             ishape = tuple(self.engine.get_binding_shape(idx))
             if ishape[0] == -1:
+                tmp_ishape = (batch_size,) + ishape[1:]
                 batch_size = 1
+                self.context.set_binding_shape(idx, tmp_ishape)
 
 
         self.context.execute_async(
