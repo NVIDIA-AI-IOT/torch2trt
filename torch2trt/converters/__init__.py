@@ -7,6 +7,7 @@ from .dummy_converters import *
 from .AdaptiveAvgPool2d import *
 from .BatchNorm1d import *
 from .BatchNorm2d import *
+from .clone import *
 from .conv_functional import *
 from .Conv import *
 from .Conv1d import *
@@ -17,7 +18,9 @@ from .Linear import *
 from .LogSoftmax import *
 from .activation import *
 from .adaptive_avg_pool2d import *
+from .adaptive_avg_pool3d import *
 from .adaptive_max_pool2d import *
+from .adaptive_max_pool3d import *
 from .add import *
 from .avg_pool import *
 from .batch_norm import *
@@ -37,7 +40,9 @@ from .interpolate import *
 from .layer_norm import *
 from .matmul import *
 from .max import *
+from .max_pool1d import *
 from .max_pool2d import *
+from .max_pool3d import *
 from .mean import *
 from .min import *
 from .mod import *

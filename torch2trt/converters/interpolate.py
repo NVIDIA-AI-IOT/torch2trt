@@ -86,7 +86,11 @@ def convert_interpolate_trt7(ctx):
         layer.resize_mode=trt.ResizeMode.NEAREST
 
     if align_corners != None:
-        layer.align_corners = align_corners
+        if trt_version() > '8.0':
+            if align_corners:
+                layer.coordinate_transformation = trt.ResizeCoordinateTransformation.ALIGN_CORNERS
+        else:
+            layer.align_corners = align_corners
 
     output._trt = layer.get_output(0)
 
@@ -133,34 +137,36 @@ def convert_interpolate_trt8(ctx):
     output._trt = layer.get_output(0)
 
 class Interpolate(torch.nn.Module):
-    def __init__(self, size, mode, align_corners):
+    def __init__(self, size=None,scale_factor=None, mode=None, align_corners=None):
         super(Interpolate, self).__init__()
+		## Use either size or scale factor. 
         self.size = size
+        self.scale_factor = scale_factor 
         self.mode = mode
         self.align_corners = align_corners
 
     def forward(self, x):
-        return F.interpolate(x, self.size, mode=self.mode, align_corners=self.align_corners)
+        return F.interpolate(x, size=self.size, scale_factor=self.scale_factor,mode=self.mode, align_corners=self.align_corners)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_interpolate_nearest():
-    return Interpolate((224, 224), 'nearest', None)
+    return Interpolate(size=(224, 224), mode='nearest', align_corners=None)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_interpolate_bilinear():
-    return Interpolate((224, 224), 'bilinear', False)
+    return Interpolate(size=(224, 224), mode= 'bilinear', align_corners=False)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_interpolate_bicubic():
-    return Interpolate((224, 224), 'bicubic', False)
+    return Interpolate(size=(224, 224), mode='bicubic',align_corners= False)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_interpolate_area():
-    return Interpolate((56, 56), 'area', None)
+    return Interpolate(size=(56, 56), mode='area',align_corners= None)
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 112, 112)], enabled=trt_version() < '7.1' and has_interpolate_plugin())
 def test_upsample_scale_factor2():
@@ -176,7 +182,11 @@ def test_bilinear_mode():
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1,3,12,12)], enabled=trt_version() >= '7.1')
 def test_align_corner():
-    return torch.nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+    return torch.nn.Upsample(scale_factor=2.0, mode="bilinear", align_corners=True)
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1,3,12,12)], enabled=trt_version() >= '7.1')
+def test_align_corner_functional():
+    return Interpolate(scale_factor=2.0, mode="bilinear", align_corners=True)
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1,5,13,13)], enabled=trt_version() >= '7.1')
 def test_bilinear_mode_odd_input_shape():
