@@ -25,27 +25,9 @@ RUN add-apt-repository ppa:git-core/ppa && \
 
 RUN pip install termcolor graphviz
 
-## If you have followed instructions on main README.md file to install torch2trt using scripts/build_contrib.sh
-## You dont require rest of the steps
-
-RUN git clone https://github.com/NVIDIA/TensorRT.git /sw/TensorRT/
-
-##Make sure that patch file is under the same folder where dockerfile is being called
-
-ADD pytorch_nvidia_quantization.patch /sw/TensorRT
-
-RUN cd /sw/TensorRT/ && \
-    git sparse-checkout init --cone && \
-    git sparse-checkout set /tools/pytorch-quantization/ && \
-    git apply --reject --whitespace=fix pytorch_nvidia_quantization.patch && \
-    cd tools/pytorch-quantization/ && \
-    python setup.py install 
-
-RUN git clone https://github.com/NVIDIA-AI-IOT/torch2trt.git /sw/TensorRT/ && \
-    cd /sw/TensorRT/ && \
-    git fetch origin pull/514/head:PR514 && \
-    git checkout PR514 && \
-    python setup.py install --plugins
+RUN git clone https://github.com/NVIDIA-AI-IOT/torch2trt.git /sw/torch2trt/ && \
+    cd /sw/torch2trt/scripts && \
+	bash build_contrib.sh
 
 ```
 
