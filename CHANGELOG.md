@@ -2,6 +2,8 @@
 
 ## [Master]
 
+- Added support for TensorRT 8
+
 ## [0.3.0] - 07/15/2021
 
 - Added converter for ``torch.nn.functional.adaptive_avg_pool3d``
