@@ -517,7 +517,6 @@ def torch2trt(module,
 
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
-    config = builder.create_builder_config()
 
     if isinstance(inputs, list):
         inputs = tuple(inputs)
@@ -568,14 +567,14 @@ def torch2trt(module,
         if int8_calib_dataset is None:
             int8_calib_dataset = TensorBatchDataset(inputs_in)
 
-        config.set_flag(trt.BuilderFlag.INT8)
+        config.flags = int8_mode << int(trt.BuilderFlag.INT8)
 
         #Making sure not to run calibration with QAT mode on
         if not 'qat_mode' in kwargs:
             # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
-                builder.int8_calibrator = DatasetCalibrator(
-                    inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
-                )
+            builder.int8_calibrator = DatasetCalibrator(
+                inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
+            )
 
     engine = builder.build_engine(network, config)
 
