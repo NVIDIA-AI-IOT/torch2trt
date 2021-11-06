@@ -556,11 +556,16 @@ def torch2trt(module,
                 outputs = (outputs,)
             ctx.mark_outputs(outputs, output_names)
 
-    config = builder.create_builder_config()
+    # set max workspace size
     config.max_workspace_size = max_workspace_size
-    config.flags = fp16_mode << int(trt.BuilderFlag.FP16)
-    config.flags = strict_type_constraints << int(trt.BuilderFlag.STRICT_TYPES)
+
+    if fp16_mode:
+        config.set_flag(trt.BuilderFlag.FP16)
+
     builder.max_batch_size = max_batch_size
+
+    if strict_type_constraints:
+        config.set_flag(trt.BuilderFlag.STRICT_TYPES)
 
     if int8_mode:
 
@@ -573,9 +578,10 @@ def torch2trt(module,
         #Making sure not to run calibration with QAT mode on
         if not 'qat_mode' in kwargs:
             # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
-                builder.int8_calibrator = DatasetCalibrator(
-                    inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
-                )
+            calibrator = DatasetCalibrator(
+                inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
+            )
+            config.int8_calibrator = calibrator
 
     engine = builder.build_engine(network, config)
 
