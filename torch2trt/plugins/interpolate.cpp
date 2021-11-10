@@ -13,35 +13,35 @@ using namespace nvinfer1;
 
 namespace torch2trt {
 
-    
+
 class InterpolatePlugin : public IPluginV2 {
 private:
-    
+
   // configured by class
   at::TensorOptions tensor_options;
   std::vector<int64_t> input_sizes;
   std::vector<int64_t> output_sizes;
   DataType dtype;
-    
+
   // configured by user
   std::vector<int64_t> size;
   std::string mode;
   bool align_corners;
 
 public:
-    
+
   // create from arguments
   InterpolatePlugin(std::vector<int64_t> size, std::string mode, bool align_corners) :
     size(size), mode(mode), align_corners(align_corners)
   {}
-    
+
   InterpolatePlugin(const char *data, size_t length) : InterpolatePlugin(std::string(data, length)) {}
-    
+
   // create from serialized data
   InterpolatePlugin(const std::string &data) {
       deserializeFromString(data);
   }
-   
+
   void deserializeFromString(const std::string &data) {
       std::istringstream data_stream(data);
       torch::serialize::InputArchive input_archive;
@@ -89,7 +89,7 @@ public:
 #endif
       }
   }
-    
+
   std::string serializeToString() const {
       torch::serialize::OutputArchive output_archive;
       output_archive.write("size", torch::IValue(size));
@@ -113,7 +113,7 @@ public:
 
   int getNbOutputs() const override {
     return 1;
-  } 
+  }
 
   Dims getOutputDimensions(int index, const Dims* inputs, int nbInputDims) override {
     Dims dims;
@@ -128,7 +128,7 @@ public:
   }
 
   bool supportsFormat(DataType type, PluginFormat format) const override {
-    if (format != PluginFormat::kNCHW) {
+    if (format != PluginFormat::kLINEAR) {
       return false;
     }
     if (type == DataType::kINT32 || type == DataType::kINT8) {
@@ -139,7 +139,7 @@ public:
 
   void configureWithFormat(const Dims* inputDims, int nbInputs, const Dims* outputDims,
       int nbOutputs, DataType type, PluginFormat format, int maxBatchSize) override {
-    
+
     // set data type
     if (type == DataType::kFLOAT) {
       tensor_options = tensor_options.dtype(c10::kFloat);
@@ -148,7 +148,7 @@ public:
       tensor_options = tensor_options.dtype(c10::kHalf);
       dtype = type;
     }
-      
+
     // set input sizes
     input_sizes.resize(inputDims[0].nbDims);
     for (int i = 0; i < inputDims[0].nbDims; i++) {
@@ -165,14 +165,14 @@ public:
   int initialize() override {
     // set device
     tensor_options = tensor_options.device(c10::kCUDA);
-      
+
     // set data type
     if (dtype == DataType::kFLOAT) {
         tensor_options = tensor_options.dtype(c10::kFloat);
     } else if (dtype == DataType::kHALF) {
         tensor_options = tensor_options.dtype(c10::kHalf);
     }
-      
+
     return 0;
   }
 
@@ -230,7 +230,7 @@ public:
   size_t getSerializationSize() const override {
     return serializeToString().size();
   }
-    
+
   void serialize(void* buffer) const override {
       std::string data = serializeToString();
       size_t size = getSerializationSize();
@@ -280,5 +280,5 @@ public:
 
 
 REGISTER_TENSORRT_PLUGIN(InterpolatePluginCreator);
-    
+
 } // namespace torch2trt

@@ -26,12 +26,12 @@ private:
     at::Tensor weight;
     at::Tensor bias;
     double eps;
-    
+
 
 public:
 
     // create from arguments
-    GroupNormPlugin(int64_t num_groups, at::Tensor weight, at::Tensor bias, double eps) : 
+    GroupNormPlugin(int64_t num_groups, at::Tensor weight, at::Tensor bias, double eps) :
             num_groups{num_groups}, weight{weight}, bias{bias}, eps{eps}
     {}
 
@@ -52,7 +52,7 @@ public:
             num_groups = value.toIntListRef().vec();
 #else
             num_groups = value.toInt();
-#endif  
+#endif
         }
 	{
             torch::IValue value;
@@ -72,7 +72,7 @@ public:
             eps = value.toDoubleListRef().vec();
 #else
             eps = value.toDouble();
-#endif  
+#endif
         }
 	{
             torch::IValue value;
@@ -86,7 +86,7 @@ public:
             input_sizes = value.toIntListRef().vec();
 #else
             input_sizes = value.toIntVector();
-#endif  
+#endif
         }
         {
             torch::IValue value;
@@ -95,7 +95,7 @@ public:
             output_sizes = value.toIntListRef().vec();
 #else
             output_sizes = value.toIntVector();
-#endif  
+#endif
         }
     }
     std::string serializeToString() const {
@@ -111,7 +111,7 @@ public:
         output_archive.save_to(data_str);
         return data_str.str();
     }
-    
+
     const char* getPluginType() const override {
       return "group_norm";
     };
@@ -122,21 +122,21 @@ public:
 
     int getNbOutputs() const override {
       return 1;
-    } 
+    }
 
     Dims getOutputDimensions(int index, const Dims* inputs, int nbInputDims) override {
       Dims dims;
       dims.nbDims = inputs->nbDims;
-  
+
       for (int i = 0; i < inputs->nbDims; i++) {
         dims.d[i] = inputs->d[i];
       }
-  
+
       return dims;
     }
 
     bool supportsFormat(DataType type, PluginFormat format) const override {
-      if (format != PluginFormat::kNCHW) {
+      if (format != PluginFormat::kLINEAR) {
         return false;
       }
       if (type == DataType::kINT32 || type == DataType::kINT8) {
@@ -147,7 +147,7 @@ public:
 
   void configureWithFormat(const Dims* inputDims, int nbInputs, const Dims* outputDims,
       int nbOutputs, DataType type, PluginFormat format, int maxBatchSize) override {
-    
+
     // set data type
     if (type == DataType::kFLOAT) {
       tensor_options = tensor_options.dtype(c10::kFloat);
@@ -156,7 +156,7 @@ public:
       tensor_options = tensor_options.dtype(c10::kHalf);
       dtype = type;
     }
-      
+
     // set input sizes
     input_sizes.resize(inputDims[0].nbDims);
     for (int i = 0; i < inputDims[0].nbDims; i++) {
@@ -173,18 +173,18 @@ public:
   int initialize() override {
     // set device
     tensor_options = tensor_options.device(c10::kCUDA);
-      
+
     // set data type
     if (dtype == DataType::kFLOAT) {
         tensor_options = tensor_options.dtype(c10::kFloat);
     } else if (dtype == DataType::kHALF) {
         tensor_options = tensor_options.dtype(c10::kHalf);
     }
-      
-      
+
+
     weight = weight.to(tensor_options);
     bias = bias.to(tensor_options);
-      
+
     return 0;
   }
 
@@ -201,8 +201,8 @@ public:
 
     // create tensor wrappers
     at::Tensor input = at::from_blob((void*) inputs[0], batch_input_sizes, [](void*){}, tensor_options);
-    at::Tensor output = at::from_blob(outputs[0], batch_output_sizes, [](void*){}, tensor_options); 
-    
+    at::Tensor output = at::from_blob(outputs[0], batch_output_sizes, [](void*){}, tensor_options);
+
     // create new torch cuda stream
     at::cuda::CUDAStream torch_stream = at::cuda::getStreamFromPool();
     at::cuda::CUDAStreamGuard torch_guard(torch_stream);
@@ -214,14 +214,14 @@ public:
 
     // make torch cuda stream wait on tensorrt work
     cudaStreamWaitEvent(torch_stream.stream(), event, 0);
-      
-      
+
+
 
     // enqueue work
     // Group_norm function from PyTorch: https://pytorch.org/cppdocs/api/function_namespaceat_1a6bc1e9504ea440c6c96ff8a8b94333f2.html#exhale-function-namespaceat-1a6bc1e9504ea440c6c96ff8a8b94333f2
     at::Tensor output_tmp = at::group_norm(input, num_groups, weight, bias, eps=eps);
     output.copy_(output_tmp);
-      
+
     // capture event on enqueued stream
     cudaEvent_t torch_event;
     cudaEventCreate(&torch_event);
@@ -238,7 +238,7 @@ public:
   size_t getSerializationSize() const override {
     return serializeToString().size();
   }
-    
+
   void serialize(void* buffer) const override {
       std::string data = serializeToString();
       size_t size = getSerializationSize();
@@ -248,7 +248,7 @@ public:
   void destroy() override {}
 
   IPluginV2* clone() const override {
-    return new GroupNormPlugin(num_groups, weight, bias, eps); 
+    return new GroupNormPlugin(num_groups, weight, bias, eps);
   }
 
   void setPluginNamespace(const char* pluginNamespace) override {}
@@ -288,7 +288,7 @@ public:
 
 
 REGISTER_TENSORRT_PLUGIN(GroupNormPluginCreator);
-    
+
 } // namespace torch2trt
 
 
