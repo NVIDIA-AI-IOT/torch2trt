@@ -1,4 +1,5 @@
 import sys
+import tensorrt
 import torch
 from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
@@ -12,8 +13,14 @@ def trt_lib_dir():
 ext_modules = []
 exclude_dir = ["torch2trt/contrib","torch2trt/contrib.*"]
 
+compile_args_cxx = []
+if torch.__version__ < '1.5':
+    compile_args_cxx.append('-DUSE_DEPRECATED_INTLIST')
+if tensorrt.__version__ < '8':
+    compile_args_cxx.append('-DPRE_TRT8')
+
 plugins_ext_module = CUDAExtension(
-        name='plugins', 
+        name='plugins',
         sources=[
             'torch2trt/plugins/plugins.cpp'
         ],
@@ -27,7 +34,7 @@ plugins_ext_module = CUDAExtension(
             'nvinfer'
         ],
         extra_compile_args={
-            'cxx': ['-DUSE_DEPRECATED_INTLIST'] if torch.__version__ < "1.5" else [],
+            'cxx': compile_args_cxx,
             'nvcc': []
         }
     )
@@ -36,7 +43,7 @@ if '--plugins' in sys.argv:
     sys.argv.remove('--plugins')
 
 if '--contrib' in sys.argv:
-    exclude_dir=[] 
+    exclude_dir=[]
     sys.argv.remove('--contrib')
 
 setup(
