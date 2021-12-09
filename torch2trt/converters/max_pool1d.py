@@ -2,27 +2,6 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-def _set_layer_precision(ctx, layer):
-    # Supported TRT precisions as given by torch2trt_kwargs.
-    INT8_MODE = "int8_mode"
-    FP16_MODE = "fp16_mode"
-
-    # Check that args exist as expected in torch2trt_kwargs.
-    trt_kwargs = ctx.torch2trt_kwargs
-    assert INT8_MODE in trt_kwargs
-    assert FP16_MODE in trt_kwargs
-
-    is_int8 = trt_kwargs.get(INT8_MODE, False)
-    is_fp16 = trt_kwargs.get(FP16_MODE, False)
-
-    if is_int8:
-        layer.precision = trt.int8
-        layer.set_output_type(0, trt.int8)
-    elif is_fp16:
-        layer.precision = trt.float16
-        layer.set_output_type(0, trt.float16)
-
-
 @tensorrt_converter('torch.nn.functional.max_pool1d')
 def convert_max_pool1d(ctx):
     # At the time of this implementation, TensorRT 8.x does not yet support max pooling in 1D using `add_pooling_nd(...)`.
@@ -47,7 +26,7 @@ def convert_max_pool1d(ctx):
 
     # Shuffle layer to unsqueeze another dimension for 2D max pooling.
     unsqueeze_layer = ctx.network.add_shuffle(input_trt)
-    _set_layer_precision(ctx, unsqueeze_layer)
+    set_layer_precision(ctx, unsqueeze_layer)
     unsqueeze_layer.reshape_dims = tuple([*input_trt.shape, 1])
     unsqueeze_trt = unsqueeze_layer.get_output(0)
 
@@ -55,7 +34,7 @@ def convert_max_pool1d(ctx):
     pooling_layer = ctx.network.add_pooling_nd(
         input=unsqueeze_trt, type=trt.PoolingType.MAX, window_size=kernel_size
     )
-    _set_layer_precision(ctx, pooling_layer)
+    set_layer_precision(ctx, pooling_layer)
     pooling_layer.stride = stride
     pooling_layer.padding = padding
 
@@ -66,7 +45,7 @@ def convert_max_pool1d(ctx):
 
     # Shuffle layer to squeeze out dimension that was just added for 2D max pooling so return is still in 1D.
     squeeze_layer = ctx.network.add_shuffle(pooling_trt)
-    _set_layer_precision(ctx, squeeze_layer)
+    set_layer_precision(ctx, squeeze_layer)
     squeeze_layer.reshape_dims = tuple(pooling_trt.shape[:-1])
     output._trt = squeeze_layer.get_output(0)
 
