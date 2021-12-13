@@ -3,6 +3,8 @@ import tensorrt
 import torch
 from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
+from packaging import version
+
 
 def trt_inc_dir():
     return "/usr/include/aarch64-linux-gnu"
@@ -14,9 +16,9 @@ ext_modules = []
 exclude_dir = ["torch2trt/contrib","torch2trt/contrib.*"]
 
 compile_args_cxx = []
-if torch.__version__ < '1.5':
+if version.parse(torch.__version__) < version.parse('1.5'):
     compile_args_cxx.append('-DUSE_DEPRECATED_INTLIST')
-if tensorrt.__version__ < '8':
+if version.parse(tensorrt.__version__) < version.parse('8'):
     compile_args_cxx.append('-DPRE_TRT8')
 
 plugins_ext_module = CUDAExtension(
