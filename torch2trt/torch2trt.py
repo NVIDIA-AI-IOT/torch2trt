@@ -555,17 +555,11 @@ def torch2trt(module,
             if not isinstance(outputs, tuple) and not isinstance(outputs, list):
                 outputs = (outputs,)
             ctx.mark_outputs(outputs, output_names)
-    
-    # set max workspace size
+
+    config = builder.create_builder_config()
     config.max_workspace_size = max_workspace_size
-    
-    if fp16_mode:
-        config.set_flag(trt.BuilderFlag.FP16)
-        
+    config.flags = fp16_mode << int(trt.BuilderFlag.FP16) | strict_type_constraints << int(trt.BuilderFlag.STRICT_TYPES)
     builder.max_batch_size = max_batch_size
-    
-    if strict_type_constraints:
-        config.set_flag(trt.BuilderFlag.STRICT_TYPES)
 
     if int8_mode:
 

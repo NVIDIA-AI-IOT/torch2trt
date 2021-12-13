@@ -4,7 +4,6 @@ from .dummy_converters import *
 
 # supported converters will override dummy converters
 
-from .AdaptiveAvgPool2d import *
 from .BatchNorm1d import *
 from .BatchNorm2d import *
 from .clone import *
@@ -38,6 +37,7 @@ from .identity import *
 from .instance_norm import *
 from .interpolate import *
 from .layer_norm import *
+from .matmul import *
 from .max import *
 from .max_pool1d import *
 from .max_pool2d import *

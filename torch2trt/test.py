@@ -142,7 +142,6 @@ if __name__ == '__main__':
         
     num_tests, num_success, num_tolerance, num_error, num_tolerance_psnr = 0, 0, 0, 0, 0
     for test in MODULE_TESTS:
-        
         # filter by module name
         name = test.module_name()
         if not re.search(args.name, name):
