@@ -9,39 +9,45 @@
 #include <torch/torch.h>
 #include <cuda_runtime_api.h>
 
+#ifdef PRE_TRT8
+#define TRT_NOEXCEPT
+#else
+#define TRT_NOEXCEPT noexcept
+#endif
+
 using namespace nvinfer1;
 
 namespace torch2trt {
 
-    
+
 class InterpolatePlugin : public IPluginV2 {
 private:
-    
+
   // configured by class
   at::TensorOptions tensor_options;
   std::vector<int64_t> input_sizes;
   std::vector<int64_t> output_sizes;
   DataType dtype;
-    
+
   // configured by user
   std::vector<int64_t> size;
   std::string mode;
   bool align_corners;
 
 public:
-    
+
   // create from arguments
   InterpolatePlugin(std::vector<int64_t> size, std::string mode, bool align_corners) :
     size(size), mode(mode), align_corners(align_corners)
   {}
-    
+
   InterpolatePlugin(const char *data, size_t length) : InterpolatePlugin(std::string(data, length)) {}
-    
+
   // create from serialized data
   InterpolatePlugin(const std::string &data) {
       deserializeFromString(data);
   }
-   
+
   void deserializeFromString(const std::string &data) {
       std::istringstream data_stream(data);
       torch::serialize::InputArchive input_archive;
@@ -89,7 +95,7 @@ public:
 #endif
       }
   }
-    
+
   std::string serializeToString() const {
       torch::serialize::OutputArchive output_archive;
       output_archive.write("size", torch::IValue(size));
@@ -103,19 +109,19 @@ public:
       return data_str.str();
   }
 
-  const char* getPluginType() const override {
+  const char* getPluginType() const TRT_NOEXCEPT override {
     return "interpolate";
   };
 
-  const char* getPluginVersion() const override {
+  const char* getPluginVersion() const TRT_NOEXCEPT override {
     return "1";
   }
 
-  int getNbOutputs() const override {
+  int getNbOutputs() const TRT_NOEXCEPT override {
     return 1;
-  } 
+  }
 
-  Dims getOutputDimensions(int index, const Dims* inputs, int nbInputDims) override {
+  Dims getOutputDimensions(int index, const Dims* inputs, int nbInputDims) TRT_NOEXCEPT override {
     Dims dims;
     dims.nbDims = inputs->nbDims;
 
@@ -127,8 +133,8 @@ public:
     return dims;
   }
 
-  bool supportsFormat(DataType type, PluginFormat format) const override {
-    if (format != PluginFormat::kNCHW) {
+  bool supportsFormat(DataType type, PluginFormat format) const TRT_NOEXCEPT override {
+    if (format != PluginFormat::kLINEAR) {
       return false;
     }
     if (type == DataType::kINT32 || type == DataType::kINT8) {
@@ -138,8 +144,8 @@ public:
   }
 
   void configureWithFormat(const Dims* inputDims, int nbInputs, const Dims* outputDims,
-      int nbOutputs, DataType type, PluginFormat format, int maxBatchSize) override {
-    
+      int nbOutputs, DataType type, PluginFormat format, int maxBatchSize) TRT_NOEXCEPT override {
+
     // set data type
     if (type == DataType::kFLOAT) {
       tensor_options = tensor_options.dtype(c10::kFloat);
@@ -148,7 +154,7 @@ public:
       tensor_options = tensor_options.dtype(c10::kHalf);
       dtype = type;
     }
-      
+
     // set input sizes
     input_sizes.resize(inputDims[0].nbDims);
     for (int i = 0; i < inputDims[0].nbDims; i++) {
@@ -162,25 +168,30 @@ public:
     }
   }
 
-  int initialize() override {
+  int initialize() TRT_NOEXCEPT override {
     // set device
     tensor_options = tensor_options.device(c10::kCUDA);
-      
+
     // set data type
     if (dtype == DataType::kFLOAT) {
         tensor_options = tensor_options.dtype(c10::kFloat);
     } else if (dtype == DataType::kHALF) {
         tensor_options = tensor_options.dtype(c10::kHalf);
     }
-      
+
     return 0;
   }
 
-  void terminate() override {}
+  void terminate() TRT_NOEXCEPT override {}
 
-  size_t getWorkspaceSize(int maxBatchSize) const override { return 0; }
+  size_t getWorkspaceSize(int maxBatchSize) const TRT_NOEXCEPT override { return 0; }
 
-  int enqueue(int batchSize, const void* const* inputs, void** outputs, void* workspace, cudaStream_t stream) override {
+#ifdef PRE_TRT8
+int enqueue(int batchSize, const void* const* inputs, void** outputs, void* workspace, cudaStream_t stream) override {
+#else
+int32_t enqueue(int32_t batchSize, void const* const* inputs, void* const* outputs, void* workspace,
+        cudaStream_t stream) noexcept override {
+#endif
     // get input / output dimensions
     std::vector<long> batch_input_sizes = input_sizes;
     std::vector<long> batch_output_sizes = output_sizes;
@@ -227,25 +238,25 @@ public:
     return 0;
   }
 
-  size_t getSerializationSize() const override {
+  size_t getSerializationSize() const TRT_NOEXCEPT override {
     return serializeToString().size();
   }
-    
-  void serialize(void* buffer) const override {
+
+  void serialize(void* buffer) const TRT_NOEXCEPT override {
       std::string data = serializeToString();
       size_t size = getSerializationSize();
       data.copy((char *) buffer, size);
   }
 
-  void destroy() override {}
+  void destroy() TRT_NOEXCEPT override {}
 
-  IPluginV2* clone() const override {
+  IPluginV2* clone() const TRT_NOEXCEPT override {
     return new InterpolatePlugin(size, mode, align_corners);
   }
 
-  void setPluginNamespace(const char* pluginNamespace) override {}
+  void setPluginNamespace(const char* pluginNamespace) TRT_NOEXCEPT override {}
 
-  const char *getPluginNamespace() const override {
+  const char *getPluginNamespace() const TRT_NOEXCEPT override {
     return "torch2trt";
   }
 
@@ -255,30 +266,30 @@ class InterpolatePluginCreator : public IPluginCreator {
 public:
   InterpolatePluginCreator() {}
 
-  const char *getPluginNamespace() const override {
+  const char *getPluginNamespace() const TRT_NOEXCEPT override {
     return "torch2trt";
   }
 
-  const char *getPluginName() const override {
+  const char *getPluginName() const TRT_NOEXCEPT override {
     return "interpolate";
   }
 
-  const char *getPluginVersion() const override {
+  const char *getPluginVersion() const TRT_NOEXCEPT override {
     return "1";
   }
 
-  IPluginV2 *deserializePlugin(const char *name, const void *data, size_t length) override {
+  IPluginV2 *deserializePlugin(const char *name, const void *data, size_t length) TRT_NOEXCEPT override {
     return new InterpolatePlugin((const char*) data, length);
   }
 
-  void setPluginNamespace(const char *N) override {}
-  const PluginFieldCollection *getFieldNames() override { return nullptr; }
+  void setPluginNamespace(const char *N) TRT_NOEXCEPT override {}
+  const PluginFieldCollection *getFieldNames() TRT_NOEXCEPT override { return nullptr; }
 
-  IPluginV2 *createPlugin(const char *name, const PluginFieldCollection *fc) override { return nullptr; }
+  IPluginV2 *createPlugin(const char *name, const PluginFieldCollection *fc) TRT_NOEXCEPT override { return nullptr; }
 
 };
 
 
 REGISTER_TENSORRT_PLUGIN(InterpolatePluginCreator);
-    
+
 } // namespace torch2trt
