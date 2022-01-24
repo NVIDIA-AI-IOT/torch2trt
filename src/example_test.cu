@@ -244,3 +244,52 @@ TEST_CASE("Example plugin enqueue test half", "[example]") {
     free(x_cpu);
     cudaFree(x_gpu);
 }
+
+
+TEST_CASE("Example plugin creation", "[example]") {
+    
+    int8_t *x_cpu;
+    int8_t *x_gpu;
+
+    // create and configure plugin
+    ExamplePluginCreator plugin_creator = ExamplePluginCreator();
+    IPluginV2 *plugin = plugin_creator.createPlugin(nullptr, nullptr);
+    Dims3 inputDims(3, 4, 5);
+    plugin->configureWithFormat(
+        &inputDims,
+        1,
+        &inputDims,
+        1,
+        DataType::kINT8,
+        PluginFormat::kCHW4,
+        1
+    );
+
+    // get sizes
+    int count = 3 * 4 * 5;
+    int size = count * sizeof(int8_t);
+    
+    // allocate buffers
+    x_cpu = (int8_t *) malloc(size);
+    cudaMalloc(&x_gpu, size);
+
+    // populate host
+    for (int i = 0; i < count; i++) {
+        x_cpu[i] = 2;
+    }
+    
+    // copy to device
+    cudaMemcpy(x_gpu, x_cpu, size, cudaMemcpyHostToDevice);
+
+    // execute plugin
+    plugin->enqueue(1, (void**) &x_gpu, (void**) &x_gpu, (void*) nullptr, 0);
+
+    // copy to host
+    cudaMemcpy(x_cpu, x_gpu, size, cudaMemcpyDeviceToHost);
+    REQUIRE(x_cpu[0] == 4);
+    for (int i = 0; i < count; i++) {
+        REQUIRE(x_cpu[i] == 4);
+    }
+    free(x_cpu);
+    cudaFree(x_gpu);
+}
