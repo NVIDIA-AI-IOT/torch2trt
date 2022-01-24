@@ -98,6 +98,9 @@ TEST_CASE("Example plugin enqueue test float", "[example]") {
     for (int i = 0; i < count; i++) {
         REQUIRE(x_cpu[i] == 4);
     }
+
+    free(x_cpu);
+    cudaFree(x_gpu);
 }
 
 
@@ -144,6 +147,8 @@ TEST_CASE("Example plugin enqueue test int32", "[example]") {
     for (int i = 0; i < count; i++) {
         REQUIRE(x_cpu[i] == 4);
     }
+    free(x_cpu);
+    cudaFree(x_gpu);
 }
 
 
@@ -190,6 +195,8 @@ TEST_CASE("Example plugin enqueue test int8", "[example]") {
     for (int i = 0; i < count; i++) {
         REQUIRE(x_cpu[i] == 4);
     }
+    free(x_cpu);
+    cudaFree(x_gpu);
 }
 
 TEST_CASE("Example plugin enqueue test half", "[example]") {
@@ -234,4 +241,6 @@ TEST_CASE("Example plugin enqueue test half", "[example]") {
     for (int i = 0; i < count; i++) {
         REQUIRE(__half2float(x_cpu[i]) == 4);
     }
+    free(x_cpu);
+    cudaFree(x_gpu);
 }
