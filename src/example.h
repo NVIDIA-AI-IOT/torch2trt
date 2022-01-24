@@ -4,6 +4,7 @@
 
 #include "NvInfer.h"
 #include "NvInferPlugin.h"
+#include <cuda_fp16.h>
 
 
 using namespace nvinfer1;
@@ -14,12 +15,14 @@ namespace torch2trt_plugins {
 
 template<typename T>
 void exampleFuncton(T *x, T *y, int size, cudaStream_t stream=0);
+void exampleFunctonHalf(__half *x, __half *y, int size, cudaStream_t stream=0);
 
 
 class ExamplePlugin : public IPluginV2 {
 public:
     int32_t inputSize;
     DataType dataType;
+
     ExamplePlugin();
     ~ExamplePlugin();
     /* IPluginV2 methods */
