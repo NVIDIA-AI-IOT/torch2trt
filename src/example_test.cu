@@ -36,6 +36,7 @@ TEST_CASE("Example plugin test", "[example]") {
     REQUIRE(plugin.inputSize == 3 * 4 * 5);
 }
 
+
 TEMPLATE_TEST_CASE("Example plugin enqueue test", "[example][template]" , int, float) {
     TestType *x_cpu;
     TestType *x_gpu;
