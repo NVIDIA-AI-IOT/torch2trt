@@ -117,6 +117,9 @@ int32_t ExamplePlugin::enqueue(int32_t batchSize, void const* const* inputs, voi
             exampleFuncton<int8_t>((int8_t*) inputs[0], (int8_t*) outputs[0], totalSize, stream);
             break;
         }
+        default: {
+            return 1;
+        }
     }
     return 0;
 };
