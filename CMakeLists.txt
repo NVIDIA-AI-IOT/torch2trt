@@ -3,13 +3,13 @@ project(torch2trt_plugins VERSION 0.1.0)
 
 
 find_package(Catch2 REQUIRED)
-# find_package(CUDA  REQUIRED)
+find_package(CUDA  REQUIRED)
 
 include(CTest)
 enable_testing()
 enable_language(CUDA)
 
-# include_directories("${CUDA_INCLUDE_DIRS}")
+include_directories("${CUDA_INCLUDE_DIRS}")
 
 add_library(torch2trt_plugins 
     src/example.cu
