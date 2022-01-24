@@ -12,12 +12,12 @@ enable_language(CUDA)
 # include_directories("${CUDA_INCLUDE_DIRS}")
 
 add_library(torch2trt_plugins 
-    src/reflection_pad_2d_plugin.cu
+    src/example.cu
 )
 
 add_executable(torch2trt_plugins_tests 
     src/tests.cpp
-    src/reflection_pad_2d_plugin_test.cu
+    src/example_test.cu
 )
 
 target_link_libraries(torch2trt_plugins_tests 
