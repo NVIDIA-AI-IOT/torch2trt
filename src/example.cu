@@ -1,5 +1,6 @@
 #include "example.h"
 #include "cuda_runtime.h"
+#include <cuda_fp16.h>
 
 
 
@@ -16,6 +17,15 @@ __global__ void exampleKernel(T *x, T *y, int size) {
 
 template __global__ void exampleKernel<float>(float *, float *, int);
 template __global__ void exampleKernel<int>(int *, int *, int);
+template __global__ void exampleKernel<int8_t>(int8_t *, int8_t *, int);
+
+
+__global__ void exampleKernelHalf(__half *x, __half *y, int size) {
+    int index = blockDim.x * blockIdx.x + threadIdx.x;
+    if (index < size) {
+        y[index] = __hmul(x[index], __float2half_rn(2.0f));
+    }
+}
 
 
 template<typename T>
@@ -27,6 +37,14 @@ void exampleFuncton(T *x, T *y, int size, cudaStream_t stream) {
 
 template void exampleFuncton<float>(float *, float *, int, cudaStream_t);
 template void exampleFuncton<int>(int *, int *, int, cudaStream_t);
+template void exampleFuncton<int8_t>(int8_t *, int8_t *, int, cudaStream_t);
+
+void exampleFunctonHalf(__half *x, __half *y, int size, cudaStream_t stream) {
+    int nThreads = 32;
+    int nBlocks = (size / 32) + 1;
+    exampleKernelHalf<<<nBlocks, nThreads, 0, stream>>>(x, y, size);
+}
+
 
 ExamplePlugin::ExamplePlugin() {
 
@@ -53,7 +71,8 @@ Dims ExamplePlugin::getOutputDimensions(int32_t index, Dims const* inputs, int32
 }
 
 bool ExamplePlugin::supportsFormat(DataType type, PluginFormat format) const noexcept {
-    return (type == DataType::kFLOAT) || (type == DataType::kINT32);
+    return (type == DataType::kFLOAT) || (type == DataType::kINT32)
+        || (type == DataType::kINT8) || (type == DataType::kHALF);
 }
 
 void ExamplePlugin::configureWithFormat(Dims const* inputDims, int32_t nbInputs, Dims const* outputDims, int32_t nbOutputs,
@@ -88,6 +107,15 @@ int32_t ExamplePlugin::enqueue(int32_t batchSize, void const* const* inputs, voi
         }
         case DataType::kINT32: {
             exampleFuncton<int>((int*) inputs[0], (int*) outputs[0], totalSize, stream);
+            break;
+        }
+        case DataType::kHALF: {
+            exampleFunctonHalf((__half*) inputs[0], (__half*) outputs[0], totalSize, stream);
+            break;
+        }
+        case DataType::kINT8: {
+            exampleFuncton<int8_t>((int8_t*) inputs[0], (int8_t*) outputs[0], totalSize, stream);
+            break;
         }
     }
     return 0;
@@ -106,15 +134,14 @@ void ExamplePlugin::destroy() noexcept {
 };
 
 IPluginV2* ExamplePlugin::clone() const noexcept { 
-    return nullptr; 
+    return new ExamplePlugin();
 };
 
 void ExamplePlugin::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {
-
 };
 
 AsciiChar const* ExamplePlugin::getPluginNamespace() const noexcept {
-    return "";
+    return "torch2trt_plugins";
 };
 
 }

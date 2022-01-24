@@ -9,6 +9,7 @@ include(CTest)
 enable_testing()
 enable_language(CUDA)
 
+
 include_directories("${CUDA_INCLUDE_DIRS}")
 
 add_library(torch2trt_plugins 
@@ -19,6 +20,9 @@ add_executable(torch2trt_plugins_tests
     src/tests.cpp
     src/example_test.cu
 )
+
+set_property(TARGET torch2trt_plugins PROPERTY CUDA_ARCHITECTURES 53)
+set_property(TARGET torch2trt_plugins_tests PROPERTY CUDA_ARCHITECTURES 53)
 
 target_link_libraries(torch2trt_plugins_tests 
     PRIVATE 
