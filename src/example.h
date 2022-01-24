@@ -13,7 +13,7 @@ namespace torch2trt_plugins {
 
 
 template<typename T>
-void exampleFuncton(T *x, int size);
+void exampleFuncton(T *x, T *y, int size, cudaStream_t stream=0);
 
 
 class ExamplePlugin : public IPluginV2 {
