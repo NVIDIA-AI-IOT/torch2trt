@@ -6,6 +6,7 @@
 
 namespace torch2trt_plugins {
 
+// KERNELS
 
 template<typename T>
 __global__ void exampleKernel(T *x, T *y, int size) {
@@ -28,6 +29,9 @@ __global__ void exampleKernelHalf(__half *x, __half *y, int size) {
 }
 
 
+// FUNCTIONS
+
+
 template<typename T>
 void exampleFuncton(T *x, T *y, int size, cudaStream_t stream) {
     int nThreads = 32;
@@ -46,6 +50,9 @@ void exampleFunctonHalf(__half *x, __half *y, int size, cudaStream_t stream) {
 }
 
 
+// PLUGIN
+
+
 ExamplePlugin::ExamplePlugin() {
 
 }
@@ -55,11 +62,11 @@ ExamplePlugin::~ExamplePlugin() {
 }
 
 AsciiChar const * ExamplePlugin::getPluginType() const noexcept {
-    return "ExamplePlugin";
+    return EXAMPLE_PLUGIN_NAME;
 }
 
 AsciiChar const * ExamplePlugin::getPluginVersion() const noexcept {
-    return "1";
+    return EXAMPLE_PLUGIN_VERSION;
 }
 
 int32_t ExamplePlugin::getNbOutputs() const noexcept {
@@ -144,6 +151,39 @@ void ExamplePlugin::setPluginNamespace(AsciiChar const* pluginNamespace) noexcep
 };
 
 AsciiChar const* ExamplePlugin::getPluginNamespace() const noexcept {
+    return EXAMPLE_PLUGIN_NAMESPACE;
+};
+
+
+// PLUGIN CREATOR
+
+ExamplePluginCreator::ExamplePluginCreator() {
+    memset(&this->fieldCollection, 0, sizeof(this->fieldCollection));
+}
+
+AsciiChar const* ExamplePluginCreator::getPluginName() const noexcept {
+    return EXAMPLE_PLUGIN_NAME;
+}
+
+AsciiChar const* ExamplePluginCreator::getPluginVersion() const noexcept {
+    return EXAMPLE_PLUGIN_VERSION;
+};
+
+PluginFieldCollection const* ExamplePluginCreator::getFieldNames() noexcept {
+    return &this->fieldCollection;
+};
+
+IPluginV2* ExamplePluginCreator::createPlugin(AsciiChar const* name, PluginFieldCollection const* fc) noexcept {
+    return new ExamplePlugin();
+}
+
+IPluginV2* ExamplePluginCreator::deserializePlugin(AsciiChar const* name, void const* serialData, size_t serialLength) noexcept {
+    return new ExamplePlugin();
+}
+
+void ExamplePluginCreator::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {};
+
+AsciiChar const* ExamplePluginCreator::getPluginNamespace() const noexcept {
     return "torch2trt_plugins";
 };
 
