@@ -1,7 +1,8 @@
 #include <catch2/catch_all.hpp>
 #include "example.h"
 #include <cuda_fp16.h>
-
+#include "NvInfer.h"
+#include <iostream>
 
 
 using namespace torch2trt_plugins;
@@ -293,3 +294,80 @@ TEST_CASE("Example plugin creation", "[example]") {
     free(x_cpu);
     cudaFree(x_gpu);
 }
+
+class Logger : public ILogger
+{
+  void log(Severity severity, AsciiChar const* msg) noexcept
+  {
+      std::cout << msg << std::endl;
+  }
+} gLogger;
+
+
+TEST_CASE("Example engine creation", "[example]") {
+    
+    float *x_cpu;
+    float *x_gpu;
+    Dims3 inputDims(3, 4, 5);
+
+    // create and configure plugin
+    auto builder = createInferBuilder(gLogger);
+    auto network_flags = NetworkDefinitionCreationFlags();
+    auto network = builder->createNetworkV2(network_flags);
+    auto input = network->addInput("input", DataType::kFLOAT, inputDims);
+    // auto plugin_creator = ExamplePluginCreator();
+    // auto plugin = plugin_creator.createPlugin(nullptr, nullptr);
+    auto plugin = ExamplePlugin();
+    auto layer = network->addPluginV2(
+        &input,
+        1,
+        plugin
+    );
+    network->markOutput(*layer->getOutput(0));
+    layer->getOutput(0)->setName("output");
+
+    // auto builder_config = Builder
+    auto builder_config = builder->createBuilderConfig();
+    auto engine = builder->buildEngineWithConfig(
+        *network,
+        *builder_config
+    );
+    
+    auto context = engine->createExecutionContext();
+
+    // get sizes
+    int count = 3 * 4 * 5;
+    int size = count * sizeof(float);
+    
+    // allocate buffers
+    x_cpu = (float *) malloc(size);
+    cudaMalloc(&x_gpu, size);
+
+    // populate host
+    for (int i = 0; i < count; i++) {
+        x_cpu[i] = 2;
+    }
+    
+    // copy to device
+    cudaMemcpy(x_gpu, x_cpu, size, cudaMemcpyHostToDevice);
+
+    // execute plugin
+    void *bindings[2];
+    bindings[engine->getBindingIndex("input")] = x_gpu;
+    bindings[engine->getBindingIndex("output")] = x_gpu;
+
+    context->enqueue(1, bindings, 0, nullptr);
+
+    // plugin->enqueue(1, (void**) &x_gpu, (void**) &x_gpu, (void*) nullptr, 0);
+
+    // copy to host
+    cudaMemcpy(x_cpu, x_gpu, size, cudaMemcpyDeviceToHost);
+    REQUIRE(x_cpu[0] == 4);
+    for (int i = 0; i < count; i++) {
+        REQUIRE(x_cpu[i] == 4);
+    }
+
+    free(x_cpu);
+    cudaFree(x_gpu);
+}
+

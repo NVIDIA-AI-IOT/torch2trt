@@ -187,4 +187,6 @@ AsciiChar const* ExamplePluginCreator::getPluginNamespace() const noexcept {
     return "torch2trt_plugins";
 };
 
+REGISTER_TENSORRT_PLUGIN(ExamplePluginCreator);
+
 }
