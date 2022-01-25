@@ -20,16 +20,17 @@ namespace torch2trt_plugins {
 
 
 template<typename T>
-void exampleFuncton(T *x, T *y, int size, cudaStream_t stream=0);
-void exampleFunctonHalf(__half *x, __half *y, int size, cudaStream_t stream=0);
+void exampleFuncton(T *x, T *y, float scale, int size, cudaStream_t stream=0);
+void exampleFunctonHalf(__half *x, __half *y, float scale, int size, cudaStream_t stream=0);
 
 
 class ExamplePlugin : public IPluginV2 {
 public:
     int32_t inputSize;
     DataType dataType;
+    float scale;
 
-    ExamplePlugin();
+    ExamplePlugin(float scale=2.0);
     ~ExamplePlugin();
 
     /* IPluginV2 methods */
