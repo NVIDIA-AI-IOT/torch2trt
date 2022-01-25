@@ -16,6 +16,11 @@ add_library(torch2trt_plugins
     src/example.cu
 )
 
+target_link_libraries(
+    torch2trt_plugins
+    nvinfer
+)
+
 add_executable(torch2trt_plugins_tests 
     src/tests.cpp
     src/example_test.cu
@@ -28,6 +33,7 @@ target_link_libraries(torch2trt_plugins_tests
     PRIVATE 
     Catch2::Catch2WithMain 
     torch2trt_plugins
+    nvinfer
 )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
