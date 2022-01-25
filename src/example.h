@@ -5,6 +5,7 @@
 #include "NvInfer.h"
 #include "NvInferPlugin.h"
 #include <cuda_fp16.h>
+#include <vector>
 
 
 #define EXAMPLE_PLUGIN_NAME "ExamplePlugin"
@@ -73,6 +74,7 @@ public:
 class ExamplePluginCreator : public IPluginCreator {
 private:
     PluginFieldCollection fieldCollection;
+    std::vector<PluginField> fields;
 
 public:
     ExamplePluginCreator();

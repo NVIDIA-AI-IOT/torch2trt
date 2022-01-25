@@ -158,7 +158,11 @@ AsciiChar const* ExamplePlugin::getPluginNamespace() const noexcept {
 // PLUGIN CREATOR
 
 ExamplePluginCreator::ExamplePluginCreator() {
-    memset(&this->fieldCollection, 0, sizeof(this->fieldCollection));
+    this->fields = {
+        PluginField("scale")
+    };
+    this->fieldCollection.fields = this->fields.data();
+    this->fieldCollection.nbFields = this->fields.size();
 }
 
 AsciiChar const* ExamplePluginCreator::getPluginName() const noexcept {
