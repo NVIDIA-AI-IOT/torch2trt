@@ -371,3 +371,8 @@ TEST_CASE("Example engine creation", "[example]") {
     cudaFree(x_gpu);
 }
 
+TEST_CASE("Example plugin creator field names includes scale", "[example]") {
+    auto pluginCreator = ExamplePluginCreator();
+    REQUIRE(pluginCreator.getFieldNames()->nbFields == 1);
+    REQUIRE(strcmp(pluginCreator.getFieldNames()->fields[0].name, "scale") == 0);
+}
