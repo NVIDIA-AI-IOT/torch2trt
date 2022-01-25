@@ -16,7 +16,7 @@ TEMPLATE_TEST_CASE("Example cuda test", "[example][template]" , int, float) {
     cudaMalloc(&x_gpu, sizeof(TestType));
     *x_cpu = 2;
     cudaMemcpy(x_gpu, x_cpu, sizeof(TestType), cudaMemcpyHostToDevice);
-    exampleFuncton<TestType>(x_gpu, x_gpu, 1);
+    exampleFuncton<TestType>(x_gpu, x_gpu, 2.0, 1);
     cudaMemcpy(x_cpu, x_gpu, sizeof(TestType), cudaMemcpyDeviceToHost);
     REQUIRE(*x_cpu == 4);
     cudaFree(x_gpu);
@@ -32,7 +32,7 @@ TEST_CASE("Example cuda test half", "[example]") {
     cudaMalloc(&x_gpu, sizeof(__half));
     *x_cpu = __float2half_rn(2.0);
     cudaMemcpy(x_gpu, x_cpu, sizeof(__half), cudaMemcpyHostToDevice);
-    exampleFunctonHalf(x_gpu, x_gpu, 1);
+    exampleFunctonHalf(x_gpu, x_gpu, 2.0, 1);
     cudaMemcpy(x_cpu, x_gpu, sizeof(__half), cudaMemcpyDeviceToHost);
     REQUIRE(__half2float(*x_cpu) == 4.0);
     cudaFree(x_gpu);
@@ -375,4 +375,19 @@ TEST_CASE("Example plugin creator field names includes scale", "[example]") {
     auto pluginCreator = ExamplePluginCreator();
     REQUIRE(pluginCreator.getFieldNames()->nbFields == 1);
     REQUIRE(strcmp(pluginCreator.getFieldNames()->fields[0].name, "scale") == 0);
+}
+
+
+TEST_CASE("Create example plugin from fields", "[example]") {
+    auto fieldCollection = PluginFieldCollection();
+    float scale = 3;
+    std::vector<PluginField> fields = {
+        PluginField("scale", (void*) &scale, PluginFieldType::kFLOAT32, 1)
+    };
+    fieldCollection.nbFields = fields.size();
+    fieldCollection.fields = fields.data();
+    auto pluginCreator = ExamplePluginCreator();
+    auto plugin = pluginCreator.createPlugin("ExamplePlugin", &fieldCollection);
+
+    REQUIRE(((ExamplePlugin*)plugin)->scale == scale);
 }
