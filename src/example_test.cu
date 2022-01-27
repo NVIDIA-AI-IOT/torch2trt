@@ -391,3 +391,22 @@ TEST_CASE("Create example plugin from fields", "[example]") {
 
     REQUIRE(((ExamplePlugin*)plugin)->scale == scale);
 }
+
+TEST_CASE("Create example plugin serialize/deserialize", "[example]") {
+    auto fieldCollection = PluginFieldCollection();
+    float scale = 3;
+    std::vector<PluginField> fields = {
+        PluginField("scale", (void*) &scale, PluginFieldType::kFLOAT32, 1)
+    };
+    fieldCollection.nbFields = fields.size();
+    fieldCollection.fields = fields.data();
+    auto pluginCreator = ExamplePluginCreator();
+    auto plugin = pluginCreator.createPlugin("ExamplePlugin", &fieldCollection);
+
+    void *buffer = malloc(sizeof(float));
+    plugin->serialize(buffer);
+    auto plugin2 = pluginCreator.deserializePlugin("ExamplePlugin", buffer, sizeof(float));
+
+    REQUIRE(((ExamplePlugin*)plugin2)->scale == scale);
+    free(buffer);
+}
