@@ -132,11 +132,12 @@ int32_t ExamplePlugin::enqueue(int32_t batchSize, void const* const* inputs, voi
 };
 
 size_t ExamplePlugin::getSerializationSize() const noexcept {
-    return 0;
+    return sizeof(this->scale);
 };
 
 void ExamplePlugin::serialize(void* buffer) const noexcept {
-
+    auto bufferFloat = reinterpret_cast<float*>(buffer);
+    *bufferFloat = this->scale;
 };
 
 void ExamplePlugin::destroy() noexcept {
@@ -178,12 +179,17 @@ PluginFieldCollection const* ExamplePluginCreator::getFieldNames() noexcept {
 };
 
 IPluginV2* ExamplePluginCreator::createPlugin(AsciiChar const* name, PluginFieldCollection const* fc) noexcept {
-    float scale = *((float*) fc->fields[0].data);
-    return new ExamplePlugin(scale);
+    if (fc == nullptr) {
+        return new ExamplePlugin();
+    } else {
+        float scale = *((float*) fc->fields[0].data);
+        return new ExamplePlugin(scale);
+    }
 }
 
 IPluginV2* ExamplePluginCreator::deserializePlugin(AsciiChar const* name, void const* serialData, size_t serialLength) noexcept {
-    return new ExamplePlugin();
+    float const* buffer = reinterpret_cast<float const*>(serialData);
+    return new ExamplePlugin(*buffer);
 }
 
 void ExamplePluginCreator::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {};
