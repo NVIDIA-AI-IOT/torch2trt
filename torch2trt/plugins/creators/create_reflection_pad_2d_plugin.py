@@ -15,17 +15,17 @@ def create_reflection_pad_2d_plugin(paddingLeft, paddingRight, paddingTop, paddi
         ),
         trt.PluginField(
             'paddingRight',
-            np.array([paddingLeft]).astype(np.int32),
+            np.array([paddingRight]).astype(np.int32),
             trt.PluginFieldType.INT32
         ),
         trt.PluginField(
             'paddingTop',
-            np.array([paddingLeft]).astype(np.int32),
+            np.array([paddingTop]).astype(np.int32),
             trt.PluginFieldType.INT32
         ),
         trt.PluginField(
             'paddingBottom',
-            np.array([paddingLeft]).astype(np.int32),
+            np.array([paddingBottom]).astype(np.int32),
             trt.PluginFieldType.INT32
         )
     ])
