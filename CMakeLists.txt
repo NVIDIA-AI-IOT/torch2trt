@@ -12,8 +12,8 @@ enable_language(CUDA)
 
 include_directories("${CUDA_INCLUDE_DIRS}")
 
-add_library(torch2trt_plugins 
-    src/example.cu
+add_library(torch2trt_plugins SHARED
+    torch2trt/plugins/src/example_plugin/example.cu
 )
 
 target_link_libraries(
@@ -22,8 +22,8 @@ target_link_libraries(
 )
 
 add_executable(torch2trt_plugins_tests 
-    src/tests.cpp
-    src/example_test.cu
+    torch2trt/plugins/src/tests.cpp
+    torch2trt/plugins/src/example_plugin/example_test.cu
 )
 
 set_property(TARGET torch2trt_plugins PROPERTY CUDA_ARCHITECTURES 53)
