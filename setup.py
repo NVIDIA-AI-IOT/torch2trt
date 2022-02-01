@@ -40,9 +40,15 @@ plugins_ext_module = CUDAExtension(
             'nvcc': []
         }
     )
+
 if '--plugins' in sys.argv:
+    subprocess.call([])
+    # call cmake
+    # move to directory
+
+if '--torch-plugins' in sys.argv:
     ext_modules.append(plugins_ext_module)
-    sys.argv.remove('--plugins')
+    sys.argv.remove('--torch-plugins')
 
 if '--contrib' in sys.argv:
     exclude_dir=[]
@@ -55,5 +61,6 @@ setup(
     packages=find_packages(exclude=exclude_dir),
     ext_package='torch2trt',
     ext_modules=ext_modules,
-    cmdclass={'build_ext': BuildExtension}
+    cmdclass={'build_ext': BuildExtension},
+    package_data={'torch2trt.plugins': ['libtorch2trt_plugins.so']}
 )

@@ -6,7 +6,7 @@
 #include "NvInferPlugin.h"
 #include <cuda_fp16.h>
 #include <vector>
-
+#include <string>
 
 #define EXAMPLE_PLUGIN_NAME "ExamplePlugin"
 #define EXAMPLE_PLUGIN_NAMESPACE "torch2trt_plugins"
@@ -29,6 +29,7 @@ public:
     int32_t inputSize;
     DataType dataType;
     float scale;
+    std::string pluginNamespace;
 
     ExamplePlugin(float scale=2.0);
     ~ExamplePlugin();
@@ -76,6 +77,7 @@ class ExamplePluginCreator : public IPluginCreator {
 private:
     PluginFieldCollection fieldCollection;
     std::vector<PluginField> fields;
+    std::string pluginNamespace;
 
 public:
     ExamplePluginCreator();
