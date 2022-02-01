@@ -41,8 +41,9 @@ plugins_ext_module = CUDAExtension(
         }
     )
 
-if '--plugins' in sys.argv:
-    subprocess.call([])
+# if '--plugins' in sys.argv:
+#     pass
+    # subprocess.call([])
     # call cmake
     # move to directory
 
