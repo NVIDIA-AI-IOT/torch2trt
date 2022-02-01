@@ -9,7 +9,6 @@
 #include <string>
 
 #define EXAMPLE_PLUGIN_NAME "ExamplePlugin"
-#define EXAMPLE_PLUGIN_NAMESPACE "torch2trt_plugins"
 #define EXAMPLE_PLUGIN_VERSION "1"
 
 
