@@ -25,3 +25,15 @@ def convert_reflection_pad(ctx):
 @add_module_test(torch.float32, torch.device("cuda"), [(1, 2, 3, 3)])
 def test_reflection_pad_2d_simple():
     return nn.ReflectionPad2d(1)
+
+
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 1, 3, 3)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 2, 3, 3)])
+def test_reflection_pad_2d_simple():
+    return nn.ReflectionPad2d(2)
+
+
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 1, 3, 3)])
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 2, 3, 3)])
+def test_reflection_pad_2d_simple():
+    return nn.ReflectionPad2d((1, 0, 1, 0))

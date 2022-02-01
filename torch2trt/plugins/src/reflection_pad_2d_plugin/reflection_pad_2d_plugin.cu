@@ -1,6 +1,7 @@
 #include "reflection_pad_2d_plugin.h"
 #include "cuda_runtime.h"
 #include <cuda_fp16.h>
+#include <iostream>
 
 
 namespace torch2trt_plugins {
@@ -19,9 +20,9 @@ __global__ void reflectionPad2dKernel(
     }
     int IW = W - (paddingLeft + paddingRight);
     int IH = H - (paddingTop + paddingBottom);
-    int n = idx / (C*H*W);
-    int c = idx / (H*W);
-    int h = idx / (W);
+    int n = (idx / (C*H*W)) % N;
+    int c = (idx / (H*W)) % C;
+    int h = (idx / W) % H;
     int w = idx % W;
     int iw;
     int ih; 
@@ -65,7 +66,7 @@ void reflectionPad2dFunction(
     cudaStream_t stream) {
     int size = N * C * H * W;
     int nThreads = 32;
-    int nBlocks = (size / 32) + 1;
+    int nBlocks = (size / nThreads) + 1;
     reflectionPad2dKernel<<<nBlocks, nThreads, 0, stream>>>(x, y, N, C, H, W, paddingLeft, paddingRight, paddingTop, paddingBottom);
 }
 
@@ -144,13 +145,10 @@ size_t ReflectionPad2dPlugin::getWorkspaceSize(int32_t maxBatchSize) const noexc
 
 int32_t ReflectionPad2dPlugin::enqueue(int32_t batchSize, void const* const* inputs, void* const* outputs, void* workspace,
     cudaStream_t stream) noexcept {
-    const int totalSize = batchSize * this->outputSize;
     int N = batchSize;
     int C = outputDims.d[0];
     int H = outputDims.d[1];
     int W = outputDims.d[2];
-    int nThreads = 32;
-    int nBlocks = (totalSize / 32) + 1;
     switch (this->dataType) {
         case DataType::kFLOAT: {
             reflectionPad2dFunction<float>(
