@@ -4,14 +4,14 @@ from torch2trt.module_test import add_module_test
 
 def has_group_norm_plugin():
     try:
-        from torch2trt.plugins import GroupNormPlugin
+        from torch2trt.torch_plugins import GroupNormPlugin
         return True
     except:
         return False
 
 
 def get_group_norm_plugin(num_groups, weight, bias, eps):
-    from torch2trt.plugins import GroupNormPlugin
+    from torch2trt.torch_plugins import GroupNormPlugin
     PLUGIN_NAME = 'group_norm'
     registry = trt.get_plugin_registry()
     creator = [c for c in registry.plugin_creator_list if c.name == PLUGIN_NAME and c.plugin_namespace == 'torch2trt'][0]

@@ -22,9 +22,9 @@ if version.parse(tensorrt.__version__) < version.parse('8'):
     compile_args_cxx.append('-DPRE_TRT8')
 
 plugins_ext_module = CUDAExtension(
-        name='plugins',
+        name='torch_plugins',
         sources=[
-            'torch2trt/plugins/plugins.cpp'
+            'torch2trt/torch_plugins/plugins.cpp'
         ],
         include_dirs=[
             trt_inc_dir()
