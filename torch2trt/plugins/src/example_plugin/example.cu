@@ -1,7 +1,7 @@
 #include "example.h"
 #include "cuda_runtime.h"
 #include <cuda_fp16.h>
-
+#include <iostream>
 
 
 namespace torch2trt_plugins {
@@ -145,7 +145,7 @@ void ExamplePlugin::destroy() noexcept {
 };
 
 IPluginV2* ExamplePlugin::clone() const noexcept { 
-    return new ExamplePlugin();
+    return new ExamplePlugin(this->scale);
 };
 
 void ExamplePlugin::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {
