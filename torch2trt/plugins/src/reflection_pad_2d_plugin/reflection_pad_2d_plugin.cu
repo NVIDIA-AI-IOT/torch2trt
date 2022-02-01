@@ -1,7 +1,6 @@
 #include "reflection_pad_2d_plugin.h"
 #include "cuda_runtime.h"
 #include <cuda_fp16.h>
-#include <iostream>
 
 
 namespace torch2trt_plugins {
@@ -44,8 +43,6 @@ __global__ void reflectionPad2dKernel(
     } else {
         ih = h - paddingTop;
     }
-    // iw = w - paddingLeft;
-    // ih = h - paddingTop;
 
     y[n*C*H*W + c*H*W + h*W + w] = x[n*C*IH*IW + c*IH*IW + ih*IW + iw];
 }
@@ -55,12 +52,6 @@ template __global__ void reflectionPad2dKernel<int>(int *, int *, int, int, int,
 template __global__ void reflectionPad2dKernel<int8_t>(int8_t *, int8_t *, int, int, int, int, int, int, int, int);
 
 
-// __global__ void exampleKernelHalf(__half *x, __half *y, float scale, int size) {
-//     int index = blockDim.x * blockIdx.x + threadIdx.x;
-//     if (index < size) {
-//         y[index] = __hmul(x[index], __float2half_rn(scale));
-//     }
-// }
 
 
 // // FUNCTIONS
@@ -84,23 +75,12 @@ template void reflectionPad2dFunction<float>(
     int, int, int, int, 
     cudaStream_t);
 
-// template void exampleFuncton<float>(float *, float *, float, int, cudaStream_t);
-// template void exampleFuncton<int>(int *, int *, float, int, cudaStream_t);
-// template void exampleFuncton<int8_t>(int8_t *, int8_t *, float, int, cudaStream_t);
-
-// void exampleFunctonHalf(__half *x, __half *y, float scale, int size, cudaStream_t stream) {
-//     int nThreads = 32;
-//     int nBlocks = (size / 32) + 1;
-//     exampleKernelHalf<<<nBlocks, nThreads, 0, stream>>>(x, y, scale, size);
-// }
-
 
 // PLUGIN
 
 
 ReflectionPad2dPlugin::ReflectionPad2dPlugin(int32_t paddingLeft, int32_t paddingRight, int32_t paddingTop, int32_t paddingBottom) : 
 paddingLeft(paddingLeft), paddingRight(paddingRight), paddingTop(paddingTop), paddingBottom(paddingBottom) {
-
 }
 
 ReflectionPad2dPlugin::~ReflectionPad2dPlugin() {
@@ -189,7 +169,7 @@ int32_t ReflectionPad2dPlugin::enqueue(int32_t batchSize, void const* const* inp
             break;
         }
         case DataType::kHALF: {
-            // exampleFunctonHalf((__half*) inputs[0], (__half*) outputs[0], this->scale, totalSize, stream);
+            // TODO
             break;
         }
         case DataType::kINT8: {
