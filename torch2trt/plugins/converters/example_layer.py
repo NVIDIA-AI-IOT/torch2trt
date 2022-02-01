@@ -1,13 +1,8 @@
 import torch
 import torch.nn as nn
-import numpy as np
-import tensorrt as trt
-import ctypes
-from torch2trt import torch2trt, tensorrt_converter, get_arg
-from torch2trt_plugins.creators.example import create_ExamplePlugin
-
-
-load = ctypes.CDLL('./build/libtorch2trt_plugins.so')
+from torch2trt.torch2trt import *
+from torch2trt.module_test import add_module_test
+from torch2trt.plugins.creators.create_example_plugin import create_example_plugin
 
 
 class ExampleLayer(nn.Module):
@@ -25,7 +20,16 @@ def convert_example_layer(ctx):
     input = get_arg(ctx, 'x', pos=1, default=None)
     output = ctx.method_return
     input_trt = input._trt
-    layer = ctx.network.add_plugin_v2([input_trt], create_ExamplePlugin(scale=module.scale))
+    plugin = create_example_plugin(module.scale)
+    layer = ctx.network.add_plugin_v2([input_trt], plugin)
     output._trt = layer.get_output(0)
 
 
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 4, 6)])
+def test_example_layer_scale3():
+    return ExampleLayer(3.0)
+
+
+@add_module_test(torch.float32, torch.device("cuda"), [(1, 3, 4, 6)])
+def test_example_layer_scale4():
+    return ExampleLayer(4.0)

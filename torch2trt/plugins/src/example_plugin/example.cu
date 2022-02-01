@@ -149,10 +149,11 @@ IPluginV2* ExamplePlugin::clone() const noexcept {
 };
 
 void ExamplePlugin::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {
+    this->pluginNamespace = pluginNamespace;
 };
 
 AsciiChar const* ExamplePlugin::getPluginNamespace() const noexcept {
-    return EXAMPLE_PLUGIN_NAMESPACE;
+    return this->pluginNamespace.c_str();
 };
 
 
@@ -192,10 +193,12 @@ IPluginV2* ExamplePluginCreator::deserializePlugin(AsciiChar const* name, void c
     return new ExamplePlugin(*buffer);
 }
 
-void ExamplePluginCreator::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {};
+void ExamplePluginCreator::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {
+    this->pluginNamespace = pluginNamespace;
+};
 
 AsciiChar const* ExamplePluginCreator::getPluginNamespace() const noexcept {
-    return "torch2trt_plugins";
+    return this->pluginNamespace.c_str();
 };
 
 REGISTER_TENSORRT_PLUGIN(ExamplePluginCreator);
