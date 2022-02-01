@@ -82,6 +82,7 @@ template void reflectionPad2dFunction<float>(
 
 ReflectionPad2dPlugin::ReflectionPad2dPlugin(int32_t paddingLeft, int32_t paddingRight, int32_t paddingTop, int32_t paddingBottom) : 
 paddingLeft(paddingLeft), paddingRight(paddingRight), paddingTop(paddingTop), paddingBottom(paddingBottom) {
+    initialize();
 }
 
 ReflectionPad2dPlugin::~ReflectionPad2dPlugin() {
@@ -118,11 +119,6 @@ bool ReflectionPad2dPlugin::supportsFormat(DataType type, PluginFormat format) c
 
 void ReflectionPad2dPlugin::configureWithFormat(Dims const* inputDims, int32_t nbInputs, Dims const* outputDims, int32_t nbOutputs,
     DataType type, PluginFormat format, int32_t maxBatchSize) noexcept {
-    Dims d = outputDims[0];
-    this->outputSize = 1;
-    for (int i = 0; i < d.nbDims; i++) {
-        this->outputSize *= d.d[i];
-    }
     this->dataType = type;
     this->outputDims = Dims3(
         outputDims->d[0],
@@ -186,7 +182,7 @@ int32_t ReflectionPad2dPlugin::enqueue(int32_t batchSize, void const* const* inp
 };
 
 size_t ReflectionPad2dPlugin::getSerializationSize() const noexcept {
-    return 4 * sizeof(int32_t);
+    return 4 * sizeof(int32_t) + sizeof(DataType) + sizeof(Dims3);
 };
 
 void ReflectionPad2dPlugin::serialize(void* buffer) const noexcept {
@@ -195,6 +191,10 @@ void ReflectionPad2dPlugin::serialize(void* buffer) const noexcept {
     *(bufferInt + 1) = this->paddingRight;
     *(bufferInt + 2) = this->paddingTop;
     *(bufferInt + 3) = this->paddingBottom;
+    auto bufferDtype = reinterpret_cast<DataType*>((char*) buffer + sizeof(int32_t) * 4);
+    *(bufferDtype) = this->dataType;
+    auto bufferDims = reinterpret_cast<Dims3*>((char*) buffer + sizeof(int32_t) * 4 + sizeof(DataType));
+    *(bufferDims) = this->outputDims;
 };
 
 void ReflectionPad2dPlugin::destroy() noexcept {
@@ -202,7 +202,9 @@ void ReflectionPad2dPlugin::destroy() noexcept {
 };
 
 IPluginV2* ReflectionPad2dPlugin::clone() const noexcept { 
-    return new ReflectionPad2dPlugin(this->paddingLeft, this->paddingRight, this->paddingTop, this->paddingBottom);
+    auto plugin = new ReflectionPad2dPlugin(this->paddingLeft, this->paddingRight, this->paddingTop, this->paddingBottom);
+    plugin->setPluginNamespace(getPluginNamespace());
+    return plugin;
 };
 
 void ReflectionPad2dPlugin::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {
@@ -240,22 +242,30 @@ PluginFieldCollection const* ReflectionPad2dPluginCreator::getFieldNames() noexc
 };
 
 IPluginV2* ReflectionPad2dPluginCreator::createPlugin(AsciiChar const* name, PluginFieldCollection const* fc) noexcept {
-    return new ReflectionPad2dPlugin(
+    auto plugin = new ReflectionPad2dPlugin(
         *((int32_t*) fc->fields[0].data),
         *((int32_t*) fc->fields[1].data),
         *((int32_t*) fc->fields[2].data),
         *((int32_t*) fc->fields[3].data)
     );
+    plugin->setPluginNamespace(getPluginNamespace());
+    return plugin;
 }
 
 IPluginV2* ReflectionPad2dPluginCreator::deserializePlugin(AsciiChar const* name, void const* serialData, size_t serialLength) noexcept {
     int32_t const* buffer = reinterpret_cast<int32_t const*>(serialData);
-    return new ReflectionPad2dPlugin(
+    DataType const *bufferDtype = reinterpret_cast<DataType const*>((char*) serialData + 4 * sizeof(int32_t));
+    Dims3 const * bufferDims = reinterpret_cast<Dims3 const *>((char*) serialData + 4 * sizeof(int32_t) + sizeof(DataType));
+    auto plugin = new ReflectionPad2dPlugin(
         *(buffer),
         *(buffer + 1),
         *(buffer + 2),
         *(buffer + 3)
     );
+    plugin->setPluginNamespace(getPluginNamespace());
+    plugin->outputDims = *bufferDims;
+    plugin->dataType = *bufferDtype;
+    return plugin;
 }
 
 void ReflectionPad2dPluginCreator::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {
