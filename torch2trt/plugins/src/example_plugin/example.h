@@ -10,7 +10,7 @@
 
 #define EXAMPLE_PLUGIN_NAME "ExamplePlugin"
 #define EXAMPLE_PLUGIN_NAMESPACE "torch2trt_plugins"
-#define EXAMPLE_PLUGIN_VERSION "1.0"
+#define EXAMPLE_PLUGIN_VERSION "1"
 
 
 using namespace nvinfer1;
