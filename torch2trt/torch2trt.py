@@ -112,7 +112,7 @@ def torch_dim_to_trt_axes(dim):
 
 
 def add_trt_constant(network, tensor):
-    shape = tuple(tensor.shape[1:])
+    shape = tuple(tensor.shape)
     array = tensor[0].detach().cpu().numpy()
     layer = network.add_constant(shape, array)
     return layer.get_output(0)
@@ -403,7 +403,7 @@ class ConversionContext(object):
             if not hasattr(torch_input, "_trt"):
                 trt_tensor = self.network.add_input(
                     name=names[i],
-                    shape=tuple(torch_input.shape)[1:],
+                    shape=tuple(torch_input.shape),
                     dtype=torch_dtype_to_trt(torch_input.dtype),
                 )
                 trt_tensor.location = torch_device_to_trt(torch_input.device)
@@ -460,20 +460,23 @@ class TRTModule(torch.nn.Module):
         batch_size = inputs[0].shape[0]
         bindings = [None] * (len(self.input_names) + len(self.output_names))
 
+        for i, input_name in enumerate(self.input_names):
+            idx = self.engine.get_binding_index(input_name)
+            shape = tuple(inputs[i].shape)
+            bindings[idx] = inputs[i].contiguous().data_ptr()
+            self.context.set_binding_shape(idx, shape)
+
         # create output tensors
         outputs = [None] * len(self.output_names)
         for i, output_name in enumerate(self.output_names):
             idx = self.engine.get_binding_index(output_name)
             dtype = torch_dtype_from_trt(self.engine.get_binding_dtype(idx))
-            shape = (batch_size,) + tuple(self.engine.get_binding_shape(idx))
+            shape = tuple(self.context.get_binding_shape(idx))
             device = torch_device_from_trt(self.engine.get_location(idx))
             output = torch.empty(size=shape, dtype=dtype, device=device)
             outputs[i] = output
             bindings[idx] = output.data_ptr()
 
-        for i, input_name in enumerate(self.input_names):
-            idx = self.engine.get_binding_index(input_name)
-            bindings[idx] = inputs[i].contiguous().data_ptr()
 
         self.context.execute_async(
             batch_size, bindings, torch.cuda.current_stream().cuda_stream
@@ -513,7 +516,7 @@ def torch2trt(module,
     inputs_in = inputs
 
     # copy inputs to avoid modifications to source data
-    inputs = [tensor.clone()[0:1] for tensor in inputs]  # only run single entry
+    inputs = [tensor.clone()[0:max_batch_size] for tensor in inputs]  # only run single entry
 
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
@@ -534,6 +537,18 @@ def torch2trt(module,
     if output_names is None:
         output_names = default_output_names(len(outputs))
 
+    profile = builder.create_optimization_profile();
+    
+    for i, name in enumerate(input_names):
+        # use fixed optimization profile
+        profile.set_shape(
+            name,
+            tuple(inputs[i].shape),
+            tuple(inputs[i].shape),
+            tuple(inputs[i].shape)
+        )
+        config.add_optimization_profile(profile)
+
     if use_onnx:
 
         f = io.BytesIO()
@@ -545,7 +560,7 @@ def torch2trt(module,
         parser.parse(onnx_bytes)
 
     else:
-        network = builder.create_network()
+        network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
         with ConversionContext(network, torch2trt_kwargs=kwargs) as ctx:
 
             ctx.add_inputs(inputs, input_names)
@@ -555,6 +570,7 @@ def torch2trt(module,
             if not isinstance(outputs, tuple) and not isinstance(outputs, list):
                 outputs = (outputs,)
             ctx.mark_outputs(outputs, output_names)
+
 
     # set max workspace size
     config.max_workspace_size = max_workspace_size
