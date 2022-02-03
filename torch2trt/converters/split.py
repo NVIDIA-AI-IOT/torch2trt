@@ -15,14 +15,14 @@ def convert_split(ctx):
     
     assert(dim >= 1)
     
-    start = [0] * len(input.shape[1:]) # exclude batch
+    start = [0] * len(input.shape) # exclude batch
     stride = [1] * len(start)
     offset = 0
-    trt_dim = dim - 1
+    trt_dim = dim #- 1
     
     # add slice layers
     for i, output in enumerate(outputs):
-        shape = list(output.shape[1:]) # exclude batch dim
+        shape = list(output.shape) # exclude batch dim
         start[trt_dim] = offset
         layer = ctx.network.add_slice(input_trt, start=start, shape=shape, stride=stride)
         output._trt = layer.get_output(0)
@@ -53,28 +53,33 @@ class TensorSplit(torch.nn.Module):
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_torch_split_1_1():
     return TorchSplit(1, 1)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_torch_split_2_1():
     return TorchSplit(2, 1)
 
     
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_torch_split_3_1():
     return TorchSplit(3, 1)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_torch_split_3_2():
     return TorchSplit(3, 2)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_tensor_split_3_2():
     return TensorSplit(3, 2)

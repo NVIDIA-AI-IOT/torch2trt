@@ -33,28 +33,33 @@ class TensorChunk(torch.nn.Module):
     
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_torch_chunk_1_1():
     return TorchChunk(1, 1)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_torch_chunk_2_1():
     return TorchChunk(2, 1)
 
     
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_torch_chunk_3_1():
     return TorchChunk(3, 1)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_torch_chunk_3_2():
     return TorchChunk(3, 2)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 3, 3)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 3, 3)], max_batch_size=2)
 def test_tensor_chunk_3_2():
     return TensorChunk(3, 2)
