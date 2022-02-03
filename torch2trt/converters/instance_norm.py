@@ -8,15 +8,15 @@ def _add_scale_1d2d3d(network, x_trt, mode, offset, scale, power):
     y_trt = x_trt
     
     # shape to 2D
-    if ndim != 3:
+    if ndim != 4:
         layer = network.add_shuffle(y_trt)
-        layer.reshape_dims = (x_trt.shape[0], x_trt.shape[1], -1)  # NCH -> NCHW
+        layer.reshape_dims = (x_trt.shape[0], x_trt.shape[1], x_trt.shape[2], -1)  # NCH -> NCHW
         y_trt = layer.get_output(0)
         
     y_trt = network.add_scale(y_trt, mode, offset, scale, power).get_output(0)
 
     # shape to original dimension
-    if ndim != 3:    
+    if ndim != 4:    
         layer = network.add_shuffle(layer.get_output(0))
         layer.reshape_dims = tuple(x_trt.shape)
         y_trt = layer.get_output(0)
