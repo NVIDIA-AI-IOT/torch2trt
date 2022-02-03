@@ -23,9 +23,7 @@ def convert_mean(ctx):
         dim = (dim, )
         
     # create axes bitmask for reduce layer
-    axes = 0
-    for d in dim:
-        axes |= 1 << (d - 1) # -1 to remove batch dimension
+    axes = torch_dim_to_trt_axes(dim)
         
     # get whether to keep dimensions
     if 'keepdim' in ctx.method_kwargs:
