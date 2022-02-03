@@ -8,8 +8,8 @@ def convert_expand(ctx):
     sizes = ctx.method_args[1:]
     output = ctx.method_return
     
-    inshape = tuple(input.shape)[1:] # exclude batch
-    shape = tuple(output.shape)[1:]
+    inshape = tuple(input.shape)
+    shape = tuple(output.shape)
     ndim = len(shape)
     start = tuple([0]*ndim)
     stride = tuple([int(i == o) for i, o in zip(inshape, shape)])  # stride == 1 if dimensions match, 0 otherwise
@@ -41,3 +41,8 @@ def test_tensor_expand_multidim():
 @add_module_test(torch.float32, torch.device('cuda'), [(1,1,1,3)])
 def test_tensor_expand_inferdim():
     return ExpandModule(1, 3, -1, -1)
+
+             
+@add_module_test(torch.float32, torch.device('cuda'), [(2,1,1,3)], max_batch_size=2)
+def test_tensor_expand_inferdim_bs2():
+    return ExpandModule(2, 3, -1, -1)
