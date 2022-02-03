@@ -8,7 +8,7 @@ def convert_mod(ctx):
     input_b = ctx.method_args[1]
     output = ctx.method_return
     input_a_trt, input_b_trt = add_missing_trt_tensors(ctx.network, [input_a, input_b])
-    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape) - 1)
+    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape))
     # we can not use ElementWiseOperation.FLOOR_DIV directly because Torch truncate negative result toward 0
     # but TensorRT FLOOR_DIV op toward -Inf
     # sign = ab / |ab|
@@ -29,6 +29,7 @@ def convert_mod(ctx):
     output._trt = sub_layer.get_output(0)
 
 
+@tensorrt_converter('torch.Tensor.__imod__')
 @tensorrt_converter('torch.Tensor.__mod__')
 # we need separate converter for operator because for some reason Torch use truncation toward -Inf for this op.
 # bug is filed: https://github.com/pytorch/pytorch/issues/52425
@@ -38,7 +39,7 @@ def convert_mod(ctx):
     input_b = ctx.method_args[1]
     output = ctx.method_return
     input_a_trt, input_b_trt = add_missing_trt_tensors(ctx.network, [input_a, input_b])
-    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape) - 1)
+    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape))
     # a % b  =  a - (a//b) * b
     floordiv_layer = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.FLOOR_DIV)
     prod_layer = ctx.network.add_elementwise(floordiv_layer.get_output(0), input_b_trt, trt.ElementWiseOperation.PROD)
