@@ -106,7 +106,7 @@ def torch_dim_to_trt_axes(dim):
     # create axes bitmask for reduce layer
     axes = 0
     for d in dim:
-        axes |= 1 << (d - 1)  # -1 to remove batch dimension
+        axes |= 1 << d 
 
     return axes
 
