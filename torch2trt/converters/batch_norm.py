@@ -25,16 +25,19 @@ def convert_batch_norm_trt7(ctx):
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3)], enabled=trt_version() >= '7.0')
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 10, 3, 3)], enabled=trt_version() >= '7.0', max_batch_size=2)
 def test_batch_norm_2d_trt7():
     return torch.nn.BatchNorm2d(10)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 3, 3, 3)], enabled=trt_version() >= '7.0')
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 10, 3, 3, 3)], enabled=trt_version() >= '7.0', max_batch_size=2)
 def test_batch_norm_3d_2_trt7():
     return torch.nn.BatchNorm3d(10)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 32, 2, 36, 47)], enabled=trt_version() >= '7.0')
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 32, 2, 36, 47)], enabled=trt_version() >= '7.0', max_batch_size=2)
 def test_batch_norm_3d_trt7():
     return torch.nn.BatchNorm3d(32)
     
