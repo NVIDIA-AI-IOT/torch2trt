@@ -15,18 +15,17 @@ def convert_split(ctx):
     
     assert(dim >= 1)
     
-    start = [0] * len(input.shape) # exclude batch
+    start = [0] * len(input.shape) 
     stride = [1] * len(start)
     offset = 0
-    trt_dim = dim #- 1
     
     # add slice layers
     for i, output in enumerate(outputs):
-        shape = list(output.shape) # exclude batch dim
-        start[trt_dim] = offset
+        shape = list(output.shape) 
+        start[dim] = offset
         layer = ctx.network.add_slice(input_trt, start=start, shape=shape, stride=stride)
         output._trt = layer.get_output(0)
-        offset = offset + shape[trt_dim]
+        offset = offset + shape[dim]
         
 
 class TorchSplit(torch.nn.Module):
