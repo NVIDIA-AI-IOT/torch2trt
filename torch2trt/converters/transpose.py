@@ -8,9 +8,9 @@ def convert_transpose(ctx):
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     # permutation -1 because TRT does not include batch dim
-    permutation = list(range(len(input.shape) - 1))
-    dim0 = ctx.method_args[1] - 1
-    dim1 = ctx.method_args[2] - 1
+    permutation = list(range(len(input.shape)))
+    dim0 = ctx.method_args[1]
+    dim1 = ctx.method_args[2]
     permutation[dim0] = dim1
     permutation[dim1] = dim0
     layer = ctx.network.add_shuffle(input_trt)
@@ -24,9 +24,9 @@ def convert_transpose_trt7(ctx):
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     # permutation -1 because TRT does not include batch dim
-    permutation = list(range(len(input.shape) - 1))
-    dim0 = ctx.method_args[1] - 1
-    dim1 = ctx.method_args[2] - 1
+    permutation = list(range(len(input.shape)))
+    dim0 = ctx.method_args[1]
+    dim1 = ctx.method_args[2]
     permutation[dim0] = dim1
     permutation[dim1] = dim0
     layer = ctx.network.add_shuffle(input_trt)
