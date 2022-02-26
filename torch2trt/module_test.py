@@ -1,7 +1,3 @@
-import torch
-import torchvision
-
-
 class ModuleTest(object):
     def __init__(self, module_fn, dtype, device, input_shapes, **torch2trt_kwargs):
         self.module_fn = module_fn
