@@ -2,10 +2,10 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
+@tensorrt_converter('torch.Tensor.expand_as')
 @tensorrt_converter('torch.Tensor.expand')
 def convert_expand(ctx):
     input = ctx.method_args[0]
-    sizes = ctx.method_args[1:]
     output = ctx.method_return
     
     inshape = tuple(input.shape)[1:] # exclude batch
