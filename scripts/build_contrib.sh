@@ -13,7 +13,7 @@ pushd /tmp/TensorRT
     git sparse-checkout set /tools/pytorch-quantization/
     git apply --reject --whitespace=fix pytorch_nvidia_quantization.patch
     cd tools/pytorch-quantization/
-    python setup.py install
+    python3 setup.py install
 popd
 
 pushd $parentdir
