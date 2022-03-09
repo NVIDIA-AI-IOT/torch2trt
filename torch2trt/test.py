@@ -53,6 +53,8 @@ def run(self):
 
     if not isinstance(outputs, tuple):
         outputs = (outputs, )
+    if not isinstance(outputs_trt, tuple):
+        outputs_trt = (outputs_trt,)
     
     # compute max error
     max_error = 0
