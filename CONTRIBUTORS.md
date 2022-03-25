@@ -5,6 +5,7 @@ who have agreed to torch2trt's Contributor License Agreement.
 
 - [John Welsh](https://github.com/jaybdub) (CLA)
 - John Welsh
+- [Eunseop Shin](https://github.com/kairos03) (CLA)
 
 ## Becoming a Contributor
 
