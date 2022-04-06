@@ -2,7 +2,7 @@ import torch
 import tensorrt as trt
 
 
-if trt.__version__ >= '5.1':
+if str(trt.__version__) >= '5.1':
     DEFAULT_CALIBRATION_ALGORITHM = trt.CalibrationAlgoType.ENTROPY_CALIBRATION_2
 else:
     DEFAULT_CALIBRATION_ALGORITHM = trt.CalibrationAlgoType.ENTROPY_CALIBRATION
