@@ -16,11 +16,11 @@ from .calibration import (
 
 
 def trt_version():
-    return trt.__version__
+    return str(trt.__version__)
 
 
 def torch_version():
-    return torch.__version__
+    return str(torch.__version__)
 
 
 def torch_dtype_to_trt(dtype):
