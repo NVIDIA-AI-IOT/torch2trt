@@ -540,7 +540,9 @@ def torch2trt(module,
         onnx_kwargs = kwargs.get('onnx_kwargs', {})
         opset_version = onnx_kwargs.get('opset_version', 9)
         do_constant_folding = onnx_kwargs.get('do_constant_folding', True)
-        export_params = onnx_kwargs.get('export_params', False)
+        export_params = onnx_kwargs.get('export_params', True)
+        verbose_onnx = onnx_kwargs.get('verbose', log_level == trt.Logger.VERBOSE)
+        dynamic_axes = onnx_kwargs.get('dynamic_axes', None)
         torch.onnx.export(
             module,
             inputs,
@@ -550,6 +552,8 @@ def torch2trt(module,
             opset_version=opset_version,
             do_constant_folding=do_constant_folding,
             export_params=export_params,
+            verbose=verbose_onnx,
+            dynamic_axes=dynamic_axes,
         )
         f.seek(0)
         onnx_bytes = f.read()
