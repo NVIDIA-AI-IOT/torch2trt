@@ -357,6 +357,7 @@ class NetworkWrapper(object):
         # set layer device type
         device_type = self._ctx.current_device_type()
         self._ctx.builder_config.set_device_type(layer, device_type)
+        orig_device_type = device_type
         if not self._ctx.builder_config.can_run_on_DLA(layer) and device_type == trt.DeviceType.DLA:
             if self._ctx.torch2trt_kwargs['gpu_fallback']:
                 device_type = trt.DeviceType.GPU  # layer will fall back to GPU
@@ -366,13 +367,14 @@ class NetworkWrapper(object):
             if isinstance(arg, torch.Tensor):
                 return "tensor(shape=%s, dtype=%s)" % (str(list(arg.shape)), str(arg.dtype))
             return str(arg)
-        scope_name = self._ctx.current_module_name() + ':' + layer.type.name
+        scope_name = self._ctx.current_module_name()# + ':' + layer.type.name
         self._layer_counts[scope_name] += 1
         args = [arg_str(arg) for arg in self._ctx.method_args]
         kwargs = ["%s=%s" % (key, arg_str(arg)) for key, arg in self._ctx.method_kwargs.items()]
-        layer.name = scope_name 
-        if self._layer_counts[scope_name] > 1:
-            layer.name = layer.name + '(' + str(self._layer_counts[scope_name] - 1) + ')'
+        layer.name = scope_name + ':' + str(self._layer_counts[scope_name] - 1) + ':' + layer.type.name + ':' + device_type_str(device_type) 
+        
+        if orig_device_type != device_type:
+            layer.name = layer.name + '(' + device_type_str(orig_device_type) + ')'
 #         "%s [%s #%d, %s] %s(%s)" % (self._ctx.current_module_name(), layer.type.name, self._layer_counts[layer.type.name], device_type_str(device_type),
 #                                           self._ctx.method_str, ", ".join(args + kwargs))
     
