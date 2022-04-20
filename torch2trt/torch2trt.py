@@ -537,18 +537,6 @@ def torch2trt(module,
     if output_names is None:
         output_names = default_output_names(len(outputs))
 
-    profile = builder.create_optimization_profile();
-    
-    for i, name in enumerate(input_names):
-        # use fixed optimization profile
-        profile.set_shape(
-            name,
-            tuple(inputs[i].shape),
-            tuple(inputs[i].shape),
-            tuple(inputs[i].shape)
-        )
-        config.add_optimization_profile(profile)
-
     if use_onnx:
 
         f = io.BytesIO()
