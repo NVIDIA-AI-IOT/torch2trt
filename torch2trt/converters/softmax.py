@@ -15,12 +15,10 @@ def convert_softmax(ctx):
         dim = ctx.method_args[1]
         
     # convert negative dims
-#     import pdb
-#     pdb.set_trace()
     if dim < 0:
         dim = len(input.shape) + dim
 
-    axes = 1 << (dim - 1)
+    axes = torch_dim_to_trt_axes(dim)
 
     layer = ctx.network.add_softmax(input=input_trt)
     layer.axes = axes

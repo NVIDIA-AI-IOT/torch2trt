@@ -15,7 +15,7 @@ def convert_view(ctx):
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     layer = ctx.network.add_shuffle(input_trt)
-    layer.reshape_dims = tuple(output.shape[1:])
+    layer.reshape_dims = tuple(output.shape)
     output._trt = layer.get_output(0)
 
 

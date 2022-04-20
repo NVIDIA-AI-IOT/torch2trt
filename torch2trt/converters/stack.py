@@ -5,7 +5,7 @@ from torch2trt.module_test import add_module_test
 def unsqueeze(ctx, input, dim):
     layer = ctx.network.add_shuffle(trt_(ctx.network, input))
 
-    shape = input.shape[1:dim] + (1,) + input.shape[dim:]
+    shape = input.shape[:dim] + (1,) + input.shape[dim:]
     layer.reshape_dims = tuple(shape)
 
     return layer.get_output(0)
@@ -24,7 +24,7 @@ def convert_cat_trt7(ctx):
     trt_inputs = [unsqueeze(ctx, i, dim) for i in inputs]
 
     layer = ctx.network.add_concatenation(inputs=trt_inputs)
-    layer.axis = dim - 1
+    layer.axis = dim
     output._trt = layer.get_output(0)
 
 

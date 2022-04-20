@@ -9,7 +9,7 @@ def convert_ne(ctx):
     input_b = ctx.method_args[1]
     output = ctx.method_return
     input_a_trt, input_b_trt = add_missing_trt_tensors(ctx.network, [input_a, input_b])
-    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape) - 1)
+    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape))
     layer_1 = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.EQUAL)
     layer_2 = ctx.network.add_unary(layer_1.get_output(0), trt.UnaryOperation.NOT)
     output._trt = layer_2.get_output(0)

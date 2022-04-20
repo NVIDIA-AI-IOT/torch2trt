@@ -10,7 +10,7 @@ def convert_floordiv(ctx):
     input_b = ctx.method_args[1]
     output = ctx.method_return
     input_a_trt, input_b_trt = add_missing_trt_tensors(ctx.network, [input_a, input_b])
-    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape) - 1)
+    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape))
     # we can not use ElementWiseOperation.FLOOR_DIV directly because Torch truncate negative result toward 0
     # but TensorRT FLOOR_DIV op toward -Inf
     # sign = ab / |ab|

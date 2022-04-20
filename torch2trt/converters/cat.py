@@ -13,10 +13,10 @@ def convert_cat(ctx):
 
     output = ctx.method_return
     trt_inputs = add_missing_trt_tensors(ctx.network, inputs)
-    trt_inputs = broadcast_trt_tensors(ctx.network, trt_inputs, len(output.shape) - 1)
+    trt_inputs = broadcast_trt_tensors(ctx.network, trt_inputs, len(output.shape))
 
     layer = ctx.network.add_concatenation(inputs=trt_inputs)
-    layer.axis = dim - 1
+    layer.axis = dim
     output._trt = layer.get_output(0)
 
 
@@ -30,15 +30,18 @@ class Cat(torch.nn.Module):
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 4, 4), (1, 3, 4), (1, 17, 4)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 4, 4), (2, 3, 4), (2, 17, 4)], max_batch_size=2)
 def test_Cat_basic():
     return Cat(1)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 4, 4), (1, 4, 4), (1, 4, 4)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 4, 4), (2, 4, 4), (2, 4, 4)], max_batch_size=2)
 def test_Cat_neg1_dim():
     return Cat(-1)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 4, 4), (1, 4, 4), (1, 4, 4)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 4, 4), (2, 4, 4), (2, 4, 4)], max_batch_size=2)
 def test_Cat_neg2_dim():
     return Cat(-2)

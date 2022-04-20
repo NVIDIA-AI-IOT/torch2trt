@@ -16,10 +16,8 @@ def convert_permute(ctx):
         
     assert(permutation[0] == 0)  # cannot move batch dim
     
-    trt_permutation = tuple([p - 1 for p in permutation])[1:]
-    
     layer = ctx.network.add_shuffle(input_trt)
-    layer.second_transpose = tuple(trt_permutation)
+    layer.second_transpose = tuple(permutation)
    
     output._trt = layer.get_output(0)
 

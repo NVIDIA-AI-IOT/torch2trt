@@ -29,9 +29,9 @@ def convert_roll(ctx):
     for s, d in zip(shifts, dims):
         start[d] = (-s) % shape[d]
     
-    start = tuple(start[1:])
-    shape = tuple(shape[1:])
-    stride = tuple(stride[1:])
+    start = tuple(start)
+    shape = tuple(shape)
+    stride = tuple(stride)
     
     
     layer = ctx.network.add_slice(

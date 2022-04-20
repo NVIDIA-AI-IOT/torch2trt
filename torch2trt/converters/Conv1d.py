@@ -22,7 +22,7 @@ def convert_Conv1d(ctx):
         
     # reshape to 2D
     layer = ctx.network.add_shuffle(input_trt)
-    layer.reshape_dims = (-1, input.shape[-1], 1)
+    layer.reshape_dims = (input.shape[0], -1, input.shape[-1], 1)
     
     layer = ctx.network.add_convolution(
         input=layer.get_output(0),
@@ -39,26 +39,30 @@ def convert_Conv1d(ctx):
         
     # reshape back to 1D
     layer = ctx.network.add_shuffle(layer.get_output(0))
-    layer.reshape_dims = (-1, output.shape[-1])
+    layer.reshape_dims = (input.shape[0], -1, output.shape[-1])
 
     output._trt = layer.get_output(0)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 224)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 10, 224)], max_batch_size=2)
 def test_Conv1d_basic():
     return torch.nn.Conv1d(10, 5, kernel_size=1, stride=1, padding=0)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 224)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 10, 224)], max_batch_size=2)
 def test_Conv1d_stride2():
     return torch.nn.Conv1d(10, 5, kernel_size=1, stride=2, padding=0)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 224)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 10, 224)], max_batch_size=2)
 def test_Conv1d_kernel3():
     return torch.nn.Conv1d(10, 5, kernel_size=3, stride=2, padding=1)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10, 224)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 10, 224)], max_batch_size=2)
 def test_Conv1d_dilation2():
     return torch.nn.Conv1d(10, 5, kernel_size=3, stride=1, padding=1, dilation=2)
