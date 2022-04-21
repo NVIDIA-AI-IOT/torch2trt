@@ -2,6 +2,8 @@
 
 ## [Master]
 
+- Added support for Deep Learning Accelerator (DLA)
+- Added support for explicit batch
 - Added support for TensorRT 8
 
 ## [0.3.0] - 07/15/2021
