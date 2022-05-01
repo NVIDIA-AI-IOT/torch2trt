@@ -117,7 +117,7 @@ python setup.py install
 
 ### Option 2 - With plugins 
 
-To install with plugins to support some operations in PyTorch that are not natviely supported with TensorRT, call the following
+To install with plugins to support some operations in PyTorch that are not natively supported with TensorRT, call the following
 
 > Please note, this currently only includes the interpolate plugin.  This plugin requires PyTorch 1.3+ for serialization.  
 
