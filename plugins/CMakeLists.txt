@@ -9,12 +9,11 @@ find_package(CUDA  REQUIRED)
 
 enable_language(CUDA)
 
-
 include_directories("${CUDA_INCLUDE_DIRS}")
 
 add_library(torch2trt_plugins SHARED
-    torch2trt/plugins/src/example_plugin/example.cu
-    torch2trt/plugins/src/reflection_pad_2d_plugin/reflection_pad_2d_plugin.cu
+    src/example.cu
+    src/reflection_pad_2d_plugin.cu
 )
 set_property(TARGET torch2trt_plugins PROPERTY CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
 
@@ -34,9 +33,9 @@ if(Catch2_FOUND)
     enable_testing()
 
     add_executable(torch2trt_plugins_tests 
-        torch2trt/plugins/src/tests.cpp
-        torch2trt/plugins/src/example_plugin/example_test.cu
-        torch2trt/plugins/src/reflection_pad_2d_plugin/reflection_pad_2d_plugin_test.cu
+        src/tests.cpp
+        src/example_test.cu
+        src/reflection_pad_2d_plugin_test.cu
     )
 
     set_property(TARGET torch2trt_plugins_tests PROPERTY CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
