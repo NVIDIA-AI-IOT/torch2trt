@@ -23,6 +23,9 @@ target_link_libraries(
     nvinfer
 )
 
+install (TARGETS torch2trt_plugins
+         LIBRARY DESTINATION lib)
+
 # BUILD TESTS
 find_package(Catch2 QUIET)
 
