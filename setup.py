@@ -22,9 +22,9 @@ if version.parse(tensorrt.__version__) < version.parse('8'):
     compile_args_cxx.append('-DPRE_TRT8')
 
 plugins_ext_module = CUDAExtension(
-        name='torch_plugins',
+        name='plugins',
         sources=[
-            'torch2trt/torch_plugins/plugins.cpp'
+            'torch2trt/plugins/plugins.cpp'
         ],
         include_dirs=[
             trt_inc_dir()
@@ -41,15 +41,9 @@ plugins_ext_module = CUDAExtension(
         }
     )
 
-# if '--plugins' in sys.argv:
-#     pass
-    # subprocess.call([])
-    # call cmake
-    # move to directory
-
-if '--torch-plugins' in sys.argv:
+if '--plugins' in sys.argv:
     ext_modules.append(plugins_ext_module)
-    sys.argv.remove('--torch-plugins')
+    sys.argv.remove('--plugins')
 
 if '--contrib' in sys.argv:
     exclude_dir=[]
@@ -62,6 +56,5 @@ setup(
     packages=find_packages(exclude=exclude_dir),
     ext_package='torch2trt',
     ext_modules=ext_modules,
-    cmdclass={'build_ext': BuildExtension},
-    package_data={'torch2trt.plugins': ['libtorch2trt_plugins.so']}
+    cmdclass={'build_ext': BuildExtension}
 )
