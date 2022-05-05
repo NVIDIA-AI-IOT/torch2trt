@@ -7,6 +7,7 @@ from .dummy_converters import *
 from .AdaptiveAvgPool2d import *
 from .BatchNorm1d import *
 from .BatchNorm2d import *
+from .BatchNorm3d import *
 from .clone import *
 from .conv_functional import *
 from .Conv import *
