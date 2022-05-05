@@ -30,6 +30,7 @@ from .clamp import *
 from .compare import *
 from .div import *
 from .expand import *
+from .example_plugin import *
 from .floordiv import *
 from .gelu import *
 from .getitem import *
@@ -54,6 +55,7 @@ from .permute import *
 from .pow import *
 from .prelu import *
 from .prod import *
+from .reflection_pad_2d import *
 from .relu import *
 from .relu6 import *
 from .roll import *
