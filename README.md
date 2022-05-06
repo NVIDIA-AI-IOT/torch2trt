@@ -120,11 +120,7 @@ python setup.py install
 To install the torch2trt plugins library, call the following
 
 ```bash
-mkdir plugins/build
-cd plugins/build
-cmake ..
-make -j
-make install
+cmake -B plugins/build plugins && cmake --build plugins/build --target install
 ```
 
 This includes support for some layers which may not be supported natively by TensorRT.  Once this library is found in the system, the associated layer converters in torch2trt are implicitly enabled.
