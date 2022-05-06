@@ -1,4 +1,4 @@
-#include "example.h"
+#include "example_plugin.h"
 #include "cuda_runtime.h"
 #include <cuda_fp16.h>
 #include <iostream>

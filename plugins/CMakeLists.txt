@@ -12,7 +12,7 @@ enable_language(CUDA)
 include_directories("${CUDA_INCLUDE_DIRS}")
 
 add_library(torch2trt_plugins SHARED
-    src/example.cu
+    src/example_plugin.cu
     src/reflection_pad_2d_plugin.cu
 )
 set_property(TARGET torch2trt_plugins PROPERTY CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
