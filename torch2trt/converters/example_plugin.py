@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
-from torch2trt.plugins.creators.create_example_plugin import create_example_plugin
 import numpy as np
 import ctypes
 
