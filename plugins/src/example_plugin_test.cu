@@ -1,5 +1,5 @@
 #include <catch2/catch_all.hpp>
-#include "example.h"
+#include "example_plugin.h"
 #include <cuda_fp16.h>
 #include "NvInfer.h"
 #include <iostream>
