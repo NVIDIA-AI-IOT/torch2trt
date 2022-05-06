@@ -127,7 +127,7 @@ make -j
 make install
 ```
 
-This includes support for some layers which may not be supported natively by TensorRT.  
+This includes support for some layers which may not be supported natively by TensorRT.  Once this library is found in the system, the associated layer converters in torch2trt are implicitly enabled.
 
 > Note: torch2trt now maintains plugins as an independent library compiled with CMake.  This makes compiled TensorRT engines more portable.  If needed, the deprecated plugins (which depend on PyTorch) may still be installed by calling ``python setup.py install --plugins``.
 
