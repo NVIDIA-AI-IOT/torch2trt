@@ -26,8 +26,8 @@ TEMPLATE_TEST_CASE("Test reflection pad kernel", "[ReflectionPad2d][template]" ,
     };
     
     // y_cpu = (TestType*) malloc(16 * sizeof(TestType));
-    cudaMalloc(&x_gpu, 9 * sizeof(TestType));
-    cudaMalloc(&y_gpu, 25 * sizeof(TestType));
+    cudaMalloc((void**)&x_gpu, 9 * sizeof(TestType));
+    cudaMalloc((void**)&y_gpu, 25 * sizeof(TestType));
     cudaMemcpy(x_gpu, x_cpu, 9 * sizeof(TestType), cudaMemcpyHostToDevice);
 
     reflectionPad2dFunction<TestType>(x_gpu, y_gpu, 
@@ -60,14 +60,27 @@ TEMPLATE_TEST_CASE("Test reflection pad plugin enqueue", "[ReflectionPad2d][temp
     };
     
     // y_cpu = (TestType*) malloc(16 * sizeof(TestType));
-    cudaMalloc(&x_gpu, 9 * sizeof(TestType));
-    cudaMalloc(&y_gpu, 25 * sizeof(TestType));
+    cudaMalloc((void**)&x_gpu, 9 * sizeof(TestType));
+    cudaMalloc((void**)&y_gpu, 25 * sizeof(TestType));
     cudaMemcpy(x_gpu, x_cpu, 9 * sizeof(TestType), cudaMemcpyHostToDevice);
 
     auto plugin = ReflectionPad2dPlugin(1, 1, 1, 1);
     Dims3 inputDims(1, 3, 3);
     Dims3 outputDims(1, 5, 5);
-    plugin.configureWithFormat(&inputDims, 1, &outputDims, 1, DataType::kFLOAT, PluginFormat::kLINEAR, 1);
+    DataType inputTypes = DataType::kFLOAT;
+    DataType outputTypes = DataType::kFLOAT;
+    bool inputIsBroadcast = false;
+    bool outputIsBroadcast = false;
+    plugin.configurePlugin(
+        &inputDims, 1, 
+        &outputDims, 1, 
+        &inputTypes, 
+        &outputTypes, 
+        &inputIsBroadcast,
+        &outputIsBroadcast,
+        PluginFormat::kLINEAR, 
+        1
+    );
     
     void *inputs[] = {(void*)x_gpu};
     void *outputs[] = {(void*)y_gpu};
@@ -107,15 +120,28 @@ TEMPLATE_TEST_CASE("Test reflection pad plugin enqueue 2 channels", "[Reflection
     };
     
     // y_cpu = (TestType*) malloc(16 * sizeof(TestType));
-    cudaMalloc(&x_gpu, 2*9 * sizeof(TestType));
-    cudaMalloc(&y_gpu, 2*25 * sizeof(TestType));
+    cudaMalloc((void**)&x_gpu, 2*9 * sizeof(TestType));
+    cudaMalloc((void**)&y_gpu, 2*25 * sizeof(TestType));
     cudaMemcpy(x_gpu, x_cpu, 2*9 * sizeof(TestType), cudaMemcpyHostToDevice);
 
     auto plugin = ReflectionPad2dPlugin(1, 1, 1, 1);
     Dims3 inputDims(2, 3, 3);
     Dims3 outputDims(2, 5, 5);
-    plugin.configureWithFormat(&inputDims, 1, &outputDims, 1, DataType::kFLOAT, PluginFormat::kLINEAR, 2);
-    
+    DataType inputTypes = DataType::kFLOAT;
+    DataType outputTypes = DataType::kFLOAT;
+    bool inputIsBroadcast = false;
+    bool outputIsBroadcast = false;
+    plugin.configurePlugin(
+        &inputDims, 1, 
+        &outputDims, 1, 
+        &inputTypes, 
+        &outputTypes, 
+        &inputIsBroadcast,
+        &outputIsBroadcast,
+        PluginFormat::kLINEAR, 
+        1
+    );
+
     void *inputs[] = {(void*)x_gpu};
     void *outputs[] = {(void*)y_gpu};
     plugin.enqueue(1, inputs, outputs, nullptr, 0);

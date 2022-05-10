@@ -5,21 +5,22 @@ project(torch2trt_plugins VERSION 0.1.0)
 set(CUDA_ARCHITECTURES 53 62 72 87)
 
 # BUILD PLUGINS LIBRARY
-find_package(CUDA  REQUIRED)
+find_package(CUDA REQUIRED)
 
 enable_language(CUDA)
 
 include_directories("${CUDA_INCLUDE_DIRS}")
 
 add_library(torch2trt_plugins SHARED
-    src/example_plugin.cu
-    src/reflection_pad_2d_plugin.cu
+    plugins/src/example_plugin.cu
+    plugins/src/reflection_pad_2d_plugin.cu
 )
 set_property(TARGET torch2trt_plugins PROPERTY CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
 
 target_link_libraries(
     torch2trt_plugins
     nvinfer
+    ${CUDA_LIBRARIES}
 )
 
 install (TARGETS torch2trt_plugins
@@ -30,26 +31,27 @@ find_package(Catch2 QUIET)
 
 if(Catch2_FOUND)
     include(CTest)
+    include(CPack)
+    include(Catch)
     enable_testing()
 
-    add_executable(torch2trt_plugins_tests 
-        src/tests.cpp
-        src/example_test.cu
-        src/reflection_pad_2d_plugin_test.cu
+    add_executable(torch2trt_plugins_test
+        plugins/src/tests.cpp
+        plugins/src/example_plugin_test.cpp
+        plugins/src/reflection_pad_2d_plugin_test.cpp
     )
 
-    set_property(TARGET torch2trt_plugins_tests PROPERTY CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
+    set_property(TARGET torch2trt_plugins_test PROPERTY CUDA_ARCHITECTURES ${CUDA_ARCHITECTURES})
 
-    target_link_libraries(torch2trt_plugins_tests 
+    target_link_libraries(torch2trt_plugins_test 
         PRIVATE 
         Catch2::Catch2WithMain 
         torch2trt_plugins
         nvinfer
+        ${CUDA_LIBRARIES}
     )
 
     set(CPACK_PROJECT_NAME ${PROJECT_NAME})
     set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-    include(CPack)
-    include(Catch)
-    catch_discover_tests(torch2trt_plugins_tests)
+    catch_discover_tests(torch2trt_plugins_test)
 endif()

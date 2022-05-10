@@ -82,16 +82,6 @@ bool ExamplePlugin::supportsFormat(DataType type, PluginFormat format) const noe
         || (type == DataType::kINT8) || (type == DataType::kHALF);
 }
 
-void ExamplePlugin::configureWithFormat(Dims const* inputDims, int32_t nbInputs, Dims const* outputDims, int32_t nbOutputs,
-    DataType type, PluginFormat format, int32_t maxBatchSize) noexcept {
-    Dims d = inputDims[0];
-    this->inputSize = 1;
-    for (int i = 0; i < d.nbDims; i++) {
-        this->inputSize *= d.d[i];
-    }
-    this->dataType = type;
-};
-
 int32_t ExamplePlugin::initialize() noexcept {
     return 0;
 };
@@ -144,9 +134,6 @@ void ExamplePlugin::destroy() noexcept {
 
 };
 
-IPluginV2* ExamplePlugin::clone() const noexcept { 
-    return new ExamplePlugin(this->scale);
-};
 
 void ExamplePlugin::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {
     this->pluginNamespace = pluginNamespace;
@@ -156,6 +143,38 @@ AsciiChar const* ExamplePlugin::getPluginNamespace() const noexcept {
     return this->pluginNamespace.c_str();
 };
 
+// IPluginV2Ext methods
+
+IPluginV2Ext* ExamplePlugin::clone() const noexcept { 
+    return new ExamplePlugin(this->scale);
+};
+
+DataType ExamplePlugin::getOutputDataType(int32_t index, DataType const* inputTypes, int32_t nbInputs) const noexcept {
+    if (!nbInputs) {
+        return DataType::kFLOAT;
+    } else {
+        return inputTypes[0];
+    }
+};
+
+bool ExamplePlugin::isOutputBroadcastAcrossBatch(int32_t outputIndex, bool const* inputIsBroadcasted, int32_t nbInputs) const noexcept {
+    return false; // TODO: optimize by enabling broadcast
+}
+
+bool ExamplePlugin::canBroadcastInputAcrossBatch(int32_t inputIndex) const noexcept {
+    return false;
+}
+
+void ExamplePlugin::configurePlugin(Dims const* inputDims, int32_t nbInputs, Dims const* outputDims, int32_t nbOutputs,
+        DataType const* inputTypes, DataType const* outputTypes, bool const* inputIsBroadcast,
+        bool const* outputIsBroadcast, PluginFormat floatFormat, int32_t maxBatchSize) noexcept {
+    Dims d = inputDims[0];
+    this->inputSize = 1;
+    for (int i = 0; i < d.nbDims; i++) {
+        this->inputSize *= d.d[i];
+    }
+    this->dataType = inputTypes[0];
+};
 
 // PLUGIN CREATOR
 

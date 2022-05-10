@@ -13,7 +13,7 @@ TEMPLATE_TEST_CASE("Example cuda test", "[example][template]" , int, float) {
     TestType *x_gpu;
     
     x_cpu = (TestType *) malloc(sizeof(TestType));
-    cudaMalloc(&x_gpu, sizeof(TestType));
+    cudaMalloc((void**)&x_gpu, sizeof(TestType));
     *x_cpu = 2;
     cudaMemcpy(x_gpu, x_cpu, sizeof(TestType), cudaMemcpyHostToDevice);
     exampleFuncton<TestType>(x_gpu, x_gpu, 2.0, 1);
@@ -29,7 +29,7 @@ TEST_CASE("Example cuda test half", "[example]") {
     __half *x_gpu;
     
     x_cpu = (__half *) malloc(sizeof(__half));
-    cudaMalloc(&x_gpu, sizeof(__half));
+    cudaMalloc((void**)&x_gpu, sizeof(__half));
     *x_cpu = __float2half_rn(2.0);
     cudaMemcpy(x_gpu, x_cpu, sizeof(__half), cudaMemcpyHostToDevice);
     exampleFunctonHalf(x_gpu, x_gpu, 2.0, 1);
@@ -43,13 +43,19 @@ TEST_CASE("Example cuda test half", "[example]") {
 TEST_CASE("Example plugin test", "[example]") {
     auto plugin = ExamplePlugin();
     Dims3 inputDims(3, 4, 5);
-    plugin.configureWithFormat(
-        &inputDims,
-        1,
-        &inputDims,
-        1,
-        DataType::kINT32,
-        PluginFormat::kCHW4,
+    Dims3 outputDims(3, 4, 5);
+    DataType inputTypes = DataType::kINT32;
+    DataType outputTypes = DataType::kINT32;
+    bool inputIsBroadcast = false;
+    bool outputIsBroadcast = false;
+    plugin.configurePlugin(
+        &inputDims, 1, 
+        &outputDims, 1, 
+        &inputTypes, 
+        &outputTypes, 
+        &inputIsBroadcast,
+        &outputIsBroadcast,
+        PluginFormat::kCHW4, 
         1
     );
     REQUIRE(plugin.inputSize == 3 * 4 * 5);
@@ -64,13 +70,19 @@ TEST_CASE("Example plugin enqueue test float", "[example]") {
     // create and configure plugin
     auto plugin = ExamplePlugin();
     Dims3 inputDims(3, 4, 5);
-    plugin.configureWithFormat(
-        &inputDims,
-        1,
-        &inputDims,
-        1,
-        DataType::kFLOAT,
-        PluginFormat::kCHW4,
+    Dims3 outputDims(3, 4, 5);
+    DataType inputTypes = DataType::kFLOAT;
+    DataType outputTypes = DataType::kFLOAT;
+    bool inputIsBroadcast = false;
+    bool outputIsBroadcast = false;
+    plugin.configurePlugin(
+        &inputDims, 1, 
+        &outputDims, 1, 
+        &inputTypes, 
+        &outputTypes, 
+        &inputIsBroadcast,
+        &outputIsBroadcast,
+        PluginFormat::kCHW4, 
         1
     );
 
@@ -80,7 +92,7 @@ TEST_CASE("Example plugin enqueue test float", "[example]") {
     
     // allocate buffers
     x_cpu = (float *) malloc(size);
-    cudaMalloc(&x_gpu, size);
+    cudaMalloc((void**)&x_gpu, size);
 
     // populate host
     for (int i = 0; i < count; i++) {
@@ -113,13 +125,19 @@ TEST_CASE("Example plugin enqueue test int32", "[example]") {
     // create and configure plugin
     auto plugin = ExamplePlugin();
     Dims3 inputDims(3, 4, 5);
-    plugin.configureWithFormat(
-        &inputDims,
-        1,
-        &inputDims,
-        1,
-        DataType::kINT32,
-        PluginFormat::kCHW4,
+    Dims3 outputDims(3, 4, 5);
+    DataType inputTypes = DataType::kINT32;
+    DataType outputTypes = DataType::kINT32;
+    bool inputIsBroadcast = false;
+    bool outputIsBroadcast = false;
+    plugin.configurePlugin(
+        &inputDims, 1, 
+        &outputDims, 1, 
+        &inputTypes, 
+        &outputTypes, 
+        &inputIsBroadcast,
+        &outputIsBroadcast,
+        PluginFormat::kCHW4, 
         1
     );
 
@@ -129,7 +147,7 @@ TEST_CASE("Example plugin enqueue test int32", "[example]") {
     
     // allocate buffers
     x_cpu = (int *) malloc(size);
-    cudaMalloc(&x_gpu, size);
+    cudaMalloc((void**)&x_gpu, size);
 
     // populate host
     for (int i = 0; i < count; i++) {
@@ -161,13 +179,19 @@ TEST_CASE("Example plugin enqueue test int8", "[example]") {
     // create and configure plugin
     auto plugin = ExamplePlugin();
     Dims3 inputDims(3, 4, 5);
-    plugin.configureWithFormat(
-        &inputDims,
-        1,
-        &inputDims,
-        1,
-        DataType::kINT8,
-        PluginFormat::kCHW4,
+    Dims3 outputDims(3, 4, 5);
+    DataType inputTypes = DataType::kINT8;
+    DataType outputTypes = DataType::kINT8;
+    bool inputIsBroadcast = false;
+    bool outputIsBroadcast = false;
+    plugin.configurePlugin(
+        &inputDims, 1, 
+        &outputDims, 1, 
+        &inputTypes, 
+        &outputTypes, 
+        &inputIsBroadcast,
+        &outputIsBroadcast,
+        PluginFormat::kCHW4, 
         1
     );
 
@@ -177,7 +201,7 @@ TEST_CASE("Example plugin enqueue test int8", "[example]") {
     
     // allocate buffers
     x_cpu = (int8_t *) malloc(size);
-    cudaMalloc(&x_gpu, size);
+    cudaMalloc((void**)&x_gpu, size);
 
     // populate host
     for (int i = 0; i < count; i++) {
@@ -207,13 +231,19 @@ TEST_CASE("Example plugin enqueue test half", "[example]") {
     // create and configure plugin
     auto plugin = ExamplePlugin();
     Dims3 inputDims(3, 4, 5);
-    plugin.configureWithFormat(
-        &inputDims,
-        1,
-        &inputDims,
-        1,
-        DataType::kHALF,
-        PluginFormat::kCHW4,
+    Dims3 outputDims(3, 4, 5);
+    DataType inputTypes = DataType::kHALF;
+    DataType outputTypes = DataType::kHALF;
+    bool inputIsBroadcast = false;
+    bool outputIsBroadcast = false;
+    plugin.configurePlugin(
+        &inputDims, 1, 
+        &outputDims, 1, 
+        &inputTypes, 
+        &outputTypes, 
+        &inputIsBroadcast,
+        &outputIsBroadcast,
+        PluginFormat::kCHW4, 
         1
     );
 
@@ -223,7 +253,7 @@ TEST_CASE("Example plugin enqueue test half", "[example]") {
     
     // allocate buffers
     x_cpu = (__half *) malloc(size);
-    cudaMalloc(&x_gpu, size);
+    cudaMalloc((void**)&x_gpu, size);
 
     // populate host
     for (int i = 0; i < count; i++) {
@@ -254,15 +284,21 @@ TEST_CASE("Example plugin creation", "[example]") {
 
     // create and configure plugin
     ExamplePluginCreator plugin_creator = ExamplePluginCreator();
-    IPluginV2 *plugin = plugin_creator.createPlugin(nullptr, nullptr);
+    IPluginV2Ext *plugin = (IPluginV2Ext*) plugin_creator.createPlugin(nullptr, nullptr);
     Dims3 inputDims(3, 4, 5);
-    plugin->configureWithFormat(
-        &inputDims,
-        1,
-        &inputDims,
-        1,
-        DataType::kINT8,
-        PluginFormat::kCHW4,
+    Dims3 outputDims(3, 4, 5);
+    DataType inputTypes = DataType::kINT8;
+    DataType outputTypes = DataType::kINT8;
+    bool inputIsBroadcast = false;
+    bool outputIsBroadcast = false;
+    plugin->configurePlugin(
+        &inputDims, 1, 
+        &outputDims, 1, 
+        &inputTypes, 
+        &outputTypes, 
+        &inputIsBroadcast,
+        &outputIsBroadcast,
+        PluginFormat::kCHW4, 
         1
     );
 
@@ -272,7 +308,7 @@ TEST_CASE("Example plugin creation", "[example]") {
     
     // allocate buffers
     x_cpu = (int8_t *) malloc(size);
-    cudaMalloc(&x_gpu, size);
+    cudaMalloc((void**)&x_gpu, size);
 
     // populate host
     for (int i = 0; i < count; i++) {
@@ -315,13 +351,13 @@ TEST_CASE("Example engine creation", "[example]") {
     auto network_flags = NetworkDefinitionCreationFlags();
     auto network = builder->createNetworkV2(network_flags);
     auto input = network->addInput("input", DataType::kFLOAT, inputDims);
-    // auto plugin_creator = ExamplePluginCreator();
-    // auto plugin = plugin_creator.createPlugin(nullptr, nullptr);
-    auto plugin = ExamplePlugin();
+    auto plugin_creator = ExamplePluginCreator();
+    auto plugin = plugin_creator.createPlugin(nullptr, nullptr);
+    // auto plugin = ExamplePlugin();
     auto layer = network->addPluginV2(
         &input,
         1,
-        plugin
+        *plugin
     );
     network->markOutput(*layer->getOutput(0));
     layer->getOutput(0)->setName("output");
@@ -341,7 +377,7 @@ TEST_CASE("Example engine creation", "[example]") {
     
     // allocate buffers
     x_cpu = (float *) malloc(size);
-    cudaMalloc(&x_gpu, size);
+    cudaMalloc((void**)&x_gpu, size);
 
     // populate host
     for (int i = 0; i < count; i++) {

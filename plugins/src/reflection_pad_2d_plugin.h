@@ -26,7 +26,7 @@ void reflectionPad2dFunction(
     cudaStream_t stream=0);
 
 
-class ReflectionPad2dPlugin : public IPluginV2 {
+class ReflectionPad2dPlugin : public IPluginV2Ext {
 public:
     int32_t outputSize;
     DataType dataType;
@@ -40,7 +40,7 @@ public:
     ReflectionPad2dPlugin(int32_t paddingLeft, int32_t paddingRight, int32_t paddingTop, int32_t paddingBottom);
     ~ReflectionPad2dPlugin();
 
-    /* IPluginV2 methods */
+    // IPluginV2 methods
 
     AsciiChar const* getPluginType() const noexcept override;
 
@@ -51,9 +51,6 @@ public:
     Dims getOutputDimensions(int32_t index, Dims const* inputs, int32_t nbInputDims) noexcept override;
 
     bool supportsFormat(DataType type, PluginFormat format) const noexcept;
-
-    void configureWithFormat(Dims const* inputDims, int32_t nbInputs, Dims const* outputDims, int32_t nbOutputs,
-        DataType type, PluginFormat format, int32_t maxBatchSize) noexcept override;
 
     int32_t initialize() noexcept override;
 
@@ -71,12 +68,19 @@ public:
 
     void destroy() noexcept override;
 
-    IPluginV2* clone() const noexcept override;
+    IPluginV2Ext* clone() const noexcept override;
 
     void setPluginNamespace(AsciiChar const* pluginNamespace) noexcept override;
 
     AsciiChar const* getPluginNamespace() const noexcept override;
 
+    // IPluginV2Ext methods
+    DataType getOutputDataType(int32_t index, DataType const* inputTypes, int32_t nbInputs) const noexcept override;
+    bool isOutputBroadcastAcrossBatch(int32_t outputIndex, bool const* inputIsBroadcasted, int32_t nbInputs) const noexcept override;
+    bool canBroadcastInputAcrossBatch(int32_t inputIndex) const noexcept override;
+    void configurePlugin(Dims const* inputDims, int32_t nbInputs, Dims const* outputDims, int32_t nbOutputs,
+        DataType const* inputTypes, DataType const* outputTypes, bool const* inputIsBroadcast,
+        bool const* outputIsBroadcast, PluginFormat floatFormat, int32_t maxBatchSize) noexcept override;
 };
 
 class ReflectionPad2dPluginCreator : public IPluginCreator {

@@ -117,15 +117,6 @@ bool ReflectionPad2dPlugin::supportsFormat(DataType type, PluginFormat format) c
         || (type == DataType::kINT8); // TODO: add half precision
 }
 
-void ReflectionPad2dPlugin::configureWithFormat(Dims const* inputDims, int32_t nbInputs, Dims const* outputDims, int32_t nbOutputs,
-    DataType type, PluginFormat format, int32_t maxBatchSize) noexcept {
-    this->dataType = type;
-    this->outputDims = Dims3(
-        outputDims->d[0],
-        outputDims->d[1],
-        outputDims->d[2]
-    );
-};
 
 int32_t ReflectionPad2dPlugin::initialize() noexcept {
     return 0;
@@ -201,7 +192,7 @@ void ReflectionPad2dPlugin::destroy() noexcept {
 
 };
 
-IPluginV2* ReflectionPad2dPlugin::clone() const noexcept { 
+IPluginV2Ext* ReflectionPad2dPlugin::clone() const noexcept { 
     auto plugin = new ReflectionPad2dPlugin(this->paddingLeft, this->paddingRight, this->paddingTop, this->paddingBottom);
     plugin->setPluginNamespace(getPluginNamespace());
     return plugin;
@@ -215,6 +206,34 @@ AsciiChar const* ReflectionPad2dPlugin::getPluginNamespace() const noexcept {
     return this->pluginNamespace.c_str();
 };
 
+// IPluginV2Ext methods
+
+DataType ReflectionPad2dPlugin::getOutputDataType(int32_t index, DataType const* inputTypes, int32_t nbInputs) const noexcept {
+    if (!nbInputs) {
+        return DataType::kFLOAT;
+    } else {
+        return inputTypes[0];
+    }
+};
+
+bool ReflectionPad2dPlugin::isOutputBroadcastAcrossBatch(int32_t outputIndex, bool const* inputIsBroadcasted, int32_t nbInputs) const noexcept {
+    return false; // TODO: optimize by enabling broadcast
+}
+
+bool ReflectionPad2dPlugin::canBroadcastInputAcrossBatch(int32_t inputIndex) const noexcept {
+    return false;
+}
+
+void ReflectionPad2dPlugin::configurePlugin(Dims const* inputDims, int32_t nbInputs, Dims const* outputDims, int32_t nbOutputs,
+        DataType const* inputTypes, DataType const* outputTypes, bool const* inputIsBroadcast,
+        bool const* outputIsBroadcast, PluginFormat floatFormat, int32_t maxBatchSize) noexcept {
+    this->dataType = inputTypes[0];
+    this->outputDims = Dims3(
+        outputDims->d[0],
+        outputDims->d[1],
+        outputDims->d[2]
+    );
+};
 
 // PLUGIN CREATOR
 
