@@ -194,6 +194,8 @@ void ReflectionPad2dPlugin::destroy() noexcept {
 
 IPluginV2Ext* ReflectionPad2dPlugin::clone() const noexcept { 
     auto plugin = new ReflectionPad2dPlugin(this->paddingLeft, this->paddingRight, this->paddingTop, this->paddingBottom);
+    plugin->dataType = this->dataType;
+    plugin->outputDims = this->outputDims;
     plugin->setPluginNamespace(getPluginNamespace());
     return plugin;
 };
