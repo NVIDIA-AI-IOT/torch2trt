@@ -31,6 +31,8 @@ public:
     std::string pluginNamespace;
 
     ExamplePlugin(float scale=2.0);
+    ExamplePlugin(float scale, int32_t inputSize, DataType dataType);
+    ExamplePlugin(void const* serialData, size_t serialLength);
     ~ExamplePlugin();
 
     /* IPluginV2 methods */

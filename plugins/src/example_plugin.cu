@@ -57,6 +57,16 @@ ExamplePlugin::ExamplePlugin(float scale) : scale(scale) {
 
 }
 
+ExamplePlugin::ExamplePlugin(float scale, int32_t inputSize, DataType dataType) : scale(scale), inputSize(inputSize), dataType(dataType) {
+
+}
+
+ExamplePlugin::ExamplePlugin(void const* serialData, size_t serialLength) {
+    this->scale = *reinterpret_cast<float const*>((char const*)serialData);
+    this->inputSize = *reinterpret_cast<int32_t const*>((char const*)serialData + sizeof(this->scale));
+    this->dataType = *reinterpret_cast<DataType const*>((char const*)serialData + sizeof(this->scale) + sizeof(this->dataType));
+}
+
 ExamplePlugin::~ExamplePlugin() {
 
 }
@@ -122,16 +132,17 @@ int32_t ExamplePlugin::enqueue(int32_t batchSize, void const* const* inputs, voi
 };
 
 size_t ExamplePlugin::getSerializationSize() const noexcept {
-    return sizeof(this->scale);
+    return sizeof(this->scale) + sizeof(this->inputSize) + sizeof(this->dataType);
 };
 
 void ExamplePlugin::serialize(void* buffer) const noexcept {
-    auto bufferFloat = reinterpret_cast<float*>(buffer);
-    *bufferFloat = this->scale;
+    *(reinterpret_cast<float*>((char*) buffer)) = this->scale;
+    *(reinterpret_cast<int32_t*>((char*)buffer + sizeof(this->scale))) = this->inputSize;
+    *(reinterpret_cast<DataType*>((char*)buffer + sizeof(this->scale) + sizeof(this->inputSize))) = this->dataType;
 };
 
 void ExamplePlugin::destroy() noexcept {
-
+    delete this;
 };
 
 
@@ -146,7 +157,9 @@ AsciiChar const* ExamplePlugin::getPluginNamespace() const noexcept {
 // IPluginV2Ext methods
 
 IPluginV2Ext* ExamplePlugin::clone() const noexcept { 
-    return new ExamplePlugin(this->scale);
+    auto *plugin = new ExamplePlugin(this->scale, this->inputSize, this->dataType);
+    plugin->setPluginNamespace(this->getPluginNamespace());
+    return plugin;
 };
 
 DataType ExamplePlugin::getOutputDataType(int32_t index, DataType const* inputTypes, int32_t nbInputs) const noexcept {
@@ -208,8 +221,9 @@ IPluginV2* ExamplePluginCreator::createPlugin(AsciiChar const* name, PluginField
 }
 
 IPluginV2* ExamplePluginCreator::deserializePlugin(AsciiChar const* name, void const* serialData, size_t serialLength) noexcept {
-    float const* buffer = reinterpret_cast<float const*>(serialData);
-    return new ExamplePlugin(*buffer);
+    auto *plugin = new ExamplePlugin(serialData, serialLength);
+    plugin->setPluginNamespace(this->getPluginNamespace());
+    return plugin;
 }
 
 void ExamplePluginCreator::setPluginNamespace(AsciiChar const* pluginNamespace) noexcept {
