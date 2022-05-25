@@ -51,7 +51,7 @@ class DatasetCalibrator(trt.IInt8Calibrator):
                     buffer[i].copy_(tensor)
                 
                 self.count += 1
-                
+
             return [int(buf.data_ptr()) for buf in self.buffers]
         else:
             return []
