@@ -106,7 +106,7 @@ def torch_dim_to_trt_axes(dim):
     # create axes bitmask for reduce layer
     axes = 0
     for d in dim:
-        axes |= 1 << d 
+        axes |= 1 << d
 
     return axes
 
@@ -344,7 +344,7 @@ def device_type_str(device_type):
         return 'GPU'
     elif device_type == trt.DeviceType.DLA:
         return 'DLA'
-    
+
 
 class NetworkWrapper(object):
     def __init__(self, ctx, network):
@@ -353,7 +353,7 @@ class NetworkWrapper(object):
         self._layer_counts = defaultdict(lambda: 0)
 
     def _configure_layer(self, layer):
-        
+
         # set layer device type
         device_type = self._ctx.current_device_type()
         self._ctx.builder_config.set_device_type(layer, device_type)
@@ -361,7 +361,7 @@ class NetworkWrapper(object):
         if not self._ctx.builder_config.can_run_on_DLA(layer) and device_type == trt.DeviceType.DLA:
             if self._ctx.torch2trt_kwargs['gpu_fallback']:
                 device_type = trt.DeviceType.GPU  # layer will fall back to GPU
-        
+
         # set layer name
         def arg_str(arg):
             if isinstance(arg, torch.Tensor):
@@ -371,14 +371,14 @@ class NetworkWrapper(object):
         self._layer_counts[scope_name] += 1
         args = [arg_str(arg) for arg in self._ctx.method_args]
         kwargs = ["%s=%s" % (key, arg_str(arg)) for key, arg in self._ctx.method_kwargs.items()]
-        layer.name = scope_name + ':' + str(self._layer_counts[scope_name] - 1) + ':' + layer.type.name + ':' + device_type_str(device_type) 
-        
+        layer.name = scope_name + ':' + str(self._layer_counts[scope_name] - 1) + ':' + layer.type.name + ':' + device_type_str(device_type)
+
         if orig_device_type != device_type:
             layer.name = layer.name + '(' + device_type_str(orig_device_type) + ')'
 #         "%s [%s #%d, %s] %s(%s)" % (self._ctx.current_module_name(), layer.type.name, self._layer_counts[layer.type.name], device_type_str(device_type),
 #                                           self._ctx.method_str, ", ".join(args + kwargs))
-    
-        
+
+
     def __getattr__(self, name):
         attr = getattr(self._network, name)
         if callable(attr):
@@ -395,7 +395,7 @@ class NetworkWrapper(object):
 
 
 class ConversionContext(object):
-    
+
     def __init__(self, network, converters=CONVERTERS, torch2trt_kwargs=None, builder_config=None):
         self.network = NetworkWrapper(self, network)
         self.lock = False
@@ -408,67 +408,67 @@ class ConversionContext(object):
             ConversionHook(self, key, converter)
             for key, converter in converters.items()
         ]
-        
+
         self.module_stack = []
         self.module_handles = []
         self.device_type_stack = []
         self.module_name_map = {}
         for name, module in torch2trt_kwargs['module'].named_modules():
             self.module_name_map[module] = name
-        
+
     def current_module_name(self):
         return self.get_module_name(self.current_module())
-    
+
     def current_module(self):
         return self.module_stack[-1]
-    
+
     def get_module_name(self, module):
         return self.module_name_map[module]
-    
+
     def _module_pre_hook(self, module, input):
         # TODO(@jwelsh): add logging to show module entry / exit
         self.module_stack.append(module)
-        
+
         # hook that is attached to modulee using register_forward_pre_hook, which is called before module is executed
         if module in self.torch2trt_kwargs['device_types']:
             device_type = self.torch2trt_kwargs['device_types'][module]
             self.device_type_stack.append((module, device_type))
-        
+
     def _module_post_hook(self, module, input, output):
-        
+
         # if module was used to set the current device type, pop device type from stack
         if self.current_device_type_module() == module:
             self.device_type_stack.pop()
-            
+
         self.module_stack.pop()
-        
+
     def current_device_type(self):
         """Returns the current device type"""
         if len(self.device_type_stack) > 0:
             return self.device_type_stack[-1][1]
         else:
             return self.torch2trt_kwargs['default_device_type']
-        
+
     def current_device_type_module(self):
         """Returns the module which controls the current device type"""
         if len(self.device_type_stack) > 0:
             return self.device_type_stack[-1][0]
         else:
             return None
-        
+
     def __enter__(self):
-        
+
         # attach hooks which add converters to methods
         for hook in self.hooks:
             hook.__enter__()
-        
+
         # attach hooks which control the current device type
         for name, module in self.torch2trt_kwargs['module'].named_modules():
             pre_hook_handle = module.register_forward_pre_hook(self._module_pre_hook)
             post_hook_handle = module.register_forward_hook(self._module_post_hook)
             self.module_handles.append(pre_hook_handle)
             self.module_handles.append(post_hook_handle)
-            
+
         return self
 
     def __exit__(self, type, val, tb):
@@ -487,7 +487,7 @@ class ConversionContext(object):
             if not hasattr(torch_input, "_trt"):
                 trt_tensor = self.network.add_input(
                     name=names[i],
-                    shape=tuple(torch_input.shape),
+                    shape=(-1,) + tuple(torch_input.shape)[1:], # Dynamic batch sizes.
                     dtype=torch_dtype_to_trt(torch_input.dtype),
                 )
                 trt_tensor.location = torch_device_to_trt(torch_input.device)
@@ -605,6 +605,7 @@ def torch2trt(module,
 
     # copy inputs to avoid modifications to source data
     inputs = [tensor.clone()[0:max_batch_size] for tensor in inputs]  # only run single entry
+    input_shapes = [tuple(input_.shape) for input_ in inputs]
 
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
@@ -624,6 +625,12 @@ def torch2trt(module,
         input_names = default_input_names(len(inputs))
     if output_names is None:
         output_names = default_output_names(len(outputs))
+
+    # Create optimization profiles. This allows for dynamic shapes, especially dynamic batch sizes.
+    opt_profile = builder.create_optimization_profile();
+    for input_name, input_shape in zip(input_names, input_shapes):
+        opt_profile.set_shape(input_name, (1,) + input_shape[1:], input_shape, input_shape)
+    assert config.add_optimization_profile(opt_profile) > -1, 'Failed to add optimization profile to IBuilderConfig.'
 
     if use_onnx:
 
@@ -660,7 +667,7 @@ def torch2trt(module,
     if gpu_fallback:
         config.set_flag(trt.BuilderFlag.GPU_FALLBACK)
     config.DLA_core = dla_core
-    
+
     if strict_type_constraints:
         config.set_flag(trt.BuilderFlag.STRICT_TYPES)
 
