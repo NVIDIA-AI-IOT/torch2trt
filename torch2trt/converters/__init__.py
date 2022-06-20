@@ -7,6 +7,7 @@ from .dummy_converters import *
 from .AdaptiveAvgPool2d import *
 from .BatchNorm1d import *
 from .BatchNorm2d import *
+from .BatchNorm3d import *
 from .clone import *
 from .conv_functional import *
 from .Conv import *
@@ -31,6 +32,7 @@ from .compare import *
 from .div import *
 from .einsum import *
 from .expand import *
+from .example_plugin import *
 from .floordiv import *
 from .gelu import *
 from .getitem import *
@@ -55,6 +57,7 @@ from .permute import *
 from .pow import *
 from .prelu import *
 from .prod import *
+from .reflection_pad_2d import *
 from .relu import *
 from .relu6 import *
 from .roll import *

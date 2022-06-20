@@ -7,6 +7,7 @@ import runpy
 import traceback
 from termcolor import colored
 import math
+import tempfile
 import numpy as np
 
 def pSNR(model_op,trt_op):
@@ -24,7 +25,7 @@ def pSNR(model_op,trt_op):
 
 
 
-def run(self):
+def run(self, serialize=False):
     # create module
     module = self.module_fn()
     module = module.to(self.device)
@@ -40,6 +41,13 @@ def run(self):
     # convert module
     module_trt = torch2trt(module, inputs_conversion, max_workspace_size=1 << 20,  **self.torch2trt_kwargs)
 
+    if serialize:
+        with tempfile.TemporaryFile() as f:
+            torch.save(module_trt.state_dict(), f)
+            f.seek(0)
+            module_trt = TRTModule()
+            module_trt.load_state_dict(torch.load(f))
+            
     # create inputs for torch/trt.. copy of inputs to handle inplace ops
     inputs = ()
     for shape in self.input_shapes:
@@ -137,6 +145,7 @@ if __name__ == '__main__':
     parser.add_argument('--tolerance', help='Maximum error to print warning for entry', type=float, default='-1')
     parser.add_argument('--include', help='Addition python file to include defining additional tests', action='append', default=[])
     parser.add_argument('--use_onnx', help='Whether to test using ONNX or torch2trt tracing', action='store_true')
+    parser.add_argument('--serialize', help='Whether to use serialization / deserialization of TRT modules before test', action='store_true')
     args = parser.parse_args()
     
     for include in args.include:
@@ -156,7 +165,7 @@ if __name__ == '__main__':
             if args.use_onnx:
                 test.torch2trt_kwargs.update({'use_onnx': True})
                 
-            max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt = run(test)
+            max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt = run(test, serialize=args.serialize)
 
             # write entry
             line = '| %70s | %s | %25s | %s | %.2E | %.2f | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt)

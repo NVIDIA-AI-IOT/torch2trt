@@ -40,6 +40,7 @@ plugins_ext_module = CUDAExtension(
             'nvcc': []
         }
     )
+
 if '--plugins' in sys.argv:
     ext_modules.append(plugins_ext_module)
     sys.argv.remove('--plugins')

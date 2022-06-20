@@ -2,6 +2,9 @@
 
 ## [Master]
 
+- Added converter for ``torch.nn.functional.group_norm`` using native TensorRT layers
+- Added converter for ``torch.nn.ReflectionPad2d`` using plugin layer
+- Added torch2trt_plugins library
 - Added support for Deep Learning Accelerator (DLA)
 - Added support for explicit batch
 - Added support for TensorRT 8
