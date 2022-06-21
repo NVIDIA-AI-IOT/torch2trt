@@ -310,6 +310,14 @@ def attach_converter(ctx, method, converter, method_str):
     return wrapper
 
 
+def _getitem_wrapper(method=torch.Tensor.__getitem__):
+    def wrapper(arg0, arg1):
+        if type(arg1) is torch.Tensor:
+            arg1 = (arg1, )
+        return method(arg0, arg1)
+    return wrapper
+
+
 class ConversionHook(object):
     """Attaches TensorRT converter to PyTorch method call"""
 
@@ -330,7 +338,10 @@ class ConversionHook(object):
         )
 
     def __exit__(self, type, val, tb):
-        self._set_method(self.converter['method_impl'])
+        if '__getitem__' in self.converter['method_str']:
+            self._set_method(_getitem_wrapper())
+        else:
+            self._set_method(self.converter['method_impl'])
 
 def default_input_names(num_inputs):
     return ["input_%d" % i for i in range(num_inputs)]
