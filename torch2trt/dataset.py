@@ -83,6 +83,16 @@ class Dataset(object):
     def median_shapes(self):
         return self._shape_stats(lambda x: torch.median(x, dim=0)[0])
 
+    def infer_dynamic_axes(self):
+        min_shapes = self.min_shapes()
+        max_shapes = self.max_shapes()
+        dynamic_axes = [[] for i in range(self.num_inputs())]
+        for i, (mins, maxs) in enumerate(zip(min_shapes, max_shapes)):
+            for j, (mins_i, maxs_i) in enumerate(zip(mins, maxs)):
+                if mins_i != maxs_i:
+                    dynamic_axes[i].append(j)
+        return dynamic_axes
+
 
 class ListDataset(Dataset):
 
