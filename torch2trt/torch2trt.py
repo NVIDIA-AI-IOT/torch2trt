@@ -6,7 +6,7 @@ import io
 from collections import defaultdict
 import importlib
 
-from .calibration import (
+from .dataset_calibrator import (
     DatasetCalibrator,
     DEFAULT_CALIBRATION_ALGORITHM,
 )
