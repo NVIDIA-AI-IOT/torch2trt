@@ -610,6 +610,7 @@ def torch2trt(module,
               min_shapes='default',
               max_shapes='default',
               opt_shapes='default',
+              onnx_opset=11,
               **kwargs):
 
     # capture arguments to provide to context
@@ -665,7 +666,18 @@ def torch2trt(module,
     if use_onnx:
 
         f = io.BytesIO()
-        torch.onnx.export(module, inputs, f, input_names=input_names, output_names=output_names)
+        torch.onnx.export(
+            module, 
+            inputs, 
+            f, 
+            input_names=input_names, 
+            output_names=output_names,
+            dynamic_axes={
+                name: {int(axis): 'axis_%d' % axis for axis in dynamic_axes[index]}
+                for index, name in enumerate(input_names)
+            },
+            opset_version=onnx_opset
+        )
         f.seek(0)
         onnx_bytes = f.read()
         network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
