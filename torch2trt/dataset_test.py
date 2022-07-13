@@ -7,6 +7,28 @@ from torch2trt.dataset import (
 )
 
 
+def test_dataset_shapes():
+
+    dataset = ListDataset()
+    dataset.insert((torch.randn(1, 3, 32, 32), torch.randn(1, 4)))
+    dataset.insert((torch.randn(1, 3, 64, 64), torch.randn(1, 8)))
+    dataset.insert((torch.randn(1, 3, 48, 48), torch.randn(1, 6)))
+
+    shapes = dataset.shapes()
+
+    assert(torch.allclose(shapes[0][0], torch.LongTensor((1, 3, 32, 32))))
+    assert(torch.allclose(shapes[0][1], torch.LongTensor((1, 3, 64, 64))))
+    assert(torch.allclose(shapes[1][0], torch.LongTensor((1, 4))))
+    assert(torch.allclose(shapes[1][1], torch.LongTensor((1, 8))))
+
+    assert(torch.allclose(dataset.min_shapes()[0], torch.LongTensor((1, 3, 32, 32))))
+    assert(torch.allclose(dataset.min_shapes()[1], torch.LongTensor((1, 4))))
+    assert(torch.allclose(dataset.max_shapes()[0], torch.LongTensor((1, 3, 64, 64))))
+    assert(torch.allclose(dataset.max_shapes()[1], torch.LongTensor((1, 8))))
+    assert(torch.allclose(dataset.median_shapes()[0], torch.LongTensor((1, 3, 48, 48))))
+    assert(torch.allclose(dataset.median_shapes()[1], torch.LongTensor((1, 6))))
+    
+
 def test_tensor_batch_dataset_record():
 
     dataset = TensorBatchDataset()

@@ -48,6 +48,28 @@ class Dataset(object):
     def record(self, module):
         return DatasetRecorder(self, module)
 
+    def num_inputs(self):
+        return len(self[0])
+
+    def shapes(self):
+        shapes = [[] for i in range(self.num_inputs())]
+        for i in range(len(self)):
+            tensors = self[i]
+            for j in range(len(tensors)):
+                shapes[j].append(tuple(tensors[j].shape))
+
+        shapes = [torch.LongTensor(s) for s in shapes]
+        return shapes
+
+    def min_shapes(self):
+        return [torch.min(shape, dim=0)[0] for shape in self.shapes()]
+
+    def max_shapes(self):
+        return [torch.max(shape, dim=0)[0] for shape in self.shapes()]
+
+    def median_shapes(self):
+        return [torch.median(shape, dim=0)[0] for shape in self.shapes()]
+
 
 class ListDataset(Dataset):
 
