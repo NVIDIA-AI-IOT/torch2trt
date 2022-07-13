@@ -56,19 +56,32 @@ class Dataset(object):
         for i in range(len(self)):
             tensors = self[i]
             for j in range(len(tensors)):
-                shapes[j].append(tuple(tensors[j].shape))
-
-        shapes = [torch.LongTensor(s) for s in shapes]
+                shapes[j].append(torch.Size(tuple(tensors[j].shape)))
         return shapes
 
+    def _shape_stats(self, stat_fn):
+        shapes = []
+        for s in self.shapes():
+            shape_tensor = []
+            for si in s:
+                shape_tensor.append(tuple(si))
+            shape_tensor = torch.LongTensor(shape_tensor)
+            shapes.append(shape_tensor)
+        
+        stat_shapes = []
+        for shape in shapes:
+            stat_shape = torch.Size(stat_fn(shape))
+            stat_shapes.append(stat_shape)
+        return stat_shapes
+
     def min_shapes(self):
-        return [torch.min(shape, dim=0)[0] for shape in self.shapes()]
+        return self._shape_stats(lambda x: torch.min(x, dim=0)[0])
 
     def max_shapes(self):
-        return [torch.max(shape, dim=0)[0] for shape in self.shapes()]
+        return self._shape_stats(lambda x: torch.max(x, dim=0)[0])
 
     def median_shapes(self):
-        return [torch.median(shape, dim=0)[0] for shape in self.shapes()]
+        return self._shape_stats(lambda x: torch.median(x, dim=0)[0])
 
 
 class ListDataset(Dataset):
