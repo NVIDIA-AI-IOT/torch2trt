@@ -7,9 +7,12 @@ from collections import defaultdict
 import importlib
 
 from .calibration import (
-    TensorBatchDataset,
     DatasetCalibrator,
     DEFAULT_CALIBRATION_ALGORITHM,
+)
+
+from .dataset import (
+    TensorBatchDataset
 )
 
 # UTILITY FUNCTIONS
@@ -674,9 +677,8 @@ def torch2trt(module,
 
         #Making sure not to run calibration with QAT mode on
         if not 'qat_mode' in kwargs:
-            # @TODO(jwelsh):  Should we set batch_size=max_batch_size?  Need to investigate memory consumption
             calibrator = DatasetCalibrator(
-                inputs, int8_calib_dataset, batch_size=int8_calib_batch_size, algorithm=int8_calib_algorithm
+                int8_calib_dataset, algorithm=int8_calib_algorithm
             )
             config.int8_calibrator = calibrator
 
