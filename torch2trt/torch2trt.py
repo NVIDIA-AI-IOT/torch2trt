@@ -703,7 +703,7 @@ def torch2trt(module,
 
         # default to use input tensors for calibration
         if int8_calib_dataset is None:
-            int8_calib_dataset = TensorBatchDataset(inputs_in)
+            int8_calib_dataset = dataset
 
         config.set_flag(trt.BuilderFlag.INT8)
 
