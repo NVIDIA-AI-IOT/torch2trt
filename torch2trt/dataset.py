@@ -1,4 +1,7 @@
+import os
 import torch
+import glob
+from uuid import uuid1
 
 
 __all__ = [
@@ -138,3 +141,28 @@ class TensorBatchDataset(Dataset):
                 torch.cat((self.tensors[index], tensors[index]), dim=0) 
                 for index in range(len(tensors))
             ])
+
+
+class FolderDataset(Dataset):
+
+    def __init__(self, folder):
+        super().__init__()
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        self.folder = folder
+    
+    def file_paths(self):
+        return sorted(glob.glob(os.path.join(self.folder, '*.pth')))
+
+    def __len__(self):
+        return len(self.file_paths())
+
+    def __getitem__(self, index):
+        return torch.load(self.file_paths()[index])
+
+    def insert(self, tensors):
+        i = 0
+        file_paths = [os.path.basename(path) for path in self.file_paths()]
+        while ('input_%d.pth' % i) in file_paths:
+            i += 1
+        torch.save(tensors, os.path.join(self.folder, 'input_%d.pth' % i))
