@@ -29,6 +29,19 @@ def test_dataset_shapes():
     assert(dataset.median_shapes()[1] == (1, 6))
 
 
+def test_dataset_infer_dynamic_axes():
+
+    dataset = ListDataset()
+    dataset.insert((torch.randn(1, 3, 32, 32), torch.randn(1, 4)))
+    dataset.insert((torch.randn(1, 3, 64, 64), torch.randn(1, 8)))
+    dataset.insert((torch.randn(1, 3, 48, 48), torch.randn(1, 6)))
+
+    dynamic_axes = dataset.infer_dynamic_axes()
+    
+    assert(dynamic_axes[0] == [2, 3])
+    assert(dynamic_axes[1] == [1])
+
+
 def test_tensor_batch_dataset_record():
 
     dataset = TensorBatchDataset()
