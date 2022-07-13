@@ -12,6 +12,7 @@ from .dataset_calibrator import (
 )
 
 from .dataset import (
+    Dataset,
     TensorBatchDataset
 )
 
@@ -481,16 +482,25 @@ class ConversionContext(object):
             handle.remove()
 
 
-    def add_inputs(self, torch_inputs, names=None):
+    def add_inputs(self, torch_inputs, names=None, dynamic_axes=None):
         if names is None:
             names = default_input_names(len(torch_inputs))
         self.input_names = names
 
         for i, torch_input in enumerate(torch_inputs):
             if not hasattr(torch_input, "_trt"):
+                
+                shape = list(torch_input.shape)
+                
+                if dynamic_axes is not None:
+                    for dim in dynamic_axes[i]:
+                        shape[dim] = -1
+
+                shape = tuple(shape)
+
                 trt_tensor = self.network.add_input(
                     name=names[i],
-                    shape=tuple(torch_input.shape),
+                    shape=shape,
                     dtype=torch_dtype_to_trt(torch_input.dtype),
                 )
                 trt_tensor.location = torch_device_to_trt(torch_input.device)
@@ -544,7 +554,6 @@ class TRTModule(torch.nn.Module):
         self.output_names = state_dict[prefix + "output_names"]
 
     def forward(self, *inputs):
-        batch_size = inputs[0].shape[0]
         bindings = [None] * (len(self.input_names) + len(self.output_names))
 
         for i, input_name in enumerate(self.input_names):
@@ -565,8 +574,8 @@ class TRTModule(torch.nn.Module):
             bindings[idx] = output.data_ptr()
 
 
-        self.context.execute_async(
-            batch_size, bindings, torch.cuda.current_stream().cuda_stream
+        self.context.execute_async_v2(
+            bindings, torch.cuda.current_stream().cuda_stream
         )
 
         outputs = tuple(outputs)
@@ -585,7 +594,6 @@ def torch2trt(module,
               input_names=None,
               output_names=None,
               log_level=trt.Logger.ERROR,
-              max_batch_size=1,
               fp16_mode=False,
               max_workspace_size=1<<25,
               strict_type_constraints=False,
@@ -593,21 +601,47 @@ def torch2trt(module,
               int8_mode=False,
               int8_calib_dataset=None,
               int8_calib_algorithm=DEFAULT_CALIBRATION_ALGORITHM,
-              int8_calib_batch_size=1,
               use_onnx=False,
               default_device_type=trt.DeviceType.GPU,
               dla_core=0,
               gpu_fallback=True,
               device_types={},
+              dynamic_axes='default',
+              min_shapes='default',
+              max_shapes='default',
+              opt_shapes='default',
               **kwargs):
 
     # capture arguments to provide to context
     kwargs.update(locals())
     kwargs.pop('kwargs')
-    inputs_in = inputs
+
+    # handle inputs as dataset of list of tensors
+    if issubclass(inputs.__class__, Dataset):
+        dataset = inputs
+        if len(dataset) == 0:
+            raise ValueError('Dataset must have at least one element to use for inference.')
+        inputs = dataset[0]
+        inputs_in = inputs
+    else:
+        dataset = TensorBatchDataset(inputs)
+        inputs_in = inputs
+        inputs = [tensor.clone()[0:1] for tensor in inputs]  
+
+    # infer default parameters from dataset
+    if dynamic_axes == 'default':
+        dynamic_axes = dataset.infer_dynamic_axes()
+
+    if min_shapes == 'default':
+        min_shapes = [tuple(t) for t in dataset.min_shapes()]
+
+    if max_shapes == 'default':
+        max_shapes = [tuple(t) for t in dataset.max_shapes()]
+    
+    if opt_shapes == 'default':
+        opt_shapes = [tuple(t) for t in dataset.median_shapes()]
 
     # copy inputs to avoid modifications to source data
-    inputs = [tensor.clone()[0:max_batch_size] for tensor in inputs]  # only run single entry
 
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
@@ -642,7 +676,7 @@ def torch2trt(module,
         network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
         with ConversionContext(network, torch2trt_kwargs=kwargs, builder_config=config) as ctx:
 
-            ctx.add_inputs(inputs, input_names)
+            ctx.add_inputs(inputs, input_names, dynamic_axes=dynamic_axes)
 
             outputs = module(*inputs)
 
@@ -656,8 +690,6 @@ def torch2trt(module,
 
     if fp16_mode:
         config.set_flag(trt.BuilderFlag.FP16)
-
-    builder.max_batch_size = max_batch_size
 
     config.default_device_type = default_device_type
     if gpu_fallback:
@@ -682,6 +714,18 @@ def torch2trt(module,
             )
             config.int8_calibrator = calibrator
 
+    # OPTIMIZATION PROFILE
+    profile = builder.create_optimization_profile()
+    for index, name in enumerate(input_names):
+        profile.set_shape(
+            name,
+            min_shapes[index],
+            opt_shapes[index],
+            max_shapes[index]
+        )
+    config.add_optimization_profile(profile)
+
+    # BUILD ENGINE
     engine = builder.build_engine(network, config)
 
     module_trt = TRTModule(engine, input_names, output_names)
