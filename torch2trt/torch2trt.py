@@ -482,12 +482,20 @@ class ConversionContext(object):
             handle.remove()
 
 
-    def add_inputs(self, torch_inputs, names=None, dynamic_axes=None):
+    def add_inputs(self, torch_inputs, names=None, dynamic_axes=None, ignore_inputs=None):
+
+        if ignore_inputs is None:
+            ignore_inputs = []
+
         if names is None:
             names = default_input_names(len(torch_inputs))
         self.input_names = names
 
         for i, torch_input in enumerate(torch_inputs):
+
+            if i in ignore_inputs:
+                continue
+
             if not hasattr(torch_input, "_trt"):
                 
                 shape = list(torch_input.shape)
@@ -520,7 +528,7 @@ class ConversionContext(object):
 
 
 class TRTModule(torch.nn.Module):
-    def __init__(self, engine=None, input_names=None, output_names=None):
+    def __init__(self, engine=None, input_names=None, output_names=None, ignore_inputs=None):
         super(TRTModule, self).__init__()
         self._register_state_dict_hook(TRTModule._on_state_dict)
         self.engine = engine
@@ -528,11 +536,15 @@ class TRTModule(torch.nn.Module):
             self.context = self.engine.create_execution_context()
         self.input_names = input_names
         self.output_names = output_names
-
+        if ignore_inputs is None:
+            ignore_inputs = []
+        self.ignore_inputs = ignore_inputs
+    
     def _on_state_dict(self, state_dict, prefix, local_metadata):
         state_dict[prefix + "engine"] = bytearray(self.engine.serialize())
         state_dict[prefix + "input_names"] = self.input_names
         state_dict[prefix + "output_names"] = self.output_names
+        state_dict[prefix + "ignore_inputs"] = self.ignore_inputs
 
     def _load_from_state_dict(
         self,
@@ -552,11 +564,14 @@ class TRTModule(torch.nn.Module):
 
         self.input_names = state_dict[prefix + "input_names"]
         self.output_names = state_dict[prefix + "output_names"]
+        self.ignore_inputs = state_dict.get(prefix + "ignore_inputs", [])
 
     def forward(self, *inputs):
-        bindings = [None] * (len(self.input_names) + len(self.output_names))
+        bindings = [None] * (len(self.input_names) - len(self.ignore_inputs) + len(self.output_names))
 
         for i, input_name in enumerate(self.input_names):
+            if self.ignore_inputs is not None and i in self.ignore_inputs:
+                continue
             idx = self.engine.get_binding_index(input_name)
             shape = tuple(inputs[i].shape)
             bindings[idx] = inputs[i].contiguous().data_ptr()
@@ -572,7 +587,6 @@ class TRTModule(torch.nn.Module):
             output = torch.empty(size=shape, dtype=dtype, device=device)
             outputs[i] = output
             bindings[idx] = output.data_ptr()
-
 
         self.context.execute_async_v2(
             bindings, torch.cuda.current_stream().cuda_stream
@@ -611,12 +625,16 @@ def torch2trt(module,
               max_shapes='default',
               opt_shapes='default',
               onnx_opset=11,
+              ignore_inputs=None,
               **kwargs):
 
     # capture arguments to provide to context
     kwargs.update(locals())
     kwargs.pop('kwargs')
 
+    if ignore_inputs is None:
+        ignore_inputs = []
+        
     # handle inputs as dataset of list of tensors
     if issubclass(inputs.__class__, Dataset):
         dataset = inputs
@@ -688,7 +706,7 @@ def torch2trt(module,
         network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
         with ConversionContext(network, torch2trt_kwargs=kwargs, builder_config=config) as ctx:
 
-            ctx.add_inputs(inputs, input_names, dynamic_axes=dynamic_axes)
+            ctx.add_inputs(inputs, input_names, dynamic_axes=dynamic_axes, ignore_inputs=ignore_inputs)
 
             outputs = module(*inputs)
 
