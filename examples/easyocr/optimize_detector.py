@@ -1,15 +1,15 @@
 from argparse import ArgumentParser
-from torch2trt.dataset import FolderDataset
+from torch2trt.dataset import FolderDataset, ListDataset
 from torch2trt import torch2trt, TRTModule
 from easyocr import Reader
 import tensorrt as trt
 import torch
 import time
-
+from tempfile import mkdtemp
 
 parser = ArgumentParser()
-parser.add_argument('detector_data', type=str, default='detector_data')
-parser.add_argument('output', type=str, default='detector_trt.pth')
+parser.add_argument('--detector_data', type=str, default='detector_data')
+parser.add_argument('--output', type=str, default='detector_trt.pth')
 parser.add_argument('--int8', action='store_true')
 parser.add_argument('--fp16', action='store_true')
 parser.add_argument('--dla', action='store_true')
@@ -24,6 +24,12 @@ if len(detector_dataset) == 0:
 reader = Reader(['en'])
 detector_torch = reader.detector.module
 
+if args.int8:
+    num_calib = 5
+    calib_dataset = FolderDataset(mkdtemp())
+    for i in range(num_calib):
+        calib_dataset.insert(tuple([t + 0.2 * torch.randn_like(t) for t in detector_dataset[i % len(detector_dataset)]]))
+
 print('Running torch2trt...')
 detector_trt = torch2trt(
     detector_torch,
@@ -31,7 +37,11 @@ detector_trt = torch2trt(
     int8_mode=args.int8,
     fp16_mode=args.fp16,
     default_device_type=trt.DeviceType.DLA if args.dla else trt.DeviceType.GPU,
-    max_workspace_size=1 << 26
+    max_workspace_size=1 << 26,
+    log_level=trt.Logger.VERBOSE,
+    int8_calib_dataset=calib_dataset if args.int8 else None,
+    int8_calib_algorithm=trt.CalibrationAlgoType.MINMAX_CALIBRATION,
+    use_onnx=True
 )
 
 torch.save(detector_trt.state_dict(), args.output)

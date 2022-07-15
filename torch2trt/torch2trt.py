@@ -761,6 +761,9 @@ def torch2trt(module,
         )
     config.add_optimization_profile(profile)
 
+    if int8_mode:
+        config.set_calibration_profile(profile)
+
     # BUILD ENGINE
 
     engine = builder.build_engine(network, config)
