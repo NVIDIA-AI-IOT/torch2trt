@@ -400,7 +400,7 @@ class NetworkWrapper(object):
 
 class ConversionContext(object):
     
-    def __init__(self, network, converters=CONVERTERS, torch2trt_kwargs=None, builder_config=None):
+    def __init__(self, network, converters=CONVERTERS, torch2trt_kwargs=None, builder_config=None, logger=None):
         self.network = NetworkWrapper(self, network)
         self.lock = False
         self.method_args = None
@@ -419,7 +419,8 @@ class ConversionContext(object):
         self.module_name_map = {}
         for name, module in torch2trt_kwargs['module'].named_modules():
             self.module_name_map[module] = name
-        
+        self.logger = logger
+
     def current_module_name(self):
         return self.get_module_name(self.current_module())
     
@@ -624,7 +625,7 @@ def torch2trt(module,
               min_shapes='default',
               max_shapes='default',
               opt_shapes='default',
-              onnx_opset=11,
+              onnx_opset=None,
               ignore_inputs=None,
               **kwargs):
 
@@ -646,6 +647,11 @@ def torch2trt(module,
         dataset = TensorBatchDataset(inputs)
         inputs_in = inputs
         inputs = [tensor.clone()[0:1] for tensor in inputs]  
+
+    if default_device_type == trt.DeviceType.DLA:
+        for key, value in dataset.infer_dynamic_axes():
+            if len(value) > 0:
+                raise ValueError('Dataset cannot have multiple shapes when using DLA')
 
     # infer default parameters from dataset
     if dynamic_axes == 'default':
@@ -704,7 +710,7 @@ def torch2trt(module,
 
     else:
         network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
-        with ConversionContext(network, torch2trt_kwargs=kwargs, builder_config=config) as ctx:
+        with ConversionContext(network, torch2trt_kwargs=kwargs, builder_config=config, logger=logger) as ctx:
 
             ctx.add_inputs(inputs, input_names, dynamic_axes=dynamic_axes, ignore_inputs=ignore_inputs)
 
@@ -756,9 +762,10 @@ def torch2trt(module,
     config.add_optimization_profile(profile)
 
     # BUILD ENGINE
+
     engine = builder.build_engine(network, config)
 
-    module_trt = TRTModule(engine, input_names, output_names)
+    module_trt = TRTModule(engine, input_names, output_names, ignore_inputs=ignore_inputs)
 
     if keep_network:
         module_trt.network = network
