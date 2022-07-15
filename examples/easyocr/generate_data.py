@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from tkinter import Y
 import cv2
 import torch
 import glob
@@ -14,6 +13,7 @@ parser.add_argument('--images', type=str, default='images')
 parser.add_argument('--detector_data', type=str, default='detector_data')
 parser.add_argument('--recognizer_data', type=str, default='recognizer_data')
 parser.add_argument('--max_image_area', type=int, default=1280*720)
+parser.add_argument('--recognizer_batch_size', type=int, default=1)
 args = parser.parse_args()
 
 
@@ -28,9 +28,9 @@ def shrink_to_area(image, area):
     height = image.shape[0]
     width = image.shape[1]
 
-    if height * width > args.max_image_area:
+    if height * width > area:
         ar = width / height
-        new_height = math.sqrt(args.max_image_area / ar)
+        new_height = math.sqrt(area / ar)
         new_width = ar * new_height
         new_height = math.floor(new_height)
         new_width = math.floor(new_width)
@@ -40,14 +40,14 @@ def shrink_to_area(image, area):
     return image
 
 
-with detector_dataset.record(reader.detector.module) and \
-     recognizer_dataset.record(reader.recognizer.module):
-    
-    for path in glob.glob(os.path.join(args.images, '*.jpg')):
-        print(path)
+with detector_dataset.record(reader.detector.module):
+    with recognizer_dataset.record(reader.recognizer.module):
+        
+        for path in glob.glob(os.path.join(args.images, '*.jpg')):
+            print(path)
 
-        image = cv2.imread(path)
+            image = cv2.imread(path)
 
-        image = shrink_to_area(image, args.max_image_area)
+            image = shrink_to_area(image, args.max_image_area)
 
-        reader.readtext(image, batch_size=1)
+            reader.readtext(image, batch_size=args.recognizer_batch_size)

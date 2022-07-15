@@ -5,14 +5,16 @@ from easyocr import Reader
 import tensorrt as trt
 import torch
 import time
+from tempfile import mkdtemp
 
 
 parser = ArgumentParser()
-parser.add_argument('detector_data', type=str, default='detector_data')
-parser.add_argument('recognizer_data', type=str, default='recognizer_data')
-parser.add_argument('output', type=str, default='recognizer_trt.pth')
+parser.add_argument('--detector_data', type=str, default='detector_data')
+parser.add_argument('--recognizer_data', type=str, default='recognizer_data')
+parser.add_argument('--output', type=str, default='recognizer_trt.pth')
 parser.add_argument('--int8', action='store_true')
 parser.add_argument('--fp16', action='store_true')
+parser.add_argument('--max_workspace_size', type=int, default=1<<28)
 args = parser.parse_args()
 
 detector_dataset = FolderDataset(args.detector_data)
@@ -23,6 +25,13 @@ if len(detector_dataset) == 0:
 
 if len(recognizer_dataset) == 0:
     raise ValueError('Recognizer dataset is empty, make sure to run generate_data.py first.')
+
+
+if args.int8:
+    num_calib = 200
+    calib_dataset = FolderDataset(mkdtemp())
+    for i in range(num_calib):
+        calib_dataset.insert(tuple([t.float() + 0.2 * torch.randn_like(t.float()) for t in recognizer_dataset[i % len(recognizer_dataset)]]))
 
 reader = Reader(['en'])
 module_torch = reader.detector.module
@@ -55,7 +64,11 @@ recognizer_trt = torch2trt(
     ignore_inputs=[1], 
     use_onnx=True,  # LSTM currently only implemented in ONNX workflow
     fp16_mode=args.fp16,
-    int8_mode=args.int8
+    int8_mode=args.int8,
+    max_workspace_size=args.max_workspace_size,
+    log_level=trt.Logger.VERBOSE,
+    int8_calib_algorithm=trt.CalibrationAlgoType.MINMAX_CALIBRATION,
+    int8_calib_dataset=calib_dataset
 )
 recognizer_trt.ignore_inputs = [1]
 
