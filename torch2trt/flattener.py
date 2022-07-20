@@ -1,13 +1,18 @@
 import copy
+import torch
 
 
-def _make_schema_from_value(value, type, size=0):
-    if isinstance(value, type):
+def _default_condition(x):
+    return isinstance(x, torch.Tensor) and (x.dtype is torch.half or x.dtype is torch.float)
+
+
+def _make_schema_from_value(value, condition=_default_condition, size=0):
+    if condition(value):
         return size, size + 1
     elif isinstance(value, list) or isinstance(value, tuple):
         schema = []
         for child_value in value:
-            child_schema, size = _make_schema_from_value(child_value, type, size)
+            child_schema, size = _make_schema_from_value(child_value, condition, size)
             schema.append(child_schema)
         if isinstance(value, tuple):
             schema = tuple(schema)
@@ -16,7 +21,7 @@ def _make_schema_from_value(value, type, size=0):
         schema = {}
         for child_key in sorted(value.keys()):
             child_value = value[child_key]
-            child_schema, size = _make_schema_from_value(child_value, type, size)
+            child_schema, size = _make_schema_from_value(child_value, condition, size)
             schema[child_key] = child_schema
         return schema, size
     else:
@@ -30,12 +35,12 @@ class Flattener(object):
         self._size = size
 
     @staticmethod
-    def from_value(value, type):
-        return Flattener(*_make_schema_from_value(value, type))
+    def from_value(value, condition=_default_condition):
+        return Flattener(*_make_schema_from_value(value, condition))
     
     @staticmethod
     def from_dict(x):
-        return Flattener.from_schema(x['schema'], x['size'])
+        return Flattener(x['schema'], x['size'])
 
     def dict(self):
         return {'schema': self.schema, 'size': self.size}

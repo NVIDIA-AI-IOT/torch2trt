@@ -659,8 +659,8 @@ def torch2trt(module,
         inputs = dataset[0]
 
     outputs = module(*inputs)
-    input_flattener = Flattener.from_value(inputs, torch.Tensor)
-    output_flattener = Flattener.from_value(outputs, torch.Tensor)
+    input_flattener = Flattener.from_value(inputs)
+    output_flattener = Flattener.from_value(outputs)
 
     if default_device_type == trt.DeviceType.DLA:
         for key, value in dataset.infer_dynamic_axes():
@@ -669,21 +669,24 @@ def torch2trt(module,
 
     # infer default parameters from dataset
     if dynamic_axes == 'default':
-        dynamic_axes = dataset.infer_dynamic_axes()
+        dynamic_axes_flat = dataset.infer_dynamic_axes(flat=True)
+    else:
+        dynamic_axes_flat = input_flattener.flatten(dynamic_axes)
 
     if min_shapes == 'default':
-        min_shapes = [tuple(t) for t in dataset.min_shapes()]
+        min_shapes_flat = [tuple(t) for t in dataset.min_shapes(flat=True)]
+    else:
+        min_shapes_flat = input_flattener.flatten(min_shapes)
 
     if max_shapes == 'default':
-        max_shapes = [tuple(t) for t in dataset.max_shapes()]
+        max_shapes_flat = [tuple(t) for t in dataset.max_shapes(flat=True)]
+    else:
+        max_shapes_flat = input_flattener.flatten(max_shapes)
     
     if opt_shapes == 'default':
-        opt_shapes = [tuple(t) for t in dataset.median_shapes()]
-
-    dynamic_axes_flat = input_flattener.flatten(dynamic_axes)
-    min_shapes_flat = input_flattener.flatten(min_shapes)
-    max_shapes_flat = input_flattener.flatten(max_shapes)
-    opt_shapes_flat = input_flattener.flatten(opt_shapes)
+        opt_shapes_flat = [tuple(t) for t in dataset.median_shapes(flat=True)]
+    else:
+        opt_shapes_flat = input_flattener.flatten(opt_shapes)
 
     # copy inputs to avoid modifications to source data
 
@@ -697,7 +700,7 @@ def torch2trt(module,
         output_names = default_output_names(output_flattener.size)
 
     if use_onnx:
-
+        
         module_flat = Flatten(module, input_flattener, output_flattener)
         inputs_flat = input_flattener.flatten(inputs)
 

@@ -7,7 +7,7 @@ def test_flattener_from_value():
 
     x = (torch.ones(3), torch.ones(3))
 
-    flattener = Flattener.from_value(x, type=torch.Tensor)
+    flattener = Flattener.from_value(x)
 
     assert(isinstance(flattener.schema, tuple))
     assert(flattener.schema[0] == 0)
@@ -18,7 +18,7 @@ def test_flattener_tuple():
 
     x = (torch.ones(3), torch.ones(3))
 
-    flattener = Flattener.from_value(x, type=torch.Tensor)
+    flattener = Flattener.from_value(x)
 
     y = flattener.flatten(x)
 
@@ -37,7 +37,7 @@ def test_flattener_list():
     
     x = [torch.ones(3), torch.ones(3)]
 
-    flattener = Flattener.from_value(x, type=torch.Tensor)
+    flattener = Flattener.from_value(x)
 
     y = flattener.flatten(x)
 
@@ -56,7 +56,7 @@ def test_flattener_dict():
     
     x = {'a': torch.ones(3), 'b': torch.ones(3)}
 
-    flattener = Flattener.from_value(x, type=torch.Tensor)
+    flattener = Flattener.from_value(x)
 
     y = flattener.flatten(x)
 
@@ -74,7 +74,7 @@ def test_flattener_nested_tuple():
 
     x = (torch.ones(1), (torch.ones(2), torch.ones(3)))
 
-    flattener = Flattener.from_value(x, type=torch.Tensor)
+    flattener = Flattener.from_value(x)
 
     y = flattener.flatten(x)
 
@@ -93,7 +93,7 @@ def test_flattener_nested_list():
 
     x = [torch.ones(1), [torch.ones(2), torch.ones(3)]]
 
-    flattener = Flattener.from_value(x, type=torch.Tensor)
+    flattener = Flattener.from_value(x)
 
     y = flattener.flatten(x)
 
@@ -115,7 +115,7 @@ def test_flattener_nested_dict():
     
     x = {'a': torch.ones(1), 'b': {'a': torch.ones(2), 'b': torch.ones(3)}}
 
-    flattener = Flattener.from_value(x, type=torch.Tensor)
+    flattener = Flattener.from_value(x)
 
     y = flattener.flatten(x)
 
@@ -137,7 +137,7 @@ def test_flattener_heterogeneous():
         'b': [torch.ones(3), torch.ones(4), (torch.ones(5), {'a': torch.ones(6)})]
     }
 
-    flattener = Flattener.from_value(x, type=torch.Tensor)
+    flattener = Flattener.from_value(x)
 
     y = flattener.flatten(x)
 
