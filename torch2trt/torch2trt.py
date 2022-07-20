@@ -486,19 +486,13 @@ class ConversionContext(object):
             handle.remove()
 
 
-    def add_inputs(self, torch_inputs, names=None, dynamic_axes=None, ignore_inputs=None):
-
-        if ignore_inputs is None:
-            ignore_inputs = []
+    def add_inputs(self, torch_inputs, names=None, dynamic_axes=None):
 
         if names is None:
             names = default_input_names(len(torch_inputs))
         self.input_names = names
 
         for i, torch_input in enumerate(torch_inputs):
-
-            if i in ignore_inputs:
-                continue
 
             if not hasattr(torch_input, "_trt"):
                 
@@ -669,11 +663,6 @@ def torch2trt(module,
     input_flattener = Flattener.from_value(inputs)
     output_flattener = Flattener.from_value(outputs)
 
-    if default_device_type == trt.DeviceType.DLA:
-        for key, value in dataset.infer_dynamic_axes():
-            if len(value) > 0:
-                raise ValueError('Dataset cannot have multiple shapes when using DLA')
-
     # infer default parameters from dataset
 
     if min_shapes == None:
@@ -698,7 +687,10 @@ def torch2trt(module,
 
     dynamic_axes_flat = infer_dynamic_axes(min_shapes_flat, max_shapes_flat)
     
-    # copy inputs to avoid modifications to source data
+    if default_device_type == trt.DeviceType.DLA:
+        for value in dynamic_axes_flat:
+            if len(value) > 0:
+                raise ValueError('Dataset cannot have multiple shapes when using DLA')
 
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
@@ -745,7 +737,6 @@ def torch2trt(module,
 
             outputs_flat = output_flattener.flatten(outputs)
             ctx.mark_outputs(outputs_flat, output_names)
-
 
     # set max workspace size
     config.max_workspace_size = max_workspace_size
