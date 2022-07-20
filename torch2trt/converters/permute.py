@@ -31,26 +31,32 @@ class Permute(torch.nn.Module):
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 5)], max_batch_size=2)
 def test_permute_2d_0123():
     return Permute(0, 1, 2, 3)
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 5)], max_batch_size=2)
 def test_permute_2d_0312():
     return Permute(0, 3, 1, 2)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5, 6)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 5, 6)], max_batch_size=2)
 def test_permute_3d_01234():
     return Permute(0, 1, 2, 3, 4)
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5, 6)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 5, 6)], max_batch_size=2)
 def test_permute_3d_04132():
     return Permute(0, 4, 1, 3, 2)
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5, 6)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 5, 6)], max_batch_size=2)
 def test_permute_list():
     return Permute([0, 4, 1, 3, 2])
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5, 6)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 5, 6)], max_batch_size=2)
 def test_permute_tuple():
     return Permute((0, 4, 1, 3, 2))
