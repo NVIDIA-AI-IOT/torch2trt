@@ -24,7 +24,7 @@ class DatasetCalibrator(trt.IInt8Calibrator):
         self.count = 0
         self.cache_file = cache_file
         if flattener is None:
-            flattener = Flattener.from_value(dataset[0], torch.Tensor)
+            flattener = Flattener.from_value(dataset[0])
         self.flattener = flattener
 
     def get_batch(self, *args, **kwargs):

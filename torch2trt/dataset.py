@@ -60,7 +60,7 @@ class Dataset(object):
         if not hasattr(self, '_flattener') or self._flattener is None:
             assert(len(self) > 0, 'Cannot create default flattener without input data.')
             value = self[0]
-            self._flattener = Flattener.from_value(value, torch.Tensor)
+            self._flattener = Flattener.from_value(value)
         return self._flattener
 
     def getitem_flat(self, index):
@@ -140,7 +140,7 @@ class TensorBatchDataset(Dataset):
 
     def __init__(self, tensors=None):
         if tensors is not None:
-            self._flattener = Flattener.from_value(tensors, torch.Tensor)
+            self._flattener = Flattener.from_value(tensors)
             self.tensors = self._flattener.flatten(tensors)
         else:
             self._flattener = None
@@ -159,7 +159,7 @@ class TensorBatchDataset(Dataset):
 
     def insert(self, tensors):
         if self._flattener is None:
-            self._flattener = Flattener.from_value(tensors, torch.Tensor)
+            self._flattener = Flattener.from_value(tensors)
 
         tensors = self.flattener.flatten(tensors)
 

@@ -36,7 +36,7 @@ if args.int8:
 reader = Reader(['en'])
 module_torch = reader.detector.module
 
-max_shapes = recognizer_dataset.max_shapes()
+max_shapes = list(recognizer_dataset.max_shapes())
 
 # override default max shape to use full image width
 max_shapes[0] = torch.Size((
@@ -45,6 +45,7 @@ max_shapes[0] = torch.Size((
     recognizer_dataset.max_shapes()[0][2],
     detector_dataset.max_shapes()[0][3]
 ))
+max_shapes = tuple(max_shapes)
 
 class PoolFix(torch.nn.Module):
     def forward(self, x):
@@ -53,7 +54,6 @@ class PoolFix(torch.nn.Module):
 if isinstance(reader.recognizer.module.AdaptiveAvgPool, torch.nn.AdaptiveAvgPool2d):
     reader.recognizer.module.AdaptiveAvgPool = PoolFix()
 
-
 recognizer_torch = reader.recognizer.module
 
 print('Running torch2trt...')
@@ -61,16 +61,14 @@ recognizer_trt = torch2trt(
     reader.recognizer.module, 
     recognizer_dataset, 
     max_shapes=max_shapes, 
-    ignore_inputs=[1], 
     use_onnx=True,  # LSTM currently only implemented in ONNX workflow
     fp16_mode=args.fp16,
     int8_mode=args.int8,
     max_workspace_size=args.max_workspace_size,
-    log_level=trt.Logger.VERBOSE,
-    int8_calib_algorithm=trt.CalibrationAlgoType.MINMAX_CALIBRATION,
-    int8_calib_dataset=calib_dataset
+    log_level=trt.Logger.VERBOSE
 )
-recognizer_trt.ignore_inputs = [1]
+
+# recognizer_trt.ignore_inputs = [1]
 
 torch.save(recognizer_trt.state_dict(), args.output)
 

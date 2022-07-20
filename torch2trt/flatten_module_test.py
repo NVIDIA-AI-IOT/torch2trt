@@ -26,3 +26,4 @@ def test_flatten_nested_tuple_args():
     out_trt = module_trt(*data)
 
     assert(torch.allclose(out, out_trt, atol=1e-3, rtol=1e-3))
+
