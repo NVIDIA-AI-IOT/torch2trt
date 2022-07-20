@@ -2,6 +2,7 @@ import os
 import torch
 import glob
 from uuid import uuid1
+from torch2trt.flattener import Flattener
 
 
 __all__ = [
@@ -39,6 +40,9 @@ class DatasetRecorder(object):
 
 class Dataset(object):
 
+    def __init__(self):
+        self.flattener = None
+        
     def __len__(self):
         raise NotImplementedError
 
@@ -52,19 +56,34 @@ class Dataset(object):
         return DatasetRecorder(self, module)
 
     def num_inputs(self):
-        return len(self[0])
+        return len(self.getitem_flat(0))
 
-    def shapes(self):
+    @property
+    def flattener(self):
+        if not hasattr(self, '_flattener'):
+            assert(len(self) > 0, 'Cannot create default flattener without input data.')
+            value = self[0]
+            self._flattener = Flattener.from_value(value, torch.Tensor)
+        return self._flattener
+
+    def getitem_flat(self, index):
+        return self.flattener.flatten(self[index])
+        
+    def shapes(self, flat=False):
         shapes = [[] for i in range(self.num_inputs())]
         for i in range(len(self)):
-            tensors = self[i]
+            tensors = self.getitem_flat(i)
             for j in range(len(tensors)):
                 shapes[j].append(torch.Size(tuple(tensors[j].shape)))
-        return shapes
 
-    def _shape_stats(self, stat_fn):
+        if flat:
+            return shapes
+        else:
+            return self.flattener.unflatten(shapes)
+
+    def _shape_stats(self, stat_fn, flat=False):
         shapes = []
-        for s in self.shapes():
+        for s in self.shapes(flat=True):
             shape_tensor = []
             for si in s:
                 shape_tensor.append(tuple(si))
@@ -75,26 +94,32 @@ class Dataset(object):
         for shape in shapes:
             stat_shape = torch.Size(stat_fn(shape))
             stat_shapes.append(stat_shape)
-        return stat_shapes
+        if flat:
+            return stat_shapes
+        else:
+            return self.flattener.unflatten(stat_shapes)
 
-    def min_shapes(self):
-        return self._shape_stats(lambda x: torch.min(x, dim=0)[0])
+    def min_shapes(self, flat=False):
+        return self._shape_stats(lambda x: torch.min(x, dim=0)[0], flat)
 
-    def max_shapes(self):
-        return self._shape_stats(lambda x: torch.max(x, dim=0)[0])
+    def max_shapes(self, flat=False):
+        return self._shape_stats(lambda x: torch.max(x, dim=0)[0], flat)
 
-    def median_shapes(self):
-        return self._shape_stats(lambda x: torch.median(x, dim=0)[0])
+    def median_shapes(self, flat=False):
+        return self._shape_stats(lambda x: torch.median(x, dim=0)[0], flat)
 
-    def infer_dynamic_axes(self):
-        min_shapes = self.min_shapes()
-        max_shapes = self.max_shapes()
+    def infer_dynamic_axes(self, flat=False):
+        min_shapes = self.min_shapes(flat=True)
+        max_shapes = self.max_shapes(flat=True)
         dynamic_axes = [[] for i in range(self.num_inputs())]
         for i, (mins, maxs) in enumerate(zip(min_shapes, max_shapes)):
             for j, (mins_i, maxs_i) in enumerate(zip(mins, maxs)):
                 if mins_i != maxs_i:
                     dynamic_axes[i].append(j)
-        return dynamic_axes
+        if flat:
+            return dynamic_axes
+        else:
+            return self.flattener.unflatten(dynamic_axes)
 
 
 class ListDataset(Dataset):
@@ -117,7 +142,11 @@ class ListDataset(Dataset):
 class TensorBatchDataset(Dataset):
 
     def __init__(self, tensors=None):
+        if tensors is not None:
+            flattener = Flattener.from_value(tensors, torch.Tensor)
+            tensors = flattener.flatten(tensors)
         self.tensors = tensors
+        self._flattener = flattener
 
     def __len__(self):
         if self.tensors is None:
@@ -128,15 +157,20 @@ class TensorBatchDataset(Dataset):
     def __getitem__(self, idx):
         if self.tensors is None:
             raise IndexError('Dataset is empty.')
-        return [t[idx:idx+1] for t in self.tensors]
+        return self.flattener.unflatten([t[idx:idx+1] for t in self.tensors])
 
     def insert(self, tensors):
+        if self._flattener is None:
+            self._flattener = Flattener.from_value(tensors, torch.Tensor)
+
+        tensors = self.flattener.flatten(tensors)
+
         if self.tensors is None:
             self.tensors = tensors
         else:
             if len(self.tensors) != len(tensors):
                 raise ValueError('Number of inserted tensors does not match the number of tensors in the current dataset.')
-
+            
             self.tensors = tuple([
                 torch.cat((self.tensors[index], tensors[index]), dim=0) 
                 for index in range(len(tensors))
