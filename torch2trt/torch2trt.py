@@ -16,6 +16,9 @@ from .dataset import (
     TensorBatchDataset
 )
 
+from .flattener import Flattener
+from .flatten_module import Flatten, Unflatten
+
 # UTILITY FUNCTIONS
 
 
@@ -529,7 +532,7 @@ class ConversionContext(object):
 
 
 class TRTModule(torch.nn.Module):
-    def __init__(self, engine=None, input_names=None, output_names=None, ignore_inputs=None):
+    def __init__(self, engine=None, input_names=None, output_names=None, input_flattener=None, output_flattener=None):
         super(TRTModule, self).__init__()
         self._register_state_dict_hook(TRTModule._on_state_dict)
         self.engine = engine
@@ -537,15 +540,15 @@ class TRTModule(torch.nn.Module):
             self.context = self.engine.create_execution_context()
         self.input_names = input_names
         self.output_names = output_names
-        if ignore_inputs is None:
-            ignore_inputs = []
-        self.ignore_inputs = ignore_inputs
+        self.input_flattener = input_flattener
+        self.output_flattener = output_flattener
     
     def _on_state_dict(self, state_dict, prefix, local_metadata):
         state_dict[prefix + "engine"] = bytearray(self.engine.serialize())
         state_dict[prefix + "input_names"] = self.input_names
         state_dict[prefix + "output_names"] = self.output_names
-        state_dict[prefix + "ignore_inputs"] = self.ignore_inputs
+        state_dict[prefix + "input_flattener"] = self.input_flattener.dict()
+        state_dict[prefix + "output_flattener"] = self.output_flattener.dict()
 
     def _load_from_state_dict(
         self,
@@ -565,14 +568,24 @@ class TRTModule(torch.nn.Module):
 
         self.input_names = state_dict[prefix + "input_names"]
         self.output_names = state_dict[prefix + "output_names"]
-        self.ignore_inputs = state_dict.get(prefix + "ignore_inputs", [])
+
+        if 'input_flattener' in state_dict:
+            self.input_flattener = Flattener.from_dict(state_dict['input_flattener'])
+        else:
+            self.input_flattener = None
+
+        if 'output_flattener' in state_dict:
+            self.output_flattener = Flattener.from_dict(state_dict['output_flattener'])
+        else:
+            self.output_flattener = None
 
     def forward(self, *inputs):
-        bindings = [None] * (len(self.input_names) - len(self.ignore_inputs) + len(self.output_names))
+        bindings = [None] * (len(self.input_names) + len(self.output_names))
+        
+        if self.input_flattener is not None:
+            inputs = self.input_flattener.flatten(inputs)
 
         for i, input_name in enumerate(self.input_names):
-            if self.ignore_inputs is not None and i in self.ignore_inputs:
-                continue
             idx = self.engine.get_binding_index(input_name)
             shape = tuple(inputs[i].shape)
             bindings[idx] = inputs[i].contiguous().data_ptr()
@@ -593,9 +606,12 @@ class TRTModule(torch.nn.Module):
             bindings, torch.cuda.current_stream().cuda_stream
         )
 
-        outputs = tuple(outputs)
-        if len(outputs) == 1:
-            outputs = outputs[0]
+        if self.output_flattener is not None:
+            outputs = self.output_flattener.unflatten(outputs)
+        else:
+            outputs = tuple(outputs)
+            if len(outputs) == 1:
+                outputs = outputs[0]
 
         return outputs
 
@@ -626,15 +642,11 @@ def torch2trt(module,
               max_shapes='default',
               opt_shapes='default',
               onnx_opset=None,
-              ignore_inputs=None,
               **kwargs):
 
     # capture arguments to provide to context
     kwargs.update(locals())
     kwargs.pop('kwargs')
-
-    if ignore_inputs is None:
-        ignore_inputs = []
         
     # handle inputs as dataset of list of tensors
     if issubclass(inputs.__class__, Dataset):
@@ -642,11 +654,13 @@ def torch2trt(module,
         if len(dataset) == 0:
             raise ValueError('Dataset must have at least one element to use for inference.')
         inputs = dataset[0]
-        inputs_in = inputs
     else:
         dataset = TensorBatchDataset(inputs)
-        inputs_in = inputs
-        inputs = [tensor.clone()[0:1] for tensor in inputs]  
+        inputs = dataset[0]
+
+    outputs = module(*inputs)
+    input_flattener = Flattener.from_value(inputs, torch.Tensor)
+    output_flattener = Flattener.from_value(outputs, torch.Tensor)
 
     if default_device_type == trt.DeviceType.DLA:
         for key, value in dataset.infer_dynamic_axes():
@@ -666,38 +680,36 @@ def torch2trt(module,
     if opt_shapes == 'default':
         opt_shapes = [tuple(t) for t in dataset.median_shapes()]
 
+    dynamic_axes_flat = input_flattener.flatten(dynamic_axes)
+    min_shapes_flat = input_flattener.flatten(min_shapes)
+    max_shapes_flat = input_flattener.flatten(max_shapes)
+    opt_shapes_flat = input_flattener.flatten(opt_shapes)
+
     # copy inputs to avoid modifications to source data
 
     logger = trt.Logger(log_level)
     builder = trt.Builder(logger)
     config = builder.create_builder_config()
 
-    if isinstance(inputs, list):
-        inputs = tuple(inputs)
-    if not isinstance(inputs, tuple):
-        inputs = (inputs,)
-
-    # run once to get num outputs
-    outputs = module(*inputs)
-    if not isinstance(outputs, tuple) and not isinstance(outputs, list):
-        outputs = (outputs,)
-
     if input_names is None:
-        input_names = default_input_names(len(inputs))
+        input_names = default_input_names(input_flattener.size)
     if output_names is None:
-        output_names = default_output_names(len(outputs))
+        output_names = default_output_names(output_flattener.size)
 
     if use_onnx:
 
+        module_flat = Flatten(module, input_flattener, output_flattener)
+        inputs_flat = input_flattener.flatten(inputs)
+
         f = io.BytesIO()
         torch.onnx.export(
-            module, 
-            inputs, 
+            module_flat, 
+            inputs_flat, 
             f, 
             input_names=input_names, 
             output_names=output_names,
             dynamic_axes={
-                name: {int(axis): 'axis_%d' % axis for axis in dynamic_axes[index]}
+                name: {int(axis): 'axis_%d' % axis for axis in dynamic_axes_flat[index]}
                 for index, name in enumerate(input_names)
             },
             opset_version=onnx_opset
@@ -711,14 +723,15 @@ def torch2trt(module,
     else:
         network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
         with ConversionContext(network, torch2trt_kwargs=kwargs, builder_config=config, logger=logger) as ctx:
+            
+            inputs_flat = input_flattener.flatten(inputs)
 
-            ctx.add_inputs(inputs, input_names, dynamic_axes=dynamic_axes, ignore_inputs=ignore_inputs)
+            ctx.add_inputs(inputs_flat, input_names, dynamic_axes=dynamic_axes_flat)
 
             outputs = module(*inputs)
 
-            if not isinstance(outputs, tuple) and not isinstance(outputs, list):
-                outputs = (outputs,)
-            ctx.mark_outputs(outputs, output_names)
+            outputs_flat = output_flattener.flatten(outputs)
+            ctx.mark_outputs(outputs_flat, output_names)
 
 
     # set max workspace size
@@ -755,9 +768,9 @@ def torch2trt(module,
     for index, name in enumerate(input_names):
         profile.set_shape(
             name,
-            min_shapes[index],
-            opt_shapes[index],
-            max_shapes[index]
+            min_shapes_flat[index],
+            opt_shapes_flat[index],
+            max_shapes_flat[index]
         )
     config.add_optimization_profile(profile)
 
@@ -768,7 +781,7 @@ def torch2trt(module,
 
     engine = builder.build_engine(network, config)
 
-    module_trt = TRTModule(engine, input_names, output_names, ignore_inputs=ignore_inputs)
+    module_trt = TRTModule(engine, input_names, output_names, input_flattener=input_flattener, output_flattener=output_flattener)
 
     if keep_network:
         module_trt.network = network

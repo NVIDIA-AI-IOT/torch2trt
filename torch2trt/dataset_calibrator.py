@@ -1,7 +1,7 @@
 import torch
 import tensorrt as trt
 import os
-
+from .flattener import Flattener
 
 __all__ = [
     'DEFAULT_CALIBRATION_ALGORITHM',
@@ -17,16 +17,20 @@ else:
 
 class DatasetCalibrator(trt.IInt8Calibrator):
 
-    def __init__(self, dataset, algorithm=DEFAULT_CALIBRATION_ALGORITHM, cache_file=None):
+    def __init__(self, dataset, algorithm=DEFAULT_CALIBRATION_ALGORITHM, cache_file=None, flattener=None):
         super(DatasetCalibrator, self).__init__()
         self.dataset = dataset
         self.algorithm = algorithm
         self.count = 0
         self.cache_file = cache_file
+        if flattener is None:
+            flattener = Flattener.from_value(dataset[0], torch.Tensor)
+        self.flattener = flattener
 
     def get_batch(self, *args, **kwargs):
         if self.count < len(self.dataset):
-            bindings = [int(t.data_ptr()) for t in self.dataset[self.count]]
+            tensors = self.flattener.flatten(self.dataset[self.count])
+            bindings = [int(t.data_ptr()) for t in tensors]
             self.count += 1
             return bindings
         else:

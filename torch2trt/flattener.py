@@ -14,7 +14,8 @@ def _make_schema_from_value(value, type, size=0):
         return schema, size
     elif isinstance(value, dict):
         schema = {}
-        for child_key, child_value in value.items():
+        for child_key in sorted(value.keys()):
+            child_value = value[child_key]
             child_schema, size = _make_schema_from_value(child_value, type, size)
             schema[child_key] = child_schema
         return schema, size
@@ -57,7 +58,7 @@ class Flattener(object):
             for child_value, child_schema in zip(value, self._schema):
                 Flattener(child_schema, self.size)._flatten(child_value, result)
         elif isinstance(self._schema, dict):
-            for key in self._schema.keys():
+            for key in sorted(self._schema.keys()):
                 child_value = value[key]
                 child_schema = self._schema[key]
                 Flattener(child_schema, self.size)._flatten(child_value, result)
@@ -79,7 +80,8 @@ class Flattener(object):
             return result
         elif isinstance(self._schema, dict):
             result = {}
-            for child_key, child_schema in self._schema.items():
+            for child_key in sorted(self._schema.keys()):
+                child_schema = self._schema[child_key]
                 result[child_key] = Flattener(child_schema, self.size).unflatten(flattened)
             return result
         else:
