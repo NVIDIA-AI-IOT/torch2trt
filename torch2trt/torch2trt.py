@@ -619,6 +619,13 @@ class TRTModule(torch.nn.Module):
         if not self.context.profiler:
             self.context.profiler = trt.Profiler()
 
+def infer_dynamic_axes(min_shapes_flat, max_shapes_flat):
+    dynamic_axes = [[] for i in range(len(min_shapes_flat))]
+    for i, (mins, maxs) in enumerate(zip(min_shapes_flat, max_shapes_flat)):
+        for j, (mins_i, maxs_i) in enumerate(zip(mins, maxs)):
+            if mins_i != maxs_i:
+                dynamic_axes[i].append(j)
+    return dynamic_axes
 
 def torch2trt(module,
               inputs,
@@ -637,11 +644,11 @@ def torch2trt(module,
               dla_core=0,
               gpu_fallback=True,
               device_types={},
-              dynamic_axes='default',
-              min_shapes='default',
-              max_shapes='default',
-              opt_shapes='default',
+              min_shapes=None,
+              max_shapes=None,
+              opt_shapes=None,
               onnx_opset=None,
+              max_batch_size=None,
               **kwargs):
 
     # capture arguments to provide to context
@@ -668,26 +675,29 @@ def torch2trt(module,
                 raise ValueError('Dataset cannot have multiple shapes when using DLA')
 
     # infer default parameters from dataset
-    if dynamic_axes == 'default':
-        dynamic_axes_flat = dataset.infer_dynamic_axes(flat=True)
-    else:
-        dynamic_axes_flat = input_flattener.flatten(dynamic_axes)
 
-    if min_shapes == 'default':
+    if min_shapes == None:
         min_shapes_flat = [tuple(t) for t in dataset.min_shapes(flat=True)]
     else:
         min_shapes_flat = input_flattener.flatten(min_shapes)
 
-    if max_shapes == 'default':
+    if max_shapes == None:
         max_shapes_flat = [tuple(t) for t in dataset.max_shapes(flat=True)]
     else:
         max_shapes_flat = input_flattener.flatten(max_shapes)
     
-    if opt_shapes == 'default':
+    if opt_shapes == None:
         opt_shapes_flat = [tuple(t) for t in dataset.median_shapes(flat=True)]
     else:
         opt_shapes_flat = input_flattener.flatten(opt_shapes)
 
+    # handle legacy max_batch_size
+    if max_batch_size is not None:
+        min_shapes_flat = [(1,) + s[1:] for s in min_shapes_flat]
+        max_shapes_flat = [(max_batch_size,) + s[1:] for s in max_shapes_flat]
+
+    dynamic_axes_flat = infer_dynamic_axes(min_shapes_flat, max_shapes_flat)
+    
     # copy inputs to avoid modifications to source data
 
     logger = trt.Logger(log_level)
