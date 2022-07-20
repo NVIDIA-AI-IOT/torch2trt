@@ -40,9 +40,6 @@ class DatasetRecorder(object):
 
 class Dataset(object):
 
-    def __init__(self):
-        self.flattener = None
-        
     def __len__(self):
         raise NotImplementedError
 
@@ -60,7 +57,7 @@ class Dataset(object):
 
     @property
     def flattener(self):
-        if not hasattr(self, '_flattener'):
+        if not hasattr(self, '_flattener') or self._flattener is None:
             assert(len(self) > 0, 'Cannot create default flattener without input data.')
             value = self[0]
             self._flattener = Flattener.from_value(value, torch.Tensor)
@@ -143,10 +140,11 @@ class TensorBatchDataset(Dataset):
 
     def __init__(self, tensors=None):
         if tensors is not None:
-            flattener = Flattener.from_value(tensors, torch.Tensor)
-            tensors = flattener.flatten(tensors)
-        self.tensors = tensors
-        self._flattener = flattener
+            self._flattener = Flattener.from_value(tensors, torch.Tensor)
+            self.tensors = self._flattener.flatten(tensors)
+        else:
+            self._flattener = None
+            self.tensors = None
 
     def __len__(self):
         if self.tensors is None:
