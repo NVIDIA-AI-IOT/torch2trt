@@ -65,7 +65,18 @@ class Dataset(object):
 
     def getitem_flat(self, index):
         return self.flattener.flatten(self[index])
-        
+    
+    def shapes_for_index(self, index, flat=False):
+        shapes = [None for i in range(self.num_inputs())]
+        tensors = self.getitem_flat(index)
+        for j in range(len(tensors)):
+            shapes[j] = torch.Size(tuple(tensors[j].shape))
+
+        if flat:
+            return shapes
+        else:
+            return self.flattener.unflatten(shapes)
+
     def shapes(self, flat=False):
         shapes = [[] for i in range(self.num_inputs())]
         for i in range(len(self)):
@@ -102,8 +113,14 @@ class Dataset(object):
     def max_shapes(self, flat=False):
         return self._shape_stats(lambda x: torch.max(x, dim=0)[0], flat)
 
-    def median_shapes(self, flat=False):
-        return self._shape_stats(lambda x: torch.median(x, dim=0)[0], flat)
+    def item_numel(self, index):
+        tensors = self.getitem_flat(index)
+        return sum([t.numel() for t in tensors])
+
+    def median_numel_shapes(self, flat=False):
+        numels = torch.LongTensor([self.item_numel(i) for i in range(len(self))])
+        median_index = int(torch.argsort(numels)[len(numels) // 2])
+        return self.shapes_for_index(median_index, flat=flat)
 
     def infer_dynamic_axes(self, flat=False):
         min_shapes = self.min_shapes(flat=True)

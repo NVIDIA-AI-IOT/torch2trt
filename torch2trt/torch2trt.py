@@ -676,7 +676,7 @@ def torch2trt(module,
         max_shapes_flat = input_flattener.flatten(max_shapes)
     
     if opt_shapes == None:
-        opt_shapes_flat = [tuple(t) for t in dataset.median_shapes(flat=True)]
+        opt_shapes_flat = [tuple(t) for t in dataset.median_numel_shapes(flat=True)]
     else:
         opt_shapes_flat = input_flattener.flatten(opt_shapes)
 
