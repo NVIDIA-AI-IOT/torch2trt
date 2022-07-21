@@ -27,8 +27,8 @@ def test_dataset_shapes():
     assert(dataset.min_shapes()[1] == (1, 4))
     assert(dataset.max_shapes()[0] == (1, 3, 64, 64))
     assert(dataset.max_shapes()[1] == (1, 8))
-    assert(dataset.median_shapes()[0] == (1, 3, 48, 48))
-    assert(dataset.median_shapes()[1] == (1, 6))
+    assert(dataset.median_numel_shapes()[0] == (1, 3, 48, 48))
+    assert(dataset.median_numel_shapes()[1] == (1, 6))
 
 
 def test_dataset_infer_dynamic_axes():
