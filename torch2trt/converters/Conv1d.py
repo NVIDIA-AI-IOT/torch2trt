@@ -22,7 +22,7 @@ def convert_Conv1d(ctx):
         
     # reshape to 2D
     layer = ctx.network.add_shuffle(input_trt)
-    layer.reshape_dims = (input.shape[0], -1, input.shape[-1], 1)
+    layer.reshape_dims = (0, -1, 0, 1)
     
     layer = ctx.network.add_convolution(
         input=layer.get_output(0),
@@ -39,7 +39,7 @@ def convert_Conv1d(ctx):
         
     # reshape back to 1D
     layer = ctx.network.add_shuffle(layer.get_output(0))
-    layer.reshape_dims = (input.shape[0], -1, output.shape[-1])
+    layer.reshape_dims = (0, -1, 0)
 
     output._trt = layer.get_output(0)
 

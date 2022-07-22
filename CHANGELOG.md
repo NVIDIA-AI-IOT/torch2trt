@@ -2,6 +2,15 @@
 
 ## [master](https://github.com/NVIDIA-AI-IOT/torch2trt/tree/master)
 
+- Added EasyOCR example
+- Added the ``DatasetRecorder`` context manager, allowing to easily capture of module inputs in large pipeline for calibration and shape inference
+- Added support for legacy max_batch_size using optimization profiles
+- Added support for nested tuple, dict and list module inputs and outputs via. the ``Flattener`` class
+- Added ability to accept dataset as ``inputs`` argument, and infer optimization profiles from the data
+- Added Dataset, TensorBatchDataset, ListDataset, and FolderDatset classes
+- Added support for dynamic shapes
+  - Known limitation: Currently some converters (ie: View) may have unexpected behavior if their arguments are defined with dynamic Tensor shapes.
+
 ## [0.4.0](https://github.com/NVIDIA-AI-IOT/torch2trt/tree/v0.4.0) - 07/22/2022
 
 - Added converter for ``torch.nn.functional.group_norm`` using native TensorRT layers
