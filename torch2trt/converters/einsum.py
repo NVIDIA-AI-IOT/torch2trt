@@ -7,7 +7,13 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.einsum')
 def convert_einsum(ctx):
     einsum_eq = ctx.method_args[0]
-    input_tensors = ctx.method_args[1:]
+
+    # handle the two different cases: torch.einsum(eq, x, y) and torch.einsum(eq, [x, y])
+    if isinstance(ctx.method_args[1], list):
+        input_tensors = ctx.method_args[1]
+    else:
+        input_tensors = ctx.method_args[1:]
+
     output = ctx.method_return
     
     # parts = einsum_eq.split('->')
