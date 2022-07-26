@@ -2,6 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
+@tensorrt_converter('torch.Tensor.add_')
 @tensorrt_converter('torch.add')
 @tensorrt_converter('torch.Tensor.__iadd__')
 @tensorrt_converter('torch.Tensor.__add__')
