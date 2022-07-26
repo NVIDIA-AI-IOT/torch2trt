@@ -794,8 +794,7 @@ def torch2trt(module,
         config.set_calibration_profile(profile)
 
     # BUILD ENGINE
-    torch.cuda.empty_cache()
-    
+
     engine = builder.build_engine(network, config)
 
     module_trt = TRTModule(engine, input_names, output_names, input_flattener=input_flattener, output_flattener=output_flattener)
