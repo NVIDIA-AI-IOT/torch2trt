@@ -42,21 +42,6 @@ class Squeeze(torch.nn.Module):
         return x.squeeze(dim=self.dim)
 
 
-# class UnSqueeze(torch.nn.Module):
-#     def __init__(self, dim):
-#         super(UnSqueeze, self).__init__()
-#         self.dim = dim
-
-#     def forward(self, x):
-#         return x.unsqueeze(dim=self.dim)        
-
-
-
-# @add_module_test(torch.float32, torch.device('cuda'), [(1, 7)])
-# @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 5, 3)])
-# def test_unsqueeze():
-#     return UnSqueeze(2)
-
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 1)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 1, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 1, 3)], max_batch_size=2)
