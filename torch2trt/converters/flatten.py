@@ -1,4 +1,5 @@
 import tensorrt as trt
+import numpy as np
 from torch2trt.torch2trt import tensorrt_converter, get_arg, torch_dim_resolve_negative, add_missing_trt_tensors, torch_dim_to_trt_axes
 from torch2trt.module_test import add_module_test
 
@@ -25,15 +26,10 @@ def convert_flatten(ctx):
         new_shape_trt.append(dim_trt)
 
     # get flatten reduce dimensions
-    input_shape_reduce_slice_trt = ctx.network.add_slice(
-        input_shape_trt, 
-        (start_dim,),
-        (1 + end_dim - start_dim,), 
-        (1,)
-    ).get_output(0)
-
-    reduce_size_trt = ctx.network.add_reduce(input_shape_reduce_slice_trt, trt.ReduceOperation.PROD, 1, True).get_output(0)
-    new_shape_trt.append(reduce_size_trt)
+    if start_dim != end_dim:
+        new_shape_trt.append(
+            ctx.network.add_constant([1], np.array([-1], dtype=np.int32)).get_output(0)
+        )
 
     # get shape after flatten
     for i in range(end_dim + 1, input.ndim):
