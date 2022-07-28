@@ -311,6 +311,9 @@ def attach_converter(ctx, method, converter, method_str):
             ctx.method_kwargs = None
             ctx.method_return = None
             ctx.lock = False
+            
+            # allow overwriting output, for things like shape converter
+            outputs = ctx.method_return
 
         return outputs
 
