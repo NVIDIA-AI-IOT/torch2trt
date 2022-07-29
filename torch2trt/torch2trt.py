@@ -18,7 +18,6 @@ from .dataset import (
 
 from .flattener import Flattener
 from .flatten_module import Flatten, Unflatten
-
 # UTILITY FUNCTIONS
 
 
@@ -492,8 +491,8 @@ class ConversionContext(object):
         return self
 
     def __exit__(self, type, val, tb):
-
         global _ACTIVE_CONVERSION_CONTEXT
+        
 
         for hook in self.hooks:
             hook.__exit__(type, val, tb)
@@ -501,6 +500,8 @@ class ConversionContext(object):
             handle.remove()
 
         _ACTIVE_CONVERSION_CONTEXT = None
+
+
 
 
     def add_inputs(self, torch_inputs, names=None, dynamic_axes=None):
@@ -887,3 +888,122 @@ def set_layer_precision(ctx, layer):
 
         
 
+# from torch2trt.torch2trt import (
+#     torch2trt, 
+#     trt,
+#     tensorrt_converter,
+#     get_conversion_context,
+#     get_arg
+# )
+
+
+# SHAPE WRAPPING
+_int = int
+_tuple = tuple
+_int_mul = int.__mul__
+_int_add = int.__add__
+_int_sub = int.__sub__
+_int_floordiv = int.__floordiv__
+
+class IntWrapper(int):
+    
+    @property
+    def _trt(self):
+        if not hasattr(self, '_raw_trt'):
+            ctx = get_conversion_context()
+            self._raw_trt = ctx.network._network.add_constant([1], np.array([_int(self)], dtype=np.int32)).get_output(0)
+        return self._raw_trt
+
+    # lhs ops
+    def __mul__(self, x):
+        if not isinstance(x, IntWrapper):
+            x = IntWrapper(x)
+        ctx = get_conversion_context()
+        result = IntWrapper(_int_mul(self, x))
+        result._raw_trt = ctx.network._network.add_elementwise(self._trt, x._trt, trt.ElementWiseOperation.PROD).get_output(0)
+        return result
+
+    def __add__(self, x):
+        if not isinstance(x, IntWrapper):
+            x = IntWrapper(x)
+        ctx = get_conversion_context()
+        result = IntWrapper(_int_add(self, x))
+        result._raw_trt = ctx.network._network.add_elementwise(self._trt, x._trt, trt.ElementWiseOperation.SUM).get_output(0)
+        return result
+
+    def __sub__(self, x):
+        if not isinstance(x, IntWrapper):
+            x = IntWrapper(x)
+        ctx = get_conversion_context()
+        result = IntWrapper(_int_sub(self, x))
+        result._raw_trt = ctx.network._network.add_elementwise(self._trt, x._trt, trt.ElementWiseOperation.SUB).get_output(0)
+        return result
+
+    def __floordiv__(self, x):
+        if not isinstance(x, IntWrapper):
+            x = IntWrapper(x)
+        ctx = get_conversion_context()
+        result = IntWrapper(_int_floordiv(self, x))
+        result._raw_trt = ctx.network._network.add_elementwise(self._trt, x._trt, trt.ElementWiseOperation.FLOOR_DIV).get_output(0)
+        return result
+
+    # rhs ops
+    def __rmul__(self, x):
+        if not isinstance(x, IntWrapper):
+            x = IntWrapper(x)
+        ctx = get_conversion_context()
+        result = IntWrapper(_int_mul(x, self))
+        result._raw_trt = ctx.network._network.add_elementwise(x._trt, self._trt, trt.ElementWiseOperation.PROD).get_output(0)
+        return result
+
+    def __radd__(self, x):
+        if not isinstance(x, IntWrapper):
+            x = IntWrapper(x)
+        ctx = get_conversion_context()
+        result = IntWrapper(_int_add(x, self))
+        result._raw_trt = ctx.network._network.add_elementwise(x._trt, self._trt, trt.ElementWiseOperation.SUM).get_output(0)
+        return result
+
+    def __rsub__(self, x):
+        if not isinstance(x, IntWrapper):
+            x = IntWrapper(x)
+        ctx = get_conversion_context()
+        result = IntWrapper(_int_sub(x, self))
+        result._raw_trt = ctx.network._network.add_elementwise(x._trt, self._trt, trt.ElementWiseOperation.SUB).get_output(0)
+        return result
+
+    def __rfloordiv__(self, x):
+        if not isinstance(x, IntWrapper):
+            x = IntWrapper(x)
+        ctx = get_conversion_context()
+        result = IntWrapper(_int_floordiv(x, self))
+        result._raw_trt = ctx.network._network.add_elementwise(x._trt, self._trt, trt.ElementWiseOperation.FLOOR_DIV).get_output(0)
+        return result
+
+    def __int__(self):
+        return self
+
+
+class SizeWrapper(tuple):
+
+    @property
+    def _trt(self):
+        if not hasattr(self, '__trt'):
+            ctx = get_conversion_context()
+            self._raw_trt = ctx.network._network.add_concatenation([d._trt for d in self]).get_output(0)
+        return self._raw_trt
+
+    def __tuple__(self):
+        return self
+
+
+def wrap_ints(x):
+    for y in x:
+        if isinstance(y, IntWrapper):
+            yield y
+        else:
+            yield IntWrapper(y)
+
+
+def make_size_wrapper(args):
+    return SizeWrapper(wrap_ints(args))

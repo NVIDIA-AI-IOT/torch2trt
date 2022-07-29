@@ -1,5 +1,5 @@
 from torch2trt.torch2trt import *
-from torch2trt.shape_conversion import *
+# from torch2trt.shape_conversion import *
 from torch2trt.module_test import add_module_test
 
 
@@ -7,12 +7,12 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.Tensor.reshape')
 def convert_view(ctx):
     input = ctx.method_args[0]
-
+    
     try:
         iter(ctx.method_args[1])
-        size = SizeWrapper(ctx.method_args[1])
+        size = make_size_wrapper(ctx.method_args[1])
     except:
-        size = SizeWrapper(ctx.method_args[1:])
+        size = make_size_wrapper(ctx.method_args[1:])
 
     output = ctx.method_return
 
