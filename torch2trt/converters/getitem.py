@@ -2,12 +2,16 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-def slice_to_trt(dim_size, dim_slice):
+def slice_to_trt(ctx, dim_size, dim_slice):
     
     start = 0 if dim_slice.start is None else dim_slice.start
     stop = dim_size if dim_slice.stop is None else dim_slice.stop
     stride = 1 if dim_slice.step is None else dim_slice.step
     
+    start = make_int_wrapper(start)
+    stop = make_int_wrapper(stop)
+    stride = make_int_wrapper(stride)
+
     size = (stop - start - 1) // stride + 1
     
     return start, size, stride
@@ -44,7 +48,7 @@ def convert_tensor_getitem(ctx):
             new_slices.append(s)
         elif s is None:
             new_slices.append(None)
-        elif isinstance(s, int):
+        elif isinstance(s, int) or isinstance(s, IntWrapper):
             new_slices.append(s)
             
     # fill missing slices at end
@@ -63,34 +67,63 @@ def convert_tensor_getitem(ctx):
     strides = []
     
     input_dim = 0
+
+    input_size = input.size()
+
     for s in slices:
         
         if input_dim >= len(input_trt.shape):
             break
-            
-        input_size = int(input_trt.shape[input_dim])
         
         if isinstance(s, slice):
-            start, size, stride = slice_to_trt(input_size, s)
+            start, size, stride = slice_to_trt(ctx, input_size[input_dim], s)
             starts.append(start)
             sizes.append(size)
             strides.append(stride)
             input_dim += 1
             
-        elif isinstance(s, int):
-            starts.append(s)
-            sizes.append(1)
-            strides.append(1)
+        elif isinstance(s, int) or isinstance(s, IntWrapper):
+            starts.append(make_int_wrapper(s))
+            sizes.append(make_int_wrapper(1))
+            strides.append(make_int_wrapper(1))
             input_dim += 1
     
-    output_trt = ctx.network.add_slice(input_trt, starts, sizes, strides).get_output(0)
+    starts = make_size_wrapper(starts)
+    sizes = make_size_wrapper(sizes)
+    strides = make_size_wrapper(strides)
     
+    layer = ctx.network.add_slice(input_trt, starts, sizes, strides)
+    layer.set_input(1, starts._trt)
+    layer.set_input(2, sizes._trt)
+    layer.set_input(3, strides._trt)
+
+    output_trt = layer.get_output(0)
+
     # Step 4 - Add shuffle layer to insert dimensions for 'None' slices and remove dimensions for 'int' slices
-    
+
+
     num_non_slice = len([s for s in slices if not isinstance(s, slice)])
     if num_non_slice > 0:
+
+        final_shape = []
+        i = 0
+        for s in slices:
+            if isinstance(s, slice):
+                # copy slice dim
+                final_shape.append(sizes[i])
+                i += 1
+            elif isinstance(s, int) or isinstance(s, IntWrapper):
+                # remove int dim
+                i += 1  
+            else:
+                # insert None dim
+                final_shape.append(make_int_wrapper(1))
+                
+        final_shape = make_size_wrapper(final_shape)
+
         layer = ctx.network.add_shuffle(output_trt)
         layer.reshape_dims = tuple(output.shape) # exclude batch
+        layer.set_input(1, final_shape._trt)
         output_trt = layer.get_output(0)
         
     output._trt = output_trt
