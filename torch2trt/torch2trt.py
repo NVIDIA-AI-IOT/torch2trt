@@ -488,6 +488,9 @@ class ConversionContext(object):
             
         _ACTIVE_CONVERSION_CONTEXT = self
 
+        torch.Tensor.size = _size_wrapper
+        torch.Tensor.__getattribute__ = _new_getattr
+
         return self
 
     def __exit__(self, type, val, tb):
@@ -501,7 +504,8 @@ class ConversionContext(object):
 
         _ACTIVE_CONVERSION_CONTEXT = None
 
-
+        torch.Tensor.size = _original_size
+        torch.Tensor.__getattribute__ = _old_getattr
 
 
     def add_inputs(self, torch_inputs, names=None, dynamic_axes=None):
@@ -988,7 +992,7 @@ class SizeWrapper(tuple):
 
     @property
     def _trt(self):
-        if not hasattr(self, '__trt'):
+        if not hasattr(self, '_raw_trt'):
             ctx = get_conversion_context()
             self._raw_trt = ctx.network._network.add_concatenation([d._trt for d in self]).get_output(0)
         return self._raw_trt
@@ -1007,3 +1011,41 @@ def wrap_ints(x):
 
 def make_size_wrapper(args):
     return SizeWrapper(wrap_ints(args))
+
+
+_original_size = torch.Tensor.size
+_original_getattr = torch.Tensor.__getattribute__
+
+
+def _size_wrapper(input, dim=None):
+
+    if not hasattr(input, '_trt'):
+        if dim is not None:
+            return _original_size(input, dim)
+        else:
+            return _original_size(input)
+
+    ctx = get_conversion_context()
+
+    output = _original_size(input)
+
+    output = make_size_wrapper(output)
+
+    shape_trt = ctx.network._network.add_shape(input._trt).get_output(0)
+
+    for i, d in enumerate(output):
+        d._raw_trt = ctx.network._network.add_slice(shape_trt, [i], [1], [1]).get_output(0)
+
+    if dim is not None:
+        output = output[dim]
+
+    return output
+
+
+_old_getattr = torch.Tensor.__getattribute__
+
+def _new_getattr(self, name):
+    if name == 'shape':
+        return _size_wrapper(self)
+    else:
+        return _old_getattr(self, name)
