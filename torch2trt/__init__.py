@@ -1,7 +1,7 @@
 from .torch2trt import *
 from .converters import *
 import tensorrt as trt
-
+from .shape_conversion import *
 
 def load_plugins():
     import torch2trt.torch_plugins

@@ -306,14 +306,14 @@ def attach_converter(ctx, method, converter, method_str):
             #             print('%s' % (converter.__name__,))
             converter["converter"](ctx)
 
+            # allow overwriting output, for things like shape converter
+            outputs = ctx.method_return
+
             # convert to None so conversion will fail for unsupported layers
             ctx.method_args = None
             ctx.method_kwargs = None
             ctx.method_return = None
             ctx.lock = False
-            
-            # allow overwriting output, for things like shape converter
-            outputs = ctx.method_return
 
         return outputs
 
@@ -403,6 +403,12 @@ class NetworkWrapper(object):
             return attr
 
 
+_ACTIVE_CONVERSION_CONTEXT = None
+
+
+def get_conversion_context():
+    return _ACTIVE_CONVERSION_CONTEXT
+
 
 class ConversionContext(object):
     
@@ -468,6 +474,7 @@ class ConversionContext(object):
             return None
         
     def __enter__(self):
+        global _ACTIVE_CONVERSION_CONTEXT
         
         # attach hooks which add converters to methods
         for hook in self.hooks:
@@ -480,13 +487,20 @@ class ConversionContext(object):
             self.module_handles.append(pre_hook_handle)
             self.module_handles.append(post_hook_handle)
             
+        _ACTIVE_CONVERSION_CONTEXT = self
+
         return self
 
     def __exit__(self, type, val, tb):
+
+        global _ACTIVE_CONVERSION_CONTEXT
+
         for hook in self.hooks:
             hook.__exit__(type, val, tb)
         for handle in self.module_handles:
             handle.remove()
+
+        _ACTIVE_CONVERSION_CONTEXT = None
 
 
     def add_inputs(self, torch_inputs, names=None, dynamic_axes=None):
@@ -526,6 +540,9 @@ class ConversionContext(object):
             trt_tensor.location = torch_device_to_trt(torch_output.device)
             trt_tensor.dtype = torch_dtype_to_trt(torch_output.dtype)
             self.network.mark_output(trt_tensor)
+
+
+
 
 
 class TRTModule(torch.nn.Module):
@@ -867,4 +884,6 @@ def set_layer_precision(ctx, layer):
     elif is_fp16:
         layer.precision = trt.float16
         layer.set_output_type(0, trt.float16)
+
+        
 
