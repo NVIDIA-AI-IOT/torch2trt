@@ -5,6 +5,10 @@ from setuptools import setup, find_packages
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
 from packaging import version
 
+REQUIREMENTS_PATH = 'requirements.txt'
+
+with open(REQUIREMENTS_PATH, 'r') as file:
+    required_libraries = file.read().splitlines()
 
 def trt_inc_dir():
     return "/usr/include/aarch64-linux-gnu"
@@ -56,5 +60,6 @@ setup(
     packages=find_packages(exclude=exclude_dir),
     ext_package='torch2trt',
     ext_modules=ext_modules,
+    install_requires=required_libraries,
     cmdclass={'build_ext': BuildExtension}
 )
