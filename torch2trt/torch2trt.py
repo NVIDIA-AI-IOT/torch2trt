@@ -13,7 +13,8 @@ from .dataset_calibrator import (
 
 from .dataset import (
     Dataset,
-    TensorBatchDataset
+    TensorBatchDataset,
+    ListDataset
 )
 
 from .flattener import Flattener
@@ -681,7 +682,8 @@ def torch2trt(module,
             raise ValueError('Dataset must have at least one element to use for inference.')
         inputs = dataset[0]
     else:
-        dataset = TensorBatchDataset(inputs)
+        dataset = ListDataset()
+        dataset.insert(inputs)
         inputs = dataset[0]
 
     outputs = module(*inputs)
@@ -987,6 +989,11 @@ class IntWrapper(int):
     def __int__(self):
         return self
 
+def make_int_wrapper(x):
+    if isinstance(x, IntWrapper):
+        return x
+    else:
+        return IntWrapper(x)
 
 class SizeWrapper(tuple):
 
@@ -1003,10 +1010,7 @@ class SizeWrapper(tuple):
 
 def wrap_ints(x):
     for y in x:
-        if isinstance(y, IntWrapper):
-            yield y
-        else:
-            yield IntWrapper(y)
+        yield make_int_wrapper(y)
 
 
 def make_size_wrapper(args):
