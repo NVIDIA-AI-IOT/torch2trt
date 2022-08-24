@@ -228,23 +228,12 @@ class IQuantConv2d(torch.nn.Conv2d,_utils.QuantMixinWeight):
         super().__init__(in_channels,out_channels,kernel_size,stride=stride,padding=padding,dilation=dilation,groups=groups,bias=bias,padding_mode=padding_mode)
         self.init_quantizer()
 
-    def forward(self,inputs):
-        return super(IQuantConv2d, self).forward(inputs)
+    def __repr__(self):
+        s = super().__repr__()
+        s = "(" + s + "dynamic_range amax {0:.4f})".format(self._weight_quantizer.learned_amax)
+        return s
 
-#class QuantConv2d(torch.nn.Conv2d,_utils.QuantMixin):
-#    '''
-#    mimicking inference side of things
-#    '''
-#    def __init__(self,in_channels,
-#                out_channels,
-#                kernel_size,
-#                stride=1,
-#                padding=0,
-#                dilation=1,
-#                groups=1,
-#                bias=True,
-#                padding_mode='zeros'):
-#        super().__init__(in_channels,out_channels,kernel_size,stride=stride,padding=padding,dilation=dilation,groups=groups,bias=bias,padding_mode=padding_mode)
-#        self.init_quantizer()
-#
-#
+    def forward(self,inputs):
+        output = F.conv2d(inputs,self.weight,self.bias,self.stride,self.padding,self.dilation,self.groups)
+        return output
+

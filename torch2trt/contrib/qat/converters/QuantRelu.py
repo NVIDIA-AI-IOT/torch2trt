@@ -12,7 +12,7 @@ def convert_QuantReLU(ctx):
     
     ## int 8 precision
     if 'qat_mode' in ctx.torch2trt_kwargs:
-        amax = module._input_quantizer.learned_amax
+        amax = module._output_quantizer.learned_amax
         layer.precision = trt.int8
         layer.set_output_type(0,trt.int8)
         out = layer.get_output(0)
