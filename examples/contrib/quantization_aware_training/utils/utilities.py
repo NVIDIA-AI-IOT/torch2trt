@@ -28,26 +28,11 @@ def mapping_names(state_dict):
     new_list = collections.OrderedDict()
     for k,v in state_dict.items():
         if re.search(r'conv\d.weight',k):
-            item = re.sub('weight','qconv.0.weight',k)
-            print("replacing {} to {}".format(k,item))
-            new_list[item]=v
-        elif re.search(r'bn\d.\w+',k):
-            m = re.search(r'bn\d.\w+',k).group(0)
-            word=m.split(".")[-1]
-            num = re.search(r'\d',m).group(0)
-            new_name = "conv"+num+".qconv.0.bn."+word
-            item = re.sub(r'bn\d.\w+',new_name,k)
+            item = re.sub('weight','quant.weight',k)
             print("replacing {} to {}".format(k,item))
             new_list[item]=v
         elif re.search(r'downsample.0.weight',k):
-            item = re.sub('weight','qconv.0.weight',k)
-            print("replacing {} to {}".format(k,item))
-            new_list[item]=v
-        elif re.search(r'downsample.1.\w+',k):
-            m = re.search(r'downsample.1.\w+',k).group(0)
-            word = m.split(".")[-1]
-            new_name = "downsample.0.qconv.0.bn."+word
-            item = re.sub(r'downsample.1.\w+',new_name,k)
+            item = re.sub('weight','quant.weight',k)
             print("replacing {} to {}".format(k,item))
             new_list[item]=v
         else:
@@ -102,11 +87,13 @@ class qconv2d(torch.nn.Module):
             bias = None,
             padding_mode: str='zeros',
             qat: bool=False,
-            infer: bool=False):
+            infer: bool=False,
+            quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR,
+            quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR):
         super().__init__()
         if qat:
             if infer:
-                self.qconvd = IQuantConv2d(in_channels,
+                self.quant = IQuantConv2d(in_channels,
                     out_channels,
                     kernel_size,
                     stride=stride,
@@ -116,7 +103,7 @@ class qconv2d(torch.nn.Module):
                     bias=bias,
                     padding_mode=padding_mode)
             else:
-                self.qconvd = QuantConv2d(in_channels,
+                self.quant = QuantConv2d(in_channels,
                     out_channels,
                     kernel_size,
                     stride=stride,
@@ -125,10 +112,10 @@ class qconv2d(torch.nn.Module):
                     dilation=dilation,
                     bias=bias,
                     padding_mode=padding_mode,
-                    quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR,
-                    quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)
+                    quant_desc_weight=quant_desc_weight,
+                    quant_desc_input=quant_desc_input)
         else:
-            self.qconvd = nn.Conv2d(in_channels, 
+            self.quant = nn.Conv2d(in_channels, 
                     out_channels,
                     kernel_size,
                     padding=padding,
@@ -138,7 +125,7 @@ class qconv2d(torch.nn.Module):
                     padding_mode=padding_mode)
 
     def forward(self,inputs):
-        return self.qconv(inputs)
+        return self.quant(inputs)
 
 
 def calculate_accuracy(model,data_loader, is_cuda=True):
