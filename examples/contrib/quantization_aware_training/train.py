@@ -148,27 +148,31 @@ def main():
         else:
             raise NotImplementedError("model {} is not defined".format(args.m))
         
-        model=model.cuda().eval()
-        checkpoint = torch.load(best_ckpt_filename)
-        model.load_state_dict(checkpoint['model_state_dict'],strict=True)
+        with torch.no_grad():
+            model=model.cuda().eval()
+            checkpoint = torch.load(best_ckpt_filename)
+            model.load_state_dict(checkpoint['model_state_dict'],strict=True)
         
-        pytorch_test_accuracy = calculate_accuracy(model,test_loader)
-        rand_in = torch.randn([128,3,32,32],dtype=torch.float32).cuda()
+            pytorch_test_accuracy = calculate_accuracy(model,test_loader)
+            rand_in = torch.randn([1,3,32,32],dtype=torch.float32).cuda()
 
-        if args.FP16:
-            trt_model_fp16 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,max_batch_size=128)
-            trtfp16_test_accuracy = calculate_accuracy(trt_model_fp16,test_loader)
-    
-        if args.INT8PTC:
-            ##preparing calib dataset
-            calib_dataset = list()
-            for i, sam in enumerate(test_loader):
-                calib_dataset.extend(sam[0])
-                if i ==5:
-                    break
+            if args.FP16:
+                trt_model_fp16 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,max_batch_size=128)
+                print("FP16 model exported")
+                torch.cuda.synchronize()
+                trtfp16_test_accuracy = calculate_accuracy(trt_model_fp16,test_loader)
+            
+            if args.INT8PTC:
+                ##preparing calib dataset
+                calib_dataset = list()
+                for i, sam in enumerate(test_loader):
+                    calib_dataset.extend(sam[0])
+                    if i ==5:
+                        break
 
-            trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=128)
-            int8_test_accuracy = calculate_accuracy(trt_model_calib_int8,test_loader)
+                trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=128)
+                torch.cuda.synchronize()
+                int8_test_accuracy = calculate_accuracy(trt_model_calib_int8,test_loader)
 
         print("Test Accuracy")
         print("Pytorch model :",pytorch_test_accuracy)

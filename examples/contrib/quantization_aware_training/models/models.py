@@ -4,7 +4,7 @@ Contains basic model definitions
 
 import torch 
 import torch.nn as nn
-from utils.utilities import qrelu,qconv2d
+from utils.utilities import qconv2d
 
 class vanilla_cnn(nn.Module):
     def __init__(self,qat_mode=False,infer=False):

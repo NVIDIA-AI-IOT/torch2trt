@@ -30,7 +30,7 @@ class Cifar10Loaders:
     
     def test_loader(self,shuffle=False):
         testset = torchvision.datasets.CIFAR10(root=self.data_dir, train=False, download=True, transform=self.test_transform)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=self.batch_size, shuffle=shuffle, num_workers=self.num_workers, pin_memory=self.pin_memory)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=shuffle, num_workers=self.num_workers, pin_memory=self.pin_memory)
         return testloader
     
     

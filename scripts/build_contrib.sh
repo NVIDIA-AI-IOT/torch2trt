@@ -8,16 +8,17 @@ patch_file="$parentdir/$patch"
 
 pushd /tmp/TensorRT
     cp $patch_file .
-    git checkout e724d31ab84626ca334b4284703b5048eb698c98  ## keeping this for versioning control
+    #git checkout e724d31ab84626ca334b4284703b5048eb698c98  ## keeping this for versioning control
     git sparse-checkout init --cone 
     git sparse-checkout set /tools/pytorch-quantization/
     git apply --reject --whitespace=fix pytorch_nvidia_quantization.patch
     cd tools/pytorch-quantization/
+    sed -i 's/scipy/scipy==1.5.0/' requirements.txt
     python setup.py install
 popd
 
 pushd $parentdir
-    python3 setup.py install --plugins --contrib
+    python3 setup.py install --contrib
 popd
 
 

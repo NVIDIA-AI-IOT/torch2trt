@@ -3,8 +3,8 @@ import torch.nn as nn
 import numpy as np
 import collections
 from pytorch_quantization import tensor_quant
-from torch2trt.contrib.qat.layers.quant_conv import QuantConvBN2d,QuantConv2d,IQuantConv2d, IQuantConvBN2d
-from torch2trt.contrib.qat.layers.quant_activation import QuantReLU, IQuantReLU
+from pytorch_quantization.nn.modules.quant_conv import QuantConv2d
+from torch2trt.contrib.qat.layers.quant_conv import IQuantConv2d 
 import torchvision.models as models  
 import re
 import timeit
@@ -79,30 +79,10 @@ def add_missing_keys(model_state,model_state_dict):
     return model_state_dict
 
 
-## QAT qrapper for ReLU layer: toggles between training and inference
-
-class qrelu(torch.nn.Module):
-    def __init__(self,inplace=False,qat=False,infer=False):
-        super().__init__()
-        if qat:
-            if infer:
-                self.relu = IQuantReLU(inplace)
-            else:
-                self.relu = QuantReLU(inplace)
-        else:
-            self.relu = nn.ReLU(inplace)
-
-    def forward(self,input):
-        return self.relu(input)
-
-
 '''
-Wrapper for conv2d + bn + relu layer. 
+Wrapper for conv2d
 Toggles between QAT mode(on and off)
 Toggles between QAT training and inference
-
-In QAT mode:
-    conv(quantized_weight) + BN + ReLU + quantized op. 
 
 '''
 
@@ -121,86 +101,41 @@ class qconv2d(torch.nn.Module):
             dilation: int=1,
             bias = None,
             padding_mode: str='zeros',
-            eps: float=1e-5,
-            momentum: float=0.1,
-            freeze_bn = False,
-            act: bool= True,
-            norm: bool=True,
             qat: bool=False,
             infer: bool=False):
         super().__init__()
         if qat:
             if infer:
-                if norm:
-                    layer_list = [IQuantConvBN2d(in_channels,
-                        out_channels,
-                        kernel_size,
-                        stride=stride,
-                        padding=padding,
-                        groups=groups,
-                        dilation=dilation,
-                        bias=bias,
-                        padding_mode=padding_mode)]
-
-                else:
-                    layer_list = [IQuantConv2d(in_channels,
-                        out_channels,
-                        kernel_size,
-                        stride=stride,
-                        padding=padding,
-                        groups=groups,
-                        dilation=dilation,
-                        bias=bias,
-                        padding_mode=padding_mode)]
+                self.qconvd = IQuantConv2d(in_channels,
+                    out_channels,
+                    kernel_size,
+                    stride=stride,
+                    padding=padding,
+                    groups=groups,
+                    dilation=dilation,
+                    bias=bias,
+                    padding_mode=padding_mode)
             else:
-                if norm:
-                    layer_list=[QuantConvBN2d(in_channels,
-                        out_channels,
-                        kernel_size,
-                        stride=stride,
-                        padding=padding,
-                        groups=groups,
-                        dilation=dilation,
-                        bias=bias,
-                        padding_mode=padding_mode,
-                        quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)]
-
-                else:
-                    layer_list = [QuantConv2d(in_channels,
-                        out_channels,
-                        kernel_size,
-                        stride=stride,
-                        padding=padding,
-                        groups=groups,
-                        dilation=dilation,
-                        bias=bias,
-                        padding_mode=padding_mode,
-                        quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)]
-           
-            if act:
-                if infer:
-                    layer_list.append(IQuantReLU())
-                else:
-                    layer_list.append(QuantReLU())
-            
-            self.qconv = nn.Sequential(*layer_list)
-    
+                self.qconvd = QuantConv2d(in_channels,
+                    out_channels,
+                    kernel_size,
+                    stride=stride,
+                    padding=padding,
+                    groups=groups,
+                    dilation=dilation,
+                    bias=bias,
+                    padding_mode=padding_mode,
+                    quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR,
+                    quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)
         else:
-            layer_list=[
-                    nn.Conv2d(in_channels=in_channels,
-                        out_channels=out_channels,
-                        kernel_size=kernel_size,
-                        padding=padding,
-                        dilation=dilation,
-                        bias=bias,
-                        groups=groups)]
-            if norm:
-                layer_list.append(nn.BatchNorm2d(out_channels))
-           
-            if act:
-                layer_list.append(nn.ReLU())
-            
-            self.qconv = nn.Sequential(*layer_list)
+            self.qconvd = nn.Conv2d(in_channels, 
+                    out_channels,
+                    kernel_size,
+                    padding=padding,
+                    dilation=dilation,
+                    bias=bias,
+                    groups=groups,
+                    padding_mode=padding_mode)
 
     def forward(self,inputs):
         return self.qconv(inputs)
@@ -220,6 +155,8 @@ def calculate_accuracy(model,data_loader, is_cuda=True):
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted==labels).sum().item()
+            if is_cuda:
+                torch.cuda.synchronize()
     acc = correct * 100 / total
     return acc 
 
