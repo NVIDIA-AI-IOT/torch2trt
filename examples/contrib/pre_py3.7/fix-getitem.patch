@@ -1,0 +1,43 @@
+From d9b35495da58038fd5045cc0e2c1f0416f8e62f0 Mon Sep 17 00:00:00 2001
+From: Chao Zhang <chaoz@aurora.tech>
+Date: Tue, 21 Jun 2022 15:38:23 +0000
+Subject: [PATCH] Fix getitem for Py<3.7
+
+---
+ torch2trt/torch2trt.py | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/torch2trt/torch2trt.py b/torch2trt/torch2trt.py
+index 3aa6946..9528f1a 100644
+--- a/torch2trt/torch2trt.py
++++ b/torch2trt/torch2trt.py
+@@ -310,6 +310,14 @@ def attach_converter(ctx, method, converter, method_str):
+     return wrapper
+ 
+ 
++def _getitem_wrapper(method=torch.Tensor.__getitem__):
++    def wrapper(arg0, arg1):
++        if type(arg1) is torch.Tensor:
++            arg1 = (arg1, )
++        return method(arg0, arg1)
++    return wrapper
++
++
+ class ConversionHook(object):
+     """Attaches TensorRT converter to PyTorch method call"""
+ 
+@@ -330,7 +338,10 @@ class ConversionHook(object):
+         )
+ 
+     def __exit__(self, type, val, tb):
+-        self._set_method(self.converter['method_impl'])
++        if '__getitem__' in self.converter['method_str']:
++            self._set_method(_getitem_wrapper())
++        else:
++            self._set_method(self.converter['method_impl'])
+ 
+ def default_input_names(num_inputs):
+     return ["input_%d" % i for i in range(num_inputs)]
+-- 
+2.32.0
+

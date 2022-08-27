@@ -29,17 +29,18 @@ def convert_roll(ctx):
     for s, d in zip(shifts, dims):
         start[d] = (-s) % shape[d]
     
-    start = tuple(start[1:])
-    shape = tuple(shape[1:])
-    stride = tuple(stride[1:])
+    start = tuple(start)
+    shape = tuple(shape)
+    stride = tuple(stride)
     
-    
+    shape_dynamic = ctx.network.add_shape(input._trt).get_output(0)
     layer = ctx.network.add_slice(
         input_trt,
         start,  # [1:] to exclude batch
         shape,
         stride
     )
+    layer.set_input(2, shape_dynamic)
     layer.mode = trt.SliceMode.WRAP
     
     output._trt = layer.get_output(0)
@@ -59,16 +60,19 @@ class Roll(torch.nn.Module):
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 4)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 4, 5)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 5)], max_batch_size=2)
 def test_roll_int():
     return Roll(1, 1)
     
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 4, 5)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 5)], max_batch_size=2)
 def test_roll_int_dim():
     return Roll(1, -2)
 
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 5)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 5)], max_batch_size=2)
 def test_roll_tuple():
     return Roll((2, 3), (1, 3))

@@ -3,6 +3,9 @@ from torch2trt import torch2trt
 
 
 def test_contiguous():
+
+    torch.manual_seed(0)
+
     net = torch.nn.Conv2d(3, 10, kernel_size=3)
     net.eval().cuda()
 
@@ -15,6 +18,6 @@ def test_contiguous():
         trt_net = torch2trt(net, [test_tensor])
         test_trt_out = trt_net(test_tensor)
 
-    delta = (test_out.contiguous() - test_trt_out.contiguous()).abs().sum()
+    delta = torch.max((test_out.contiguous() - test_trt_out.contiguous()).abs())
     assert delta < 1e-3, f"Delta: {delta}"
 

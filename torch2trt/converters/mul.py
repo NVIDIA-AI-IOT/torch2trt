@@ -3,6 +3,7 @@ from torch2trt.module_test import add_module_test
 
 
 @tensorrt_converter('torch.mul')
+@tensorrt_converter('torch.Tensor.mul_')
 @tensorrt_converter('torch.Tensor.__imul__')
 @tensorrt_converter('torch.Tensor.__mul__')
 @tensorrt_converter('torch.Tensor.__rmul__')
@@ -11,7 +12,7 @@ def convert_mul(ctx):
     input_b = ctx.method_args[1]
     output = ctx.method_return
     input_a_trt, input_b_trt = add_missing_trt_tensors(ctx.network, [input_a, input_b])
-    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape) - 1)
+    input_a_trt, input_b_trt = broadcast_trt_tensors(ctx.network, [input_a_trt, input_b_trt], len(output.shape))
     layer = ctx.network.add_elementwise(input_a_trt, input_b_trt, trt.ElementWiseOperation.PROD)
     output._trt = layer.get_output(0)
 

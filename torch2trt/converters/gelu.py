@@ -17,7 +17,7 @@ def convert_gelu_v1(ctx):
     x, c05, c1, cs2pi, c044, c3 = broadcast_trt_tensors(
         ctx.network, 
         [x, c05, c1, cs2pi, c044, c3], 
-        len(output.shape) - 1
+        len(output.shape)
     )
     
     y = ctx.network.add_elementwise(x, c3, trt.ElementWiseOperation.POW).get_output(0)

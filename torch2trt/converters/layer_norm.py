@@ -19,7 +19,7 @@ def convert_layernorm(ctx):
     input_trt, eps_trt = broadcast_trt_tensors(
         ctx.network, 
         [input_trt, eps_trt],
-        len(output.shape) - 1
+        len(output.shape)
     )
     
     if weight is not None:
@@ -30,7 +30,7 @@ def convert_layernorm(ctx):
         _, weight_trt = broadcast_trt_tensors(
             ctx.network, 
             [input_trt, weight_trt],
-            len(output.shape) - 1
+            len(output.shape)
         )
     
     if bias is not None:
@@ -41,7 +41,7 @@ def convert_layernorm(ctx):
         _, bias_trt = broadcast_trt_tensors(
             ctx.network, 
             [input_trt, bias_trt],
-            len(output.shape) - 1
+            len(output.shape)
         )
     
     if isinstance(shape, int):

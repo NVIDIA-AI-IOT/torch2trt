@@ -7,13 +7,13 @@ import collections
 
 def has_interpolate_plugin():
     try:
-        from torch2trt.plugins import InterpolatePlugin
+        from torch2trt.torch_plugins import InterpolatePlugin
         return True
     except:
         return False
     
 def get_interpolate_plugin(size, mode, align_corners):
-    from torch2trt.plugins import InterpolatePlugin
+    from torch2trt.torch_plugins import InterpolatePlugin
     PLUGIN_NAME = 'interpolate'
     registry = trt.get_plugin_registry()
     creator = [c for c in registry.plugin_creator_list if c.name == PLUGIN_NAME and c.plugin_namespace == 'torch2trt'][0]
@@ -67,9 +67,9 @@ def convert_interpolate_trt7(ctx):
     shape = size
     if shape != None:
         if isinstance(shape, collections.Sequence):
-           shape  = [input.size(1)] + list(shape)
+           shape  = [input.size(0), input.size(1)] + list(shape)
         else:
-            shape = [input.size(1)] + [shape] * input_dim
+            shape = [input.size(0), input.size(1)] + [shape] * input_dim
 
         layer.shape = shape
 
@@ -77,7 +77,7 @@ def convert_interpolate_trt7(ctx):
     if scales != None:
         if not isinstance(scales, collections.Sequence):
             scales = [scales] * input_dim
-        layer.scales = [1] + list(scales)
+        layer.scales = [1, 1] + list(scales)
 
     resize_mode = mode
     if resize_mode.lower() in ["linear","bilinear","trilinear"]:
@@ -86,7 +86,11 @@ def convert_interpolate_trt7(ctx):
         layer.resize_mode=trt.ResizeMode.NEAREST
 
     if align_corners != None:
-        layer.align_corners = align_corners
+        if trt_version() > '8.0':
+            if align_corners:
+                layer.coordinate_transformation = trt.ResizeCoordinateTransformation.ALIGN_CORNERS
+        else:
+            layer.align_corners = align_corners
 
     output._trt = layer.get_output(0)
 

@@ -12,7 +12,7 @@ def convert_Linear(ctx):
 
     # reshape to ...xNx1x1
     layer = ctx.network.add_shuffle(input_trt)
-    layer.reshape_dims = tuple(input_trt.shape) + (1, 1) 
+    layer.reshape_dims = tuple([0]*input.ndim) + (1, 1) 
 
     bias_trt = trt.Weights(torch_dtype_to_trt(weight.dtype))
     if bias is not None:
@@ -27,7 +27,7 @@ def convert_Linear(ctx):
 
     # reshape back to N
     layer = ctx.network.add_shuffle(layer.get_output(0))
-    layer.reshape_dims = tuple(output.shape[1:])
+    layer.reshape_dims = tuple([0] * output.ndim)
 
     output._trt = layer.get_output(0)
     
@@ -42,5 +42,6 @@ def test_Linear_basic():
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 10)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 4, 10)])
+@add_module_test(torch.float32, torch.device('cuda'), [(2, 3, 4, 10)], max_batch_size=2)
 def test_Linear_no_bias():
     return torch.nn.Linear(10, 5, bias=False)
