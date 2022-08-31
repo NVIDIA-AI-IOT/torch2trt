@@ -3,9 +3,9 @@ import torch.nn as nn
 from torch2trt.torch2trt import *                                 
 from torch2trt.module_test import add_module_test
 try:
-	from collections import Sequence
+    from collections import Sequence
 except ImportError:
-	from collections.abc import Sequence
+    from collections.abc import Sequence
 
 
 def has_interpolate_plugin():
