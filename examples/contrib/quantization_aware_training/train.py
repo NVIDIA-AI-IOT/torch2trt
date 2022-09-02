@@ -13,6 +13,8 @@ from parser import parse_args
 import time
 from torch2trt import torch2trt
 import tensorrt as trt 
+from pytorch_quantization import nn as quant_nn
+
 
 def main():
     args = parse_args()
@@ -96,11 +98,12 @@ def main():
         print("===>>> Checkpoint loaded successfully from {} at epoch {} ".format(args.load_ckpt,epoch))
 
     print("===>> Training started")
+    model.train()
     for epoch in range(args.start_epoch, args.start_epoch + args.num_epochs):
         running_loss=0.0
         start=time.time()
-        model.train()
         for i, data in enumerate(train_loader,0):
+            print(i)
             inputs, labels = data
 
             if args.cuda:
@@ -115,6 +118,9 @@ def main():
             optimizer.step()
 
             running_loss +=loss.item()
+
+            if i == 20:
+                break
         
         if epoch > 0 and  epoch % args.lrdt == 0:
             print("===>> decaying learning rate at epoch {}".format(epoch))
@@ -138,7 +144,13 @@ def main():
                 'loss': running_loss,
                 }, best_ckpt_filename)
     print("Training finished")
-    
+    #quant_nn.TensorQuantizer.use_fb_fake_quant = True 
+    #with torch.no_grad():
+    #    data = iter(test_loader)
+    #    images, _ = data.next()
+    #    print(model)
+
+    #exit(0)
     ## Running metrics
     if args.test_trt:
         if args.m == 'resnet34-tl' or args.m == 'resnet34':
@@ -155,9 +167,10 @@ def main():
         
             pytorch_test_accuracy = calculate_accuracy(model,test_loader)
             rand_in = torch.randn([1,3,32,32],dtype=torch.float32).cuda()
+            torch.cuda.synchronize()
 
             if args.FP16:
-                trt_model_fp16 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,max_batch_size=128)
+                trt_model_fp16 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,max_batch_size=1)
                 print("FP16 model exported")
                 torch.cuda.synchronize()
                 trtfp16_test_accuracy = calculate_accuracy(trt_model_fp16,test_loader)
@@ -170,7 +183,7 @@ def main():
                     if i ==5:
                         break
 
-                trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=128)
+                trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=16)
                 torch.cuda.synchronize()
                 int8_test_accuracy = calculate_accuracy(trt_model_calib_int8,test_loader)
 
