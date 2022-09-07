@@ -12,7 +12,9 @@ import torch.nn.functional as F
 from torch.nn.modules.utils import _single, _pair, _triple
 from pytorch_quantization import tensor_quant
 from pytorch_quantization.nn.modules.quant_conv import _QuantConvNd
-from . import _utils
+import pytorch_quantization.nn.modules._utils as _utils 
+from . import _utils as utils
+from absl import logging
 
 '''
 Training class to quantize the input and weights of conv2d.
@@ -40,23 +42,67 @@ class QuantConv2d(_QuantConvNd):
         stride = _pair(stride)
         padding = _pair(padding)
         dilation = _pair(dilation)
-        input_quantizer = None
-        weight_quantizer = None
         quant_desc_input, quant_desc_weight = _utils.pop_quant_desc_in_kwargs(self.__class__, **kwargs)
         super(QuantConv2d, self).__init__(in_channels, out_channels, kernel_size, stride, padding, dilation, False,
                                           _pair(0), groups, bias, padding_mode,
                                           quant_desc_input=quant_desc_input, quant_desc_weight=quant_desc_weight)
 
-    def extract_quant_info(self,quant_input,quant_weight):
-        print("type of quant input",type(quant_input))
-        print("type of quant weight",type(quant_weight))
-        self.input_quantizer = quant_input
-        self.weight_quantizer = quant_weight
+    def _extract_info(self,quantizer):
+        bound = (1 << (quantizer._num_bits - 1 + int(quantizer._unsigned))) - 1
+        amax = quantizer.learned_amax
+        quantizer._scale = amax
+        if amax.numel() == 1:
+            scale=amax.item() / bound
+            zero_point = 0
+            quant_min = -bound - 1 if not quantizer._unsigned else 0
+            quant_max = bound
+            axis = None
+        else:
+            amax_sequeeze = amax.squeeze().detach()
+            if len(amax_sequeeze.shape) != 1:
+                raise TypeError("Multiple axis is not supported in quantization")
+            quant_dim = list(amax.shape).index(list(amax_sequeeze.shape)[0])
+            scale = amax_sequeeze / bound
+            scale = scale.data
+            zero_point = torch.zeros_like(scale, dtype=torch.int32).data
+            axis = quant_dim
+            quant_min = -bound - 1 if not quantizer._unsigned else 0
+            quant_max = bound
+        return scale, zero_point, quant_min, quant_max, axis
+
+    def extract_quant_info(self):
+        logging.log_first_n(logging.WARNING, "Calculating quantization metrics for {}".format(self.__class__), 1) 
+        if self._input_quantizer.learned_amax.numel() == 1:
+            logging.log_first_n(logging.WARNING, "per tensor quantization for input quantizer", 1)
+        else:
+            logging.log_first_n(logging.WARNING, "per channel quantization for input quantizer", 1)
+        scale, zero_point,quant_min, quant_max, axis = self._extract_info(self._input_quantizer)
+        
+        setattr(self._input_quantizer, 'quant_scale', torch.nn.Parameter(torch.as_tensor(scale),requires_grad=False))
+        setattr(self._input_quantizer, 'zero_point', torch.nn.Parameter(torch.as_tensor(zero_point),requires_grad=False))
+        setattr(self._input_quantizer, 'quant_min', torch.nn.Parameter(torch.as_tensor(quant_min),requires_grad=False))
+        setattr(self._input_quantizer, 'quant_max', torch.nn.Parameter(torch.as_tensor(quant_max),requires_grad=False))
+        if not axis == None:
+            setattr(self._input_quantizer, 'quant_axis', torch.nn.Parameter(torch.as_tensor(axis),requires_grad=False))
+
+        if self._weight_quantizer.learned_amax.numel() == 1:
+            logging.log_first_n(logging.WARNING, "per tensor quantization for weight quantizer", 1)
+        else:
+            logging.log_first_n(logging.WARNING, "per channel quantization for weight quantizer", 1)
+        scale, zero_point, quant_min, quant_max, axis = self._extract_info(self._weight_quantizer)
+
+        setattr(self._weight_quantizer, 'quant_scale', torch.nn.Parameter(torch.as_tensor(scale),requires_grad=False))
+        setattr(self._weight_quantizer, 'zero_point', torch.nn.Parameter(torch.as_tensor(zero_point),requires_grad=False))
+        setattr(self._weight_quantizer, 'quant_min', torch.nn.Parameter(torch.as_tensor(quant_min),requires_grad=False))
+        setattr(self._weight_quantizer, 'quant_max', torch.nn.Parameter(torch.as_tensor(quant_max),requires_grad=False))
+        if not axis == None:
+            setattr(self._weight_quantizer, 'quant_axis', torch.nn.Parameter(torch.as_tensor(axis),requires_grad=False))
 
     def forward(self, input):
         # the actual quantization happens in the next level of the class hierarchy
         quant_input, quant_weight = self._quant(input)
-        self.extract_quant_info(quant_input,quant_weight)
+        if self.eval:
+            self.extract_quant_info()
 
         if self.padding_mode == 'circular':
             expanded_padding = ((self.padding[1] + 1) // 2, self.padding[1] // 2,
@@ -71,10 +117,8 @@ class QuantConv2d(_QuantConvNd):
         return output
 
 
-
-
 ## Inference class for quantized conv2d
-class IQuantConv2d(torch.nn.Conv2d,_utils.QuantMixin):
+class IQuantConv2d(torch.nn.Conv2d,utils.QuantMixin):
     '''
     mimicking inference side of Conv2d to map correctly to TRT
     Layer to be used with TRT only.

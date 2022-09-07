@@ -144,11 +144,14 @@ def main():
                 'loss': running_loss,
                 }, best_ckpt_filename)
     print("Training finished")
-    #quant_nn.TensorQuantizer.use_fb_fake_quant = True 
-    #with torch.no_grad():
-    #    data = iter(test_loader)
-    #    images, _ = data.next()
-    #    print(model)
+    quant_nn.TensorQuantizer.use_fb_fake_quant = True 
+    model.eval()
+    with torch.no_grad():
+        data = iter(test_loader)
+        images, _ = data.next()
+        out = model(images.cuda())
+        print(model)
+
 
     #exit(0)
     ## Running metrics
