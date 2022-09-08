@@ -29,7 +29,7 @@ def main():
 
     if args.m == "resnet18":
         if args.netqat:
-            model=resnet18(qat_mode=True,infer=True)
+            model=resnet18(qat_mode=True,infer=False)
         else:
             model=resnet18()
     elif args.m == "resnet34":
@@ -41,8 +41,13 @@ def main():
         raise NotImplementedError("{} model not found".format(args.m))
 
 
+    rand_in = torch.randn([128,3,32,32],dtype=torch.float32).cuda()
     model = model.cuda().eval()
 
+    ## Single dummy run to instantiate quant metrics
+    out = model(rand_in)
+    #for k,v in model.state_dict().items():
+    #    print(k)
     if args.load_ckpt:
         checkpoint = torch.load(args.load_ckpt)
         if not args.netqat:
@@ -52,7 +57,6 @@ def main():
     
     test_accuracy = calculate_accuracy(model,test_loader)
     print(" Test accuracy for Pytorch model: {0} ".format(test_accuracy))
-    rand_in = torch.randn([128,3,32,32],dtype=torch.float32).cuda()
     
     #Converting the model to TRT
     if args.FP16:
@@ -61,6 +65,7 @@ def main():
         print(" TRT test accuracy at FP16: {0}".format(test_accuracy))
     
     if args.INT8QAT:
+        model = model.eval()
         trt_model_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_mode=True,max_batch_size=128,qat_mode=True)
         test_accuracy = calculate_accuracy(trt_model_int8,test_loader)
         print(" TRT test accuracy at INT8 QAT: {0}".format(test_accuracy))
