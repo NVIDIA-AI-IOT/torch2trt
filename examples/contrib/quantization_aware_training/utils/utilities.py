@@ -3,7 +3,6 @@ import torch.nn as nn
 import numpy as np
 import collections
 from pytorch_quantization import tensor_quant
-#from pytorch_quantization.nn.modules.quant_conv import QuantConv2d
 from torch2trt.contrib.qat.layers.quant_conv import QuantConv2d
 import torchvision.models as models  
 import re
@@ -47,19 +46,8 @@ def add_missing_keys(model_state,model_state_dict):
     """
     for k,v in model_state.items():
         if k not in model_state_dict.keys():
-            if re.search(r'folded_weight',k):
-                item = re.sub("folded_weight","weight",k)
-                tensor_size = model_state[item].size()
-                model_state_dict[k] = torch.ones(tensor_size)
-                print("adding {} with shape {} to the model state dict".format(k,tensor_size))
-            elif re.search(r'folded_bias',k):
-                item = re.sub("folded_bias","weight",k)
-                tensor_size = model_state[item].size()
-                model_state_dict[k] = torch.ones(tensor_size[0])
-                print("adding {} with shape {} to the model state dict".format(k,tensor_size[0]))
-            else:
-                print("adding {} to the model state dict".format(k))
-                model_state_dict[k]= torch.tensor(127)
+            print("adding {} to the model state dict".format(k))
+            model_state_dict[k]= torch.tensor(127)
 
     return model_state_dict
 
@@ -67,8 +55,6 @@ def add_missing_keys(model_state,model_state_dict):
 '''
 Wrapper for conv2d
 Toggles between QAT mode(on and off)
-Toggles between QAT training and inference
-
 '''
 
 class qconv2d(torch.nn.Module):
@@ -87,33 +73,21 @@ class qconv2d(torch.nn.Module):
             bias = None,
             padding_mode: str='zeros',
             qat: bool=False,
-            infer: bool=False,
             quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR,
             quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR):
         super().__init__()
         if qat:
-            if infer:
-                self.quant = IQuantConv2d(in_channels,
-                    out_channels,
-                    kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    groups=groups,
-                    dilation=dilation,
-                    bias=bias,
-                    padding_mode=padding_mode)
-            else:
-                self.quant = QuantConv2d(in_channels,
-                    out_channels,
-                    kernel_size,
-                    stride=stride,
-                    padding=padding,
-                    groups=groups,
-                    dilation=dilation,
-                    bias=bias,
-                    padding_mode=padding_mode,
-                    quant_desc_weight=quant_desc_weight,
-                    quant_desc_input=quant_desc_input)
+            self.quant = QuantConv2d(in_channels,
+                out_channels,
+                kernel_size,
+                stride=stride,
+                padding=padding,
+                groups=groups,
+                dilation=dilation,
+                bias=bias,
+                padding_mode=padding_mode,
+                quant_desc_weight=quant_desc_weight,
+                quant_desc_input=quant_desc_input)
         else:
             self.quant = nn.Conv2d(in_channels, 
                     out_channels,

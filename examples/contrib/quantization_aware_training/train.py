@@ -47,26 +47,29 @@ def main():
     train_loader = loaders.train_loader()
     test_loader = loaders.test_loader()
 
+    #Model selection
+
     if args.m =="resnet18":
-        if args.netqat:
+        if args.quantize:
             model=resnet18(qat_mode=True)
+        elif args.pretrain:
+            model=transfer_learning_resnet18()
         else:
             model=resnet18()
     elif args.m =="resnet34":
-        if args.netqat:
+        if args.quantize:
             model=resnet34(qat_mode=True)
+        elif args.pretrain:
+            model = transfer_learning_resnet34()
         else:
             model=resnet34()
-    elif args.m == 'resnet34-tl':
-        model = transfer_learning_resnet34()
-    elif args.m == "resnet18-tl": ## resnet18 transfer learning
-        model=transfer_learning_resnet18()
     else:
         raise NotImplementedError("model {} is not defined".format(args.m))
 
     if args.cuda:
         model = model.cuda()
-
+    
+    ## Loading checkpoint 
     best_test_accuracy=0
     if args.v:
         print("======>>> keys present in state dict at model creation")
@@ -82,8 +85,7 @@ def main():
                 print("====>>>>> keys present in the ckpt state dict")
                 for k,_ in model_state.items():
                     print(k)
-            if args.tl:
-                model_state = mapping_names(model_state)
+            model_state = mapping_names(model_state)
             new_state_dict = add_missing_keys(model.state_dict(),model_state)
             model.load_state_dict(new_state_dict,strict=True)
         else:
@@ -103,7 +105,6 @@ def main():
         running_loss=0.0
         start=time.time()
         for i, data in enumerate(train_loader,0):
-            print(i)
             inputs, labels = data
 
             if args.cuda:
@@ -144,7 +145,6 @@ def main():
                 'loss': running_loss,
                 }, best_ckpt_filename)
     print("Training finished")
-    quant_nn.TensorQuantizer.use_fb_fake_quant = True 
     model.eval()
     with torch.no_grad():
         data = iter(test_loader)
@@ -156,9 +156,9 @@ def main():
     #exit(0)
     ## Running metrics
     if args.test_trt:
-        if args.m == 'resnet34-tl' or args.m == 'resnet34':
+        if args.m == 'resnet34':
             model = transfer_learning_resnet34(pretrained=False)
-        elif args.m == 'resnet18-tl' or args.m == 'resnet18':
+        elif args.m == 'resnet18':
             model= transfer_learning_resnet18(pretrained=False)
         else:
             raise NotImplementedError("model {} is not defined".format(args.m))

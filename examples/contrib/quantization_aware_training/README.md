@@ -49,15 +49,15 @@ Workflow consists of three parts.
 
 Here pretrained weights from imagenet are used. 
 
-`python train.py --m resnet34-tl / resnet18-tl --num_epochs 45 --test_trt --FP16 --INT8PTC`
+`python train.py --m resnet34 / resnet18 --pretrain --num_epochs 45 --test_trt --FP16 --INT8PTC`
 
 2. Train with quantization (weights are mapped using a custom function to make sure that each weight is loaded correctly)
 
-`python train.py --m resnet34/ resnet18 --netqat --partial_ckpt --tl --load_ckpt /tmp/pytorch_exp/{} --num_epochs 25 --lr 1e-4 --lrdt 10`
+`python train.py --m resnet34/ resnet18 --quantize --partial_ckpt --load_ckpt /tmp/pytorch_exp/{} --num_epochs 25 --lr 1e-4 --lrdt 10`
 
 3. Infer with and without TRT
 
-`python infer.py --m resnet34/resnet18 --load_ckpt /tmp/pytorch_exp_1/ckpt_{} --netqat --INT8QAT`
+`python infer.py --m resnet34/resnet18 --load_ckpt /tmp/pytorch_exp_1/ckpt_{} --quantize --INT8QAT`
 
 
 ## Accuracy Results 

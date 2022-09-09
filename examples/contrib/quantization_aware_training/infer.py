@@ -29,12 +29,12 @@ def main():
 
     if args.m == "resnet18":
         if args.netqat:
-            model=resnet18(qat_mode=True,infer=False)
+            model=resnet18(qat_mode=True)
         else:
             model=resnet18()
     elif args.m == "resnet34":
         if args.netqat:
-            model=resnet34(qat_mode=True,infer=True)
+            model=resnet34(qat_mode=True)
         else:
             model=resnet34()
     else:
