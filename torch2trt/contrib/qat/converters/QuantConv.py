@@ -1,7 +1,6 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 import tensorrt as trt
-import pdb
 
 @tensorrt_converter('torch2trt.contrib.qat.layers.quant_conv.QuantConv2d.forward', enabled=trt_version() >= '8.0') 
 def convert_QuantConv(ctx):
@@ -28,7 +27,7 @@ def convert_QuantConv(ctx):
     if not isinstance(dilation, tuple):
         dilation = (dilation, ) * input_dim
 
-    kernel = module.weight.detach()
+    kernel = module.weight.detach()#.cpu().numpy()
     
     bias = None #trt.Weights(torch_dtype_to_trt(module.weight.dtype))
     if module.bias is not None:
@@ -37,10 +36,7 @@ def convert_QuantConv(ctx):
     ## Add quantizatin and dequantization nodes for inputs and weights
     # Input Layer quantization
     # Adding scale as ITensor
-    print("scale shape",module._input_quantizer.quant_scale)
     scale_trt = ctx.network.add_constant(tuple(module._input_quantizer.quant_scale.shape),module._input_quantizer.quant_scale.detach().cpu().numpy())
-    #scale_trt = add_missing_trt_tensors(ctx.network,[module._input_quantizer.quant_scale])[0]
-    print("Quantizer")
     input_quantizer = ctx.network.add_quantize(
             input=input_trt,
             scale=scale_trt.get_output(0))
@@ -50,7 +46,6 @@ def convert_QuantConv(ctx):
     else:
         input_quantizer.axis=0
 
-    print("DEQUANTIZER")    
     input_dequantizer = ctx.network.add_dequantize(
             input = input_quantizer.get_output(0),
             scale = scale_trt.get_output(0))
@@ -58,10 +53,10 @@ def convert_QuantConv(ctx):
     if hasattr(module._input_quantizer,'quant_axis'):
         input_dequantizer.axis = module._input_quantizer.quant_axis.to(torch.long).item()
     else:
-        print("adding axis")
         input_dequantizer.axis=0
-
+    
     # Weight quantization
+    ## currently not using weight quantizer, waiting for a resolution on the issue.
     kernel_trt = ctx.network.add_constant(tuple(kernel.shape),kernel.cpu().numpy())
     scale_trt = ctx.network.add_constant(tuple(module._weight_quantizer.quant_scale.shape),module._weight_quantizer.quant_scale.detach().cpu().numpy()) 
     weight_quantizer = ctx.network.add_quantize(
@@ -76,21 +71,25 @@ def convert_QuantConv(ctx):
     weight_dequantizer = ctx.network.add_dequantize(
             input = weight_quantizer.get_output(0),
             scale = scale_trt.get_output(0))
-    pdb.set_trace()
+    
     if hasattr(module._weight_quantizer,'quant_axis'):
         weight_dequantizer.axis = module._weight_quantizer.quant_axis.to(torch.long).item()
     else:
         weight_dequantizer.axis = 0
 
+    # Creating dummy kernel to pass creation of conv layer. will substitute this with an actual kernel later
+    dummy_kernel = trt.Weights()
+
     layer = ctx.network.add_convolution_nd(
         input=input_dequantizer.get_output(0),
         num_output_maps=module.out_channels,
         kernel_shape=kernel_size,
-        kernel=weight_dequantizer.get_output(0),
+        kernel=dummy_kernel, #weight_dequantizer.get_output(0),
         bias=bias)
     layer.stride_nd = stride
     layer.padding_nd = padding
     layer.dilation_nd = dilation
+    layer.set_input(1,weight_dequantizer.get_output(0))
 
     if module.groups is not None:
         layer.num_groups = module.groups

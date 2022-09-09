@@ -13,12 +13,10 @@ from torch.nn.modules.utils import _single, _pair, _triple
 from pytorch_quantization import tensor_quant
 from pytorch_quantization.nn.modules.quant_conv import _QuantConvNd
 import pytorch_quantization.nn.modules._utils as _utils 
-from . import _utils as utils
 from absl import logging
 
 '''
-Training class to quantize the input and weights of conv2d.
-Source code inspired from <insert path>
+Custom class to quantize the input and weights of conv2d.
 '''
 
 class QuantConv2d(_QuantConvNd):
@@ -101,8 +99,7 @@ class QuantConv2d(_QuantConvNd):
     def forward(self, input):
         # the actual quantization happens in the next level of the class hierarchy
         quant_input, quant_weight = self._quant(input)
-        if self.eval:
-            self.extract_quant_info()
+        self.extract_quant_info()
 
         if self.padding_mode == 'circular':
             expanded_padding = ((self.padding[1] + 1) // 2, self.padding[1] // 2,
@@ -115,34 +112,5 @@ class QuantConv2d(_QuantConvNd):
                               self.groups)
 
         return output
-
-
-## Inference class for quantized conv2d
-class IQuantConv2d(torch.nn.Conv2d,utils.QuantMixin):
-    '''
-    mimicking inference side of Conv2d to map correctly to TRT
-    Layer to be used with TRT only.
-    '''
-    def __init__(self,in_channels,
-                out_channels,
-                kernel_size,
-                stride=1,
-                padding=0,
-                dilation=1,
-                groups=1,
-                bias=True,
-                padding_mode='zeros'):
-        super().__init__(in_channels,out_channels,kernel_size,stride=stride,padding=padding,dilation=dilation,groups=groups,bias=bias,padding_mode=padding_mode)
-        self.init_quantizer()
-
-    def __repr__(self):
-        s = super().__repr__()
-        s = "(" + s + "learned amax for weights {0:.4f})".format(self._weight_quantizer.learned_amax) + "\n" +  "(" + s + "learned amax for input {0:.4f})".format(self._input_quantizer.learned_amax)
-        return s
-
-    def forward(self,inputs):
-        output = F.conv2d(inputs,self.weight,self.bias,self.stride,self.padding,self.dilation,self.groups)
-        return output
-
 
 
