@@ -28,12 +28,12 @@ def main():
     test_loader = loaders.test_loader()
 
     if args.m == "resnet18":
-        if args.netqat:
+        if args.quantize:
             model=resnet18(qat_mode=True)
         else:
             model=resnet18()
     elif args.m == "resnet34":
-        if args.netqat:
+        if args.quantize:
             model=resnet34(qat_mode=True)
         else:
             model=resnet34()
@@ -50,7 +50,7 @@ def main():
     #    print(k)
     if args.load_ckpt:
         checkpoint = torch.load(args.load_ckpt)
-        if not args.netqat:
+        if not args.quantize:
             checkpoint = mapping_names_resnets(checkpoint)
         model.load_state_dict(checkpoint['model_state_dict'],strict=True)
         print("===>>> Checkpoint loaded successfully from {} ".format(args.load_ckpt))

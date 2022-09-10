@@ -120,9 +120,6 @@ def main():
 
             running_loss +=loss.item()
 
-            if i == 20:
-                break
-        
         if epoch > 0 and  epoch % args.lrdt == 0:
             print("===>> decaying learning rate at epoch {}".format(epoch))
             for param_group in optimizer.param_groups:
@@ -145,16 +142,7 @@ def main():
                 'loss': running_loss,
                 }, best_ckpt_filename)
     print("Training finished")
-    model.eval()
-    with torch.no_grad():
-        data = iter(test_loader)
-        images, _ = data.next()
-        out = model(images.cuda())
-        print(model)
-
-
-    #exit(0)
-    ## Running metrics
+    
     if args.test_trt:
         if args.m == 'resnet34':
             model = transfer_learning_resnet34(pretrained=False)
@@ -183,10 +171,8 @@ def main():
                 calib_dataset = list()
                 for i, sam in enumerate(test_loader):
                     calib_dataset.extend(sam[0])
-                    if i ==5:
-                        break
 
-                trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=16)
+                trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=1)
                 torch.cuda.synchronize()
                 int8_test_accuracy = calculate_accuracy(trt_model_calib_int8,test_loader)
 

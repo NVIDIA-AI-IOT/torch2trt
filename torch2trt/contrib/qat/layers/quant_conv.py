@@ -23,7 +23,7 @@ class QuantConv2d(_QuantConvNd):
     """Quantized 2D conv"""
 
     default_quant_desc_weight = tensor_quant.QUANT_DESC_8BIT_CONV2D_WEIGHT_PER_CHANNEL
-
+    default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -66,7 +66,21 @@ class QuantConv2d(_QuantConvNd):
             axis = quant_dim
             quant_min = -bound - 1 if not quantizer._unsigned else 0
             quant_max = bound
+        
+        scale = self.correct_tensor_type(scale)
+        zero_point = self.correct_tensor_type(zero_point)
+        quant_min = self.correct_tensor_type(quant_min)
+        quant_max = self.correct_tensor_type(quant_max)
+        axis = self.correct_tensor_type(axis)
         return scale, zero_point, quant_min, quant_max, axis
+
+    def correct_tensor_type(self,variable):
+        if torch.is_tensor(variable):
+            return torch.nn.Parameter(variable,requires_grad=False)
+        elif variable is None:
+            return variable
+        else:
+            return torch.nn.Parameter(torch.as_tensor([variable]),requires_grad=False)
 
     def extract_quant_info(self):
         logging.log_first_n(logging.WARNING, "Calculating quantization metrics for {}".format(self.__class__), 1) 
@@ -76,25 +90,25 @@ class QuantConv2d(_QuantConvNd):
             logging.log_first_n(logging.WARNING, "per channel quantization for input quantizer", 1)
         scale, zero_point,quant_min, quant_max, axis = self._extract_info(self._input_quantizer)
         
-        setattr(self._input_quantizer, 'quant_scale', torch.nn.Parameter(torch.as_tensor([scale]),requires_grad=False))
-        setattr(self._input_quantizer, 'zero_point', torch.nn.Parameter(torch.as_tensor([zero_point]),requires_grad=False))
-        setattr(self._input_quantizer, 'quant_min', torch.nn.Parameter(torch.as_tensor([quant_min]),requires_grad=False))
-        setattr(self._input_quantizer, 'quant_max', torch.nn.Parameter(torch.as_tensor([quant_max]),requires_grad=False))
+        setattr(self._input_quantizer, 'quant_scale', scale)
+        setattr(self._input_quantizer, 'zero_point', zero_point)
+        setattr(self._input_quantizer, 'quant_min', quant_min)
+        setattr(self._input_quantizer, 'quant_max', quant_max)
         if not axis == None:
-            setattr(self._input_quantizer, 'quant_axis', torch.nn.Parameter(torch.as_tensor([axis]),requires_grad=False))
+            setattr(self._input_quantizer, 'quant_axis',axis )
 
         if self._weight_quantizer.learned_amax.numel() == 1:
             logging.log_first_n(logging.WARNING, "per tensor quantization for weight quantizer", 1)
         else:
             logging.log_first_n(logging.WARNING, "per channel quantization for weight quantizer", 1)
         scale, zero_point, quant_min, quant_max, axis = self._extract_info(self._weight_quantizer)
-
-        setattr(self._weight_quantizer, 'quant_scale', torch.nn.Parameter(torch.as_tensor([scale]),requires_grad=False))
-        setattr(self._weight_quantizer, 'zero_point', torch.nn.Parameter(torch.as_tensor([zero_point]),requires_grad=False))
-        setattr(self._weight_quantizer, 'quant_min', torch.nn.Parameter(torch.as_tensor([quant_min]),requires_grad=False))
-        setattr(self._weight_quantizer, 'quant_max', torch.nn.Parameter(torch.as_tensor([quant_max]),requires_grad=False))
+        
+        setattr(self._weight_quantizer, 'quant_scale', scale)
+        setattr(self._weight_quantizer, 'zero_point', zero_point)
+        setattr(self._weight_quantizer, 'quant_min', quant_min)
+        setattr(self._weight_quantizer, 'quant_max', quant_max)
         if not axis == None:
-            setattr(self._weight_quantizer, 'quant_axis', torch.nn.Parameter(torch.as_tensor([axis]),requires_grad=False))
+            setattr(self._weight_quantizer, 'quant_axis', axis)
 
     def forward(self, input):
         # the actual quantization happens in the next level of the class hierarchy

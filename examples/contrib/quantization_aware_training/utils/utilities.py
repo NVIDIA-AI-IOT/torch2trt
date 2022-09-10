@@ -73,7 +73,7 @@ class qconv2d(torch.nn.Module):
             bias = None,
             padding_mode: str='zeros',
             qat: bool=False,
-            quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR,
+            quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_CONV2D_WEIGHT_PER_CHANNEL,#tensor_quant.QUANT_DESC_8BIT_PER_TENSOR,
             quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR):
         super().__init__()
         if qat:
@@ -119,9 +119,6 @@ def calculate_accuracy(model,data_loader, is_cuda=True):
             correct += (predicted==labels).sum().item()
             if is_cuda:
                 torch.cuda.synchronize()
-            count+=1
-            if count == 100:
-                break
     acc = correct * 100 / total
     return acc 
 

@@ -27,7 +27,7 @@ def convert_QuantConv(ctx):
     if not isinstance(dilation, tuple):
         dilation = (dilation, ) * input_dim
 
-    kernel = module.weight.detach()#.cpu().numpy()
+    kernel = module.weight.detach()
     
     bias = None #trt.Weights(torch_dtype_to_trt(module.weight.dtype))
     if module.bias is not None:
@@ -67,7 +67,7 @@ def convert_QuantConv(ctx):
         weight_quantizer.axis = module._weight_quantizer.quant_axis.to(torch.long).item()
     else:
         weight_quantizer.axis = 0
-
+    
     weight_dequantizer = ctx.network.add_dequantize(
             input = weight_quantizer.get_output(0),
             scale = scale_trt.get_output(0))
@@ -84,7 +84,7 @@ def convert_QuantConv(ctx):
         input=input_dequantizer.get_output(0),
         num_output_maps=module.out_channels,
         kernel_shape=kernel_size,
-        kernel=dummy_kernel, #weight_dequantizer.get_output(0),
+        kernel=dummy_kernel, 
         bias=bias)
     layer.stride_nd = stride
     layer.padding_nd = padding
