@@ -171,6 +171,8 @@ def main():
                 calib_dataset = list()
                 for i, sam in enumerate(test_loader):
                     calib_dataset.extend(sam[0])
+                    if i == 750:
+                        break
 
                 trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=1)
                 torch.cuda.synchronize()

@@ -66,7 +66,7 @@ def main():
     
     if args.INT8QAT:
         model = model.eval()
-        trt_model_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_mode=True,max_batch_size=128,qat_mode=True)
+        trt_model_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.VERBOSE,fp16_mode=True,int8_mode=True,max_batch_size=128,qat_mode=True)
         test_accuracy = calculate_accuracy(trt_model_int8,test_loader)
         print(" TRT test accuracy at INT8 QAT: {0}".format(test_accuracy))
     

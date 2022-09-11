@@ -4,6 +4,7 @@ import numpy as np
 import collections
 from pytorch_quantization import tensor_quant
 from torch2trt.contrib.qat.layers.quant_conv import QuantConv2d
+from torch2trt.contrib.qat.layers.quant_pooling import QuantMaxPool2d
 import torchvision.models as models  
 import re
 import timeit
@@ -57,7 +58,7 @@ Wrapper for conv2d
 Toggles between QAT mode(on and off)
 '''
 
-class qconv2d(torch.nn.Module):
+class QConv2d(torch.nn.Module):
     """
     common layer for qat and non qat mode
     """
@@ -73,7 +74,7 @@ class qconv2d(torch.nn.Module):
             bias = None,
             padding_mode: str='zeros',
             qat: bool=False,
-            quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_CONV2D_WEIGHT_PER_CHANNEL,#tensor_quant.QUANT_DESC_8BIT_PER_TENSOR,
+            quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_CONV2D_WEIGHT_PER_CHANNEL,
             quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR):
         super().__init__()
         if qat:
@@ -101,6 +102,41 @@ class qconv2d(torch.nn.Module):
     def forward(self,inputs):
         return self.quant(inputs)
 
+class QMaxPool2d(torch.nn.Module):
+    '''
+    wrapper for maxpool2d layer to toggle between qat and non-qat mode
+    '''
+    def __init__(
+            self,
+            kernel_size,
+            stride=None,
+            padding=0,
+            dilation=1,
+            return_indices=False,
+            ceil_mode=False,
+            qat_mode = False,
+            quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR):
+        super().__init__()
+        if qat_mode:
+            self.quant = QuantMaxPool2d(
+                    kernel_size,
+                    stride=stride,
+                    padding=padding,
+                    dilation=dilation,
+                    return_indices=return_indices,
+                    ceil_mode=ceil_mode,
+                    quant_desc_input=quant_desc_input)
+        else:
+            self.quant= nn.MaxPool2d(kernel_size,
+                    stride=stride,
+                    padding=padding,
+                    dilation=dilation,
+                    return_indices=return_indices,
+                    ceil_mode=ceil_mode)
+
+    def forward(self,input):
+        return self.quant(input)
+                    
 
 def calculate_accuracy(model,data_loader, is_cuda=True):
     correct=0
