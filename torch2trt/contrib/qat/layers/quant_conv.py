@@ -113,15 +113,15 @@ class QuantConv2d(_QuantConvNd):
     def quantize_tensor(self,quantizer,input):
         if quantizer.learned_amax.numel() == 1:
             quant_input = torch.fake_quantize_per_tensor_affine(input,
-                    quantizer.scale,
+                    quantizer.quant_scale.to(torch.float32).item(),
                     quantizer.zero_point.to(torch.long).item(),
                     quantizer.quant_min.to(torch.long).item(),
                     quantizer.quant_max.to(torch.long).item())
         else:
             quant_input = torch.fake_quantize_per_channel_affine(input,
-                    quantizer.scale,
-                    quantizer.zero_point,
-                    quantizer.axis.to(torch.long).item(),
+                    quantizer.quant_scale,
+                    quantizer.zero_point.to(torch.long),
+                    quantizer.quant_axis.to(torch.long).item(),
                     quantizer.quant_min.to(torch.long).item(),
                     quantizer.quant_max.to(torch.long).item())
 
