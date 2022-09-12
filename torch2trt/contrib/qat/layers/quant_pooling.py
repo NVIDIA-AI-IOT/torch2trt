@@ -13,7 +13,7 @@ from torch.nn.modules.utils import _single, _pair, _triple
 from pytorch_quantization import tensor_quant
 import pytorch_quantization.nn.modules._utils as _utils 
 from absl import logging
-
+from . import utils
 '''
 Custom class to quantize the input of various pooling layers.
 '''
@@ -21,7 +21,6 @@ Custom class to quantize the input of various pooling layers.
 class QuantMaxPool2d(torch.nn.Module,_utils.QuantInputMixin):
     """Quantized 2D maxpool"""
     default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
-
     def __init__(self, kernel_size, stride=None, padding=0, dilation=1,
                  return_indices=False, ceil_mode=False, **kwargs):
         super().__init__()
@@ -81,17 +80,39 @@ class QuantMaxPool2d(torch.nn.Module,_utils.QuantInputMixin):
         setattr(self._input_quantizer, 'quant_max', quant_max)
         if not axis == None:
             setattr(self._input_quantizer, 'quant_axis',axis )
+    
+    def quantize_input(self,quantizer,input):
+        if quantizer.learned_amax.numel() == 1:
+            quant_input = torch.fake_quantize_per_tensor_affine(input,
+                    quantizer.scale,
+                    quantizer.zero_point.to(torch.long).item(),
+                    quantizer.quant_min.to(torch.long).item(),
+                    quantizer.quant_max.to(torch.long).item())
+        else:
+            quant_input = torch.fake_quantize_per_channel_affine(input,
+                    quantizer.scale,
+                    quantizer.zero_point,
+                    quantizer.axis.to(torch.long).item(),
+                    quantizer.quant_min.to(torch.long).item(),
+                    quantizer.quant_max.to(torch.long).item())
+
+        return quant_input
 
     def forward(self, input):
-        quant_input = self._input_quantizer(input)
-        self.extract_quant_info()
+        if self.training:
+            quant_input = self._input_quantizer(input)
+            self.extract_quant_info()
+        else:
+            if not utils.HelperFunction.export_trt:
+                quant_input = self.quantize_input(self._input_quantizer,input)
+            else: quant_input = input
+ 
         output = self.maxpool2d(quant_input)
         return output
 
 class QuantAdaptiveAvgPool2d(torch.nn.Module,_utils.QuantInputMixin):
     """Quantized AdaptiveAvgPool2d layer"""
     default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
-
     def __init__(self, output_size, **kwargs):
         super().__init__()
         quant_desc_input = _utils.pop_quant_desc_in_kwargs(self.__class__, input_only=True, **kwargs)
@@ -150,9 +171,34 @@ class QuantAdaptiveAvgPool2d(torch.nn.Module,_utils.QuantInputMixin):
         if not axis == None:
             setattr(self._input_quantizer, 'quant_axis',axis )
 
+    def quantize_input(self,quantizer,input):
+        if quantizer.learned_amax.numel() == 1:
+            quant_input = torch.fake_quantize_per_tensor_affine(input,
+                    quantizer.scale,
+                    quantizer.zero_point.to(torch.long).item(),
+                    quantizer.quant_min.to(torch.long).item(),
+                    quantizer.quant_max.to(torch.long).item())
+        else:
+            quant_input = torch.fake_quantize_per_channel_affine(input,
+                    quantizer.scale,
+                    quantizer.zero_point,
+                    quantizer.axis.to(torch.long).item(),
+                    quantizer.quant_min.to(torch.long).item(),
+                    quantizer.quant_max.to(torch.long).item())
+
+        return quant_input
+
     def forward(self, input):
-        quant_input = self._input_quantizer(input)
-        self.extract_quant_info()
+        if self.training:
+            quant_input = self._input_quantizer(input)
+            self.extract_quant_info()
+        else:
+            # It is expected that model has already been finetuned / trained with qat.
+            # For quick inference test, run a single step of train step to invoke and save quantization parameters
+            if not utils.HelperFunction.export_trt:
+                quant_input = self.quantize_input(self._input_quantizer,input)
+            else: quant_input = input
+        
         output = self.adaptive_avg_pool2d(quant_input)
         return output
 
