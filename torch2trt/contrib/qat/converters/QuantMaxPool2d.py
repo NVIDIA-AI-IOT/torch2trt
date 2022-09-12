@@ -2,7 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 @tensorrt_converter('torch2trt.contrib.qat.layers.quant_pooling.QuantMaxPool2d.forward', enabled=trt_version() >= '8.0') 
-def convert_QuantConv(ctx):
+def convert_QuantMaxPool2d(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]

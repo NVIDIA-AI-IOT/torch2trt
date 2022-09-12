@@ -4,7 +4,7 @@ import numpy as np
 import collections
 from pytorch_quantization import tensor_quant
 from torch2trt.contrib.qat.layers.quant_conv import QuantConv2d
-from torch2trt.contrib.qat.layers.quant_pooling import QuantMaxPool2d
+from torch2trt.contrib.qat.layers.quant_pooling import QuantMaxPool2d, QuantAdaptiveAvgPool2d
 import torchvision.models as models  
 import re
 import timeit
@@ -102,6 +102,10 @@ class QConv2d(torch.nn.Module):
     def forward(self,inputs):
         return self.quant(inputs)
 
+'''
+Wrapper for MaxPool2d
+'''
+
 class QMaxPool2d(torch.nn.Module):
     '''
     wrapper for maxpool2d layer to toggle between qat and non-qat mode
@@ -137,6 +141,30 @@ class QMaxPool2d(torch.nn.Module):
     def forward(self,input):
         return self.quant(input)
                     
+'''
+Wrapper for AdaptiveAvgPool2d
+'''
+
+class QAdaptiveAvgPool2d(torch.nn.Module):
+    '''
+    wrapper for AdaptiveAvgPool2d layer to toggle between qat and non-qat mode
+    '''
+    def __init__(
+            self,
+            output_size,
+            qat_mode = False,
+            quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR):
+        super().__init__()
+        if qat_mode:
+            self.quant = QuantAdaptiveAvgPool2d(
+                    output_size,
+                    quant_desc_input=quant_desc_input)
+        else:
+            self.quant= nn.AdaptiveAvgPool2d(output_size)
+
+    def forward(self,input):
+        return self.quant(input)
+ 
 
 def calculate_accuracy(model,data_loader, is_cuda=True):
     correct=0

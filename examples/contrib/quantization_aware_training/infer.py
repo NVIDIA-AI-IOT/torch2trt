@@ -11,6 +11,7 @@ from models.resnet import resnet18,resnet34
 from parser import parse_args
 from torch2trt import torch2trt
 import tensorrt as trt
+from torch2trt.utils import trt_network_to_dot_graph
 torch.set_printoptions(precision=5)
 
 def main():
@@ -55,8 +56,8 @@ def main():
         model.load_state_dict(checkpoint['model_state_dict'],strict=True)
         print("===>>> Checkpoint loaded successfully from {} ".format(args.load_ckpt))
     
-    test_accuracy = calculate_accuracy(model,test_loader)
-    print(" Test accuracy for Pytorch model: {0} ".format(test_accuracy))
+    #test_accuracy = calculate_accuracy(model,test_loader)
+    #print(" Test accuracy for Pytorch model: {0} ".format(test_accuracy))
     
     #Converting the model to TRT
     if args.FP16:
@@ -67,6 +68,8 @@ def main():
     if args.INT8QAT:
         model = model.eval()
         trt_model_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.VERBOSE,fp16_mode=True,int8_mode=True,max_batch_size=128,qat_mode=True)
+        dot = trt_network_to_dot_graph(trt_model_int8.network)
+        dot.render('model_network.gv', view=True)
         test_accuracy = calculate_accuracy(trt_model_int8,test_loader)
         print(" TRT test accuracy at INT8 QAT: {0}".format(test_accuracy))
     
