@@ -73,7 +73,7 @@ def main():
         trt_model_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.VERBOSE,fp16_mode=True,int8_mode=True,max_batch_size=128,qat_mode=True,strict_type_constraints=True)
         #dot = trt_network_to_dot_graph(trt_model_int8.network)
         #dot.render('model_network.gv', view=True)
-        #test_accuracy = calculate_accuracy(trt_model_int8,test_loader)
+        test_accuracy = calculate_accuracy(trt_model_int8,test_loader)
         print(" TRT test accuracy at INT8 QAT: {0}".format(test_accuracy))
     
     if args.INT8PTC:

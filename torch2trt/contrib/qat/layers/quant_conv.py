@@ -14,7 +14,7 @@ from pytorch_quantization import tensor_quant
 from pytorch_quantization.nn.modules.quant_conv import _QuantConvNd
 import pytorch_quantization.nn.modules._utils as _utils 
 from absl import logging
-
+from . import utils
 '''
 Custom class to quantize the input and weights of conv2d.
 '''
@@ -109,11 +109,36 @@ class QuantConv2d(_QuantConvNd):
         setattr(self._weight_quantizer, 'quant_max', quant_max)
         if not axis == None:
             setattr(self._weight_quantizer, 'quant_axis', axis)
+    
+    def quantize_tensor(self,quantizer,input):
+        if quantizer.learned_amax.numel() == 1:
+            quant_input = torch.fake_quantize_per_tensor_affine(input,
+                    quantizer.scale,
+                    quantizer.zero_point.to(torch.long).item(),
+                    quantizer.quant_min.to(torch.long).item(),
+                    quantizer.quant_max.to(torch.long).item())
+        else:
+            quant_input = torch.fake_quantize_per_channel_affine(input,
+                    quantizer.scale,
+                    quantizer.zero_point,
+                    quantizer.axis.to(torch.long).item(),
+                    quantizer.quant_min.to(torch.long).item(),
+                    quantizer.quant_max.to(torch.long).item())
+
+        return quant_input
+
 
     def forward(self, input):
-        # the actual quantization happens in the next level of the class hierarchy
-        quant_input, quant_weight = self._quant(input)
-        self.extract_quant_info()
+        if self.training:
+            quant_input, quant_weight = self._quant(input)
+            self.extract_quant_info()
+        else:
+            if not utils.HelperFunction.export_trt:
+                quant_input = self.quantize_tensor(self._input_quantizer,input)
+                quant_weight = self.quantize_tensor(self._weight_quantizer,self.weight)
+            else:
+                quant_input = input
+                quant_weight = self.weight
 
         if self.padding_mode == 'circular':
             expanded_padding = ((self.padding[1] + 1) // 2, self.padding[1] // 2,
