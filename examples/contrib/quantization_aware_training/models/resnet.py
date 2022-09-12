@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 from utils.utilities import QConv2d,QMaxPool2d,QAdaptiveAvgPool2d
+from torch2trt.contrib.qat.layers.quant_generic_tensor import QuantGenericTensor
+from pytorch_quantization import tensor_quant
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
@@ -51,6 +53,8 @@ class BasicBlock(nn.Module):
         self.bn2 = norm_layer(planes)
         self.downsample = downsample
         self.stride = stride
+        self.qat_mode= qat_mode
+        self.QuantGenericTensor = QuantGenericTensor(quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)
 
     def forward(self, x):
         identity = x
@@ -64,7 +68,8 @@ class BasicBlock(nn.Module):
 
         if self.downsample is not None:
             identity = self.downsample(x)
-
+        if self.qat_mode:
+            identity = self.QuantGenericTensor(identity)
         out += identity
         out = self.relu(out)
 

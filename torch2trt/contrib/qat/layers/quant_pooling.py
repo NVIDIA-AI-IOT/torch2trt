@@ -2,7 +2,7 @@
 Original source code taken from nvidia quantization library. 
 Changes made to correctly map quantized pytorch layers to TensorRT layers at INT8
 
-Original source: tools/pytorch_quantization/pytorch_quantization/nn/modules/quant_conv.py under 
+Original source: tools/pytorch_quantization/pytorch_quantization/nn/modules/quant_pooling.py under 
 https://github.com/NVIDIA/TensorRT.git
 """
 
@@ -32,7 +32,6 @@ class QuantMaxPool2d(torch.nn.Module,_utils.QuantInputMixin):
     def _extract_info(self,quantizer):
         bound = (1 << (quantizer._num_bits - 1 + int(quantizer._unsigned))) - 1
         amax = quantizer.learned_amax
-        quantizer._scale = amax
         if amax.numel() == 1:
             scale=amax.item() / bound
             zero_point = 0
@@ -82,6 +81,7 @@ class QuantMaxPool2d(torch.nn.Module,_utils.QuantInputMixin):
             setattr(self._input_quantizer, 'quant_axis',axis )
     
     def quantize_input(self,quantizer,input):
+        quantizer._scale = quantizer.learned_amax
         if quantizer.learned_amax.numel() == 1:
             quant_input = torch.fake_quantize_per_tensor_affine(input,
                     quantizer.quant_scale.to(torch.float32).item(),
@@ -122,7 +122,6 @@ class QuantAdaptiveAvgPool2d(torch.nn.Module,_utils.QuantInputMixin):
     def _extract_info(self,quantizer):
         bound = (1 << (quantizer._num_bits - 1 + int(quantizer._unsigned))) - 1
         amax = quantizer.learned_amax
-        quantizer._scale = amax
         if amax.numel() == 1:
             scale=amax.item() / bound
             zero_point = 0
@@ -172,6 +171,7 @@ class QuantAdaptiveAvgPool2d(torch.nn.Module,_utils.QuantInputMixin):
             setattr(self._input_quantizer, 'quant_axis',axis )
 
     def quantize_input(self,quantizer,input):
+        quantizer._scale = quantizer.learned_amax
         if quantizer.learned_amax.numel() == 1:
             quant_input = torch.fake_quantize_per_tensor_affine(input,
                     quantizer.quant_scale.to(torch.float32).item(),
