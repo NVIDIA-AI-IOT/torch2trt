@@ -11,7 +11,6 @@ from models.resnet import resnet18,resnet34
 from parser import parse_args
 from torch2trt import torch2trt
 import tensorrt as trt
-from torch2trt.utils import trt_network_to_dot_graph
 torch.set_printoptions(precision=5)
 import torch2trt.contrib.qat.layers as quant_nn  
 
@@ -71,8 +70,6 @@ def main():
         quant_nn.HelperFunction.export_trt = True
         model = model.eval()
         trt_model_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.VERBOSE,fp16_mode=True,int8_mode=True,max_batch_size=128,qat_mode=True,strict_type_constraints=True)
-        #dot = trt_network_to_dot_graph(trt_model_int8.network)
-        #dot.render('model_network.gv', view=True)
         test_accuracy = calculate_accuracy(trt_model_int8,test_loader)
         print(" TRT test accuracy at INT8 QAT: {0}".format(test_accuracy))
     
