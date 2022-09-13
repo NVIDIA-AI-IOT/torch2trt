@@ -93,10 +93,11 @@ class QConv2d(torch.nn.Module):
             self.quant = nn.Conv2d(in_channels, 
                     out_channels,
                     kernel_size,
+                    stride=stride,
                     padding=padding,
                     dilation=dilation,
-                    bias=bias,
                     groups=groups,
+                    bias=bias,
                     padding_mode=padding_mode)
 
     def forward(self,inputs):
