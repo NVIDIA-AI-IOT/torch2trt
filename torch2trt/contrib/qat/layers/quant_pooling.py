@@ -19,7 +19,14 @@ Custom class to quantize the input of various pooling layers.
 '''
 
 class QuantMaxPool2d(torch.nn.Module,_utils.QuantInputMixin):
-    """Quantized 2D maxpool"""
+    """
+    Custom layer to quantize torch.nn.MaxPool2d layer
+    Arguments are exactly the same as torch.nn.MaxPool2d
+    quant_desc_input : Quant Descriptor to quantize input tensor
+    
+    For different type of descriptors, refer to 
+    https://github.com/NVIDIA/TensorRT/blob/e5f9ead4a4826cc774325720a26dbf4ec47203ea/tools/pytorch-quantization/pytorch_quantization/tensor_quant.py#L222
+    """
     default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
     def __init__(self, kernel_size, stride=None, padding=0, dilation=1,
                  return_indices=False, ceil_mode=False, **kwargs):
@@ -111,7 +118,16 @@ class QuantMaxPool2d(torch.nn.Module,_utils.QuantInputMixin):
         return output
 
 class QuantAdaptiveAvgPool2d(torch.nn.Module,_utils.QuantInputMixin):
-    """Quantized AdaptiveAvgPool2d layer"""
+    """
+    Custom layer to quantize torch.nn.AdaptiveAvgPool2d layer
+    Arguments are exactly the same as torch.nn.AdaptiveAvgPool2d
+    quant_desc_input : Quant Descriptor to quantize input tensor
+    
+    For different type of descriptors, refer to 
+    https://github.com/NVIDIA/TensorRT/blob/e5f9ead4a4826cc774325720a26dbf4ec47203ea/tools/pytorch-quantization/pytorch_quantization/tensor_quant.py#L222
+ 
+    """
+
     default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
     def __init__(self, output_size, **kwargs):
         super().__init__()

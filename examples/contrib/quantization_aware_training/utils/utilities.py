@@ -9,17 +9,24 @@ import torchvision.models as models
 import re
 import timeit
 
-def transfer_learning_resnet18(pretrained=True):
-    resnet18 = models.resnet18(pretrained=pretrained)
-    num_ftrs = resnet18.fc.in_features
-    resnet18.fc = nn.Linear(num_ftrs, 10)
-    return resnet18
-
-def transfer_learning_resnet34(pretrained=True):
-    resnet34 = models.resnet34(pretrained=pretrained)
-    num_ftrs = resnet34.fc.in_features
-    resnet34.fc = nn.Linear(num_ftrs,10)
-    return resnet34
+def transfer_learning(model : str, pretrained : bool = True):
+    if model == "resnet18":
+        resnet18 = models.resnet18(pretrained=pretrained)
+        num_ftrs = resnet18.fc.in_features
+        resnet18.fc = nn.Linear(num_ftrs, 10)
+        return resnet18
+    elif model =="resnet34":
+        resnet34 = models.resnet34(pretrained=pretrained)
+        num_ftrs = resnet34.fc.in_features
+        resnet34.fc = nn.Linear(num_ftrs,10)
+        return resnet34
+    elif model == "resnet50":
+        resnet50 = models.resnet50(pretrained=pretrained)
+        num_ftrs = resnet50.fc.in_features
+        resnet50.fc = nn.Linear(num_ftrs,10)
+        return resnet50
+    else:
+        return None
 
 def mapping_names(state_dict):
     '''

@@ -6,9 +6,8 @@ import argparse
 import os,sys 
 import torch.optim as optim 
 from datasets.cifar10 import Cifar10Loaders
-from models.models import vanilla_cnn
-from models.resnet import resnet18 , resnet34
-from utils.utilities import calculate_accuracy , add_missing_keys, transfer_learning_resnet18,transfer_learning_resnet34, mapping_names
+from models.resnet import resnet18 , resnet34, resnet50
+from utils.utilities import calculate_accuracy , add_missing_keys, transfer_learning,mapping_names
 from parser import parse_args
 import time
 from torch2trt import torch2trt
@@ -53,16 +52,23 @@ def main():
         if args.quantize:
             model=resnet18(qat_mode=True)
         elif args.pretrain:
-            model=transfer_learning_resnet18()
+            model=transfer_learning("resnet18",True)
         else:
             model=resnet18()
     elif args.m =="resnet34":
         if args.quantize:
             model=resnet34(qat_mode=True)
         elif args.pretrain:
-            model = transfer_learning_resnet34()
+            model = transfer_learning("resnet34", True)
         else:
             model=resnet34()
+    elif args.m =="resnet50":
+        if args.quantize:
+            model=resnet50(qat_mode=True)
+        elif args.pretrain:
+            model = transfer_learning("resnet50", True)
+        else:
+            model=resnet50()
     else:
         raise NotImplementedError("model {} is not defined".format(args.m))
 
@@ -70,6 +76,7 @@ def main():
         model = model.cuda()
     
     ## Loading checkpoint 
+    
     best_test_accuracy=0
     if args.v:
         print("======>>> keys present in state dict at model creation")
@@ -91,6 +98,8 @@ def main():
         else:
             model.load_state_dict(checkpoint['model_state_dict'],strict=True)
     
+    ## Creating optimizer and loss function
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, momentum=0.9)
     if args.load_ckpt:
@@ -98,6 +107,8 @@ def main():
         epoch = checkpoint['epoch']
         loss = checkpoint['loss']
         print("===>>> Checkpoint loaded successfully from {} at epoch {} ".format(args.load_ckpt,epoch))
+
+    ## Training 
 
     print("===>> Training started")
     model.train()
@@ -143,11 +154,15 @@ def main():
                 }, best_ckpt_filename)
     print("Training finished")
     
+    ## Testing
+
     if args.test_trt:
         if args.m == 'resnet34':
-            model = transfer_learning_resnet34(pretrained=False)
+            model = transfer_learning("resnet34",False)
         elif args.m == 'resnet18':
-            model= transfer_learning_resnet18(pretrained=False)
+            model= transfer_learning("resnet18",False)
+        elif args.m == "resnet50":
+            model = transfer_learning("resnet50",False)
         else:
             raise NotImplementedError("model {} is not defined".format(args.m))
         

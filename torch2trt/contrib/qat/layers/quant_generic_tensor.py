@@ -17,7 +17,16 @@ Custom class to quantize the activation of any layer in the network
 '''
 
 class QuantGenericTensor(torch.nn.Module,_utils.QuantInputMixin):
-    """Quantized activation tensor"""
+    """
+    Generic Tensor to quantize activations. 
+    Parameters:
+    default_quant_desc_input: TensorDescriptor on how to quantize the activations
+    
+    For different type of descriptors, refer to 
+    https://github.com/NVIDIA/TensorRT/blob/e5f9ead4a4826cc774325720a26dbf4ec47203ea/tools/pytorch-quantization/pytorch_quantization/tensor_quant.py#L222
+ 
+    """
+
     default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR
     def __init__(self,**kwargs): 
         super().__init__()

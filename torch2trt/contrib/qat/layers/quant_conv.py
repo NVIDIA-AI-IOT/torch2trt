@@ -20,7 +20,15 @@ Custom class to quantize the input and weights of conv2d.
 '''
 
 class QuantConv2d(_QuantConvNd):
-    """Quantized 2D conv"""
+    """
+    Custom class to quantize Conv2d
+    Arguments are exactly the same as torch.nn.Conv2d
+    quant_desc_input : Quant Descriptor to quantize input tensor
+    quant_dec_weight : Quant Descriptot to quantize weights
+
+    For different type of descriptors, refer to 
+    https://github.com/NVIDIA/TensorRT/blob/e5f9ead4a4826cc774325720a26dbf4ec47203ea/tools/pytorch-quantization/pytorch_quantization/tensor_quant.py#L222
+    """
 
     default_quant_desc_weight = tensor_quant.QUANT_DESC_8BIT_CONV2D_WEIGHT_PER_CHANNEL
     default_quant_desc_input = tensor_quant.QUANT_DESC_8BIT_PER_TENSOR

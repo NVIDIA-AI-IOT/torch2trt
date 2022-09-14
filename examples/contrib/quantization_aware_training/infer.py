@@ -7,7 +7,7 @@ import argparse
 import os,sys 
 from datasets.cifar10 import Cifar10Loaders
 from utils.utilities import calculate_accuracy, timeGraph,printStats
-from models.resnet import resnet18,resnet34
+from models.resnet import resnet18,resnet34,resnet50
 from parser import parse_args
 from torch2trt import torch2trt
 import tensorrt as trt
@@ -23,10 +23,14 @@ def main():
     if args.cuda:
         torch.backends.cudnn.benchmark = True
         torch.cuda.manual_seed(args.seed)
-    
+
+    ## Loading dataset
+
     loaders = Cifar10Loaders()
     train_loader = loaders.train_loader()
     test_loader = loaders.test_loader()
+
+    ## Loading model 
 
     if args.m == "resnet18":
         if args.quantize:
@@ -38,6 +42,11 @@ def main():
             model=resnet34(qat_mode=True)
         else:
             model=resnet34()
+    elif args.m == "resnet50":
+        if args.quantize:
+            model=resnet50(qat_mode=True)
+        else:
+            model=resnet50()
     else:
         raise NotImplementedError("{} model not found".format(args.m))
 
