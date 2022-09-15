@@ -3,17 +3,19 @@
 git clone https://github.com/NVIDIA/TensorRT.git /tmp/TensorRT/
 
 parentdir="$(dirname "$(pwd)")"
-patch="examples/contrib/quantization_aware_training/utils/pytorch_nvidia_quantization.patch"
+patch="examples/contrib/quantization_aware_training/utils/torch2trt_qat.patch"
 patch_file="$parentdir/$patch"
 
 pushd /tmp/TensorRT
     cp $patch_file .
-    #git checkout e724d31ab84626ca334b4284703b5048eb698c98  ## keeping this for versioning control
+    
+    ## Official tags from NVIDIA/TensorRT can't be used as `tools/` folder is not part of official tags
+
+    git checkout e5f9ead4a4826cc774325720a26dbf4ec47203ea  ## NVIDIA/TensorRT master on Sept 14, 2022
     git sparse-checkout init --cone 
     git sparse-checkout set /tools/pytorch-quantization/
-    git apply --reject --whitespace=fix pytorch_nvidia_quantization.patch
+    git apply --whitespace=fix torch2trt_qat.patch
     cd tools/pytorch-quantization/
-    sed -i 's/scipy/scipy==1.5.0/' requirements.txt
     python setup.py install
 popd
 
