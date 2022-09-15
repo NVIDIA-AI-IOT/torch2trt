@@ -38,7 +38,7 @@ Here pretrained weights from imagenet are used.
 |-------|------|------|------------|----------|
 | Resnet18 | 83.78 | 83.77 | 83.78 | 83.78 |
 | Resnet34 | 85.13 | 85.11 | 84.99 | 84.95 |  
-| Resnet50 | 85.56|87.54 |87.49 |87.38 |
+| Resnet50 | 87.56|87.54 |87.49 |87.38 |
 
 Models were intially trained for 40 epochs and then fine tuned with QAT on for 10 epochs.
 
