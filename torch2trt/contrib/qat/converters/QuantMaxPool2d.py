@@ -1,5 +1,6 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
+import tensorrt as trt
 
 @tensorrt_converter('torch2trt.contrib.qat.layers.quant_pooling.QuantMaxPool2d.forward', enabled=trt_version() >= '8.0') 
 def convert_QuantMaxPool2d(ctx):
