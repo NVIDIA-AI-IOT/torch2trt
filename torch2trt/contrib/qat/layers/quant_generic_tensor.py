@@ -96,7 +96,7 @@ class QuantGenericTensor(torch.nn.Module,_utils.QuantInputMixin):
         else:
             quant_input = torch.fake_quantize_per_channel_affine(input,
                     quantizer.quant_scale,
-                    quantizer.zero_point,
+                    quantizer.zero_point.to(torch.long),
                     quantizer.axis.to(torch.int32).item(),
                     quantizer.quant_min.to(torch.long).item(),
                     quantizer.quant_max.to(torch.long).item())
