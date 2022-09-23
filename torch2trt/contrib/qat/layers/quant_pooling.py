@@ -35,81 +35,25 @@ class QuantMaxPool2d(torch.nn.Module,_utils.QuantInputMixin):
         self.maxpool2d = torch.nn.MaxPool2d(kernel_size,stride=stride,padding=padding,
                 dilation=dilation,return_indices=return_indices, ceil_mode=ceil_mode)
 
-    def _extract_info(self,quantizer):
-        bound = (1 << (quantizer._num_bits - 1 + int(quantizer._unsigned))) - 1
-        amax = quantizer.learned_amax
-        if amax.numel() == 1:
-            scale=amax.item() / bound
-            zero_point = 0
-            quant_min = -bound - 1 if not quantizer._unsigned else 0
-            quant_max = bound
-            axis = None
-        else:
-            amax_sequeeze = amax.squeeze().detach()
-            if len(amax_sequeeze.shape) != 1:
-                raise TypeError("Multiple axis is not supported in quantization")
-            quant_dim = list(amax.shape).index(list(amax_sequeeze.shape)[0])
-            scale = amax_sequeeze / bound
-            scale = scale.data
-            zero_point = torch.zeros_like(scale, dtype=torch.int32).data
-            axis = quant_dim
-            quant_min = -bound - 1 if not quantizer._unsigned else 0
-            quant_max = bound
-        
-        scale = self.correct_tensor_type(scale)
-        zero_point = self.correct_tensor_type(zero_point)
-        quant_min = self.correct_tensor_type(quant_min)
-        quant_max = self.correct_tensor_type(quant_max)
-        axis = self.correct_tensor_type(axis)
-        return scale, zero_point, quant_min, quant_max, axis
+        self.infer_input_quantizer = utils.InferQuantTensor()
 
-    def correct_tensor_type(self,variable):
-        if torch.is_tensor(variable):
-            return torch.nn.Parameter(variable,requires_grad=False)
-        elif variable is None:
-            return variable
-        else:
-            return torch.nn.Parameter(torch.as_tensor([variable]),requires_grad=False)
-
-    def extract_quant_info(self):
-        scale, zero_point,quant_min, quant_max, axis = self._extract_info(self._input_quantizer)
-        
-        setattr(self._input_quantizer, 'quant_scale', scale)
-        setattr(self._input_quantizer, 'zero_point', zero_point)
-        setattr(self._input_quantizer, 'quant_min', quant_min)
-        setattr(self._input_quantizer, 'quant_max', quant_max)
-        if not axis == None:
-            setattr(self._input_quantizer, 'quant_axis',axis )
-    
-    def quantize_input(self,quantizer,input):
-        quantizer._scale = quantizer.learned_amax
-        if quantizer.learned_amax.numel() == 1:
-            quant_input = torch.fake_quantize_per_tensor_affine(input,
-                    quantizer.quant_scale.to(torch.float32).item(),
-                    quantizer.zero_point.to(torch.long).item(),
-                    quantizer.quant_min.to(torch.long).item(),
-                    quantizer.quant_max.to(torch.long).item())
-        else:
-            quant_input = torch.fake_quantize_per_channel_affine(input,
-                    quantizer.quant_scale,
-                    quantizer.zero_point.to(torch.long),
-                    quantizer.quant_axis.to(torch.int32).item(),
-                    quantizer.quant_min.to(torch.long).item(),
-                    quantizer.quant_max.to(torch.long).item())
-
-        return quant_input
 
     def forward(self, input):
-        if self.training:
+        if not torch.jit.is_scripting() and self.training:
             quant_input = self._input_quantizer(input)
-            self.extract_quant_info()
+            self.infer_input_quantizer.extract_quant_info(
+                    self._input_quantizer.learned_amax.detach(),
+                    self._input_quantizer._num_bits,
+                    self._input_quantizer._unsigned
+                    )
         else:
             if not utils.HelperFunction.export_trt:
-                quant_input = self.quantize_input(self._input_quantizer,input)
+                quant_input = self.infer_input_quantizer(input)
             else: quant_input = input
  
         output = self.maxpool2d(quant_input)
         return output
+
 
 class QuantAdaptiveAvgPool2d(torch.nn.Module,_utils.QuantInputMixin):
     """
@@ -128,80 +72,21 @@ class QuantAdaptiveAvgPool2d(torch.nn.Module,_utils.QuantInputMixin):
         quant_desc_input = _utils.pop_quant_desc_in_kwargs(self.__class__, input_only=True, **kwargs)
         self.init_quantizer(quant_desc_input)
         self.adaptive_avg_pool2d = torch.nn.AdaptiveAvgPool2d(output_size)
-
-    def _extract_info(self,quantizer):
-        bound = (1 << (quantizer._num_bits - 1 + int(quantizer._unsigned))) - 1
-        amax = quantizer.learned_amax
-        if amax.numel() == 1:
-            scale=amax.item() / bound
-            zero_point = 0
-            quant_min = -bound - 1 if not quantizer._unsigned else 0
-            quant_max = bound
-            axis = None
-        else:
-            amax_sequeeze = amax.squeeze().detach()
-            if len(amax_sequeeze.shape) != 1:
-                raise TypeError("Multiple axis is not supported in quantization")
-            quant_dim = list(amax.shape).index(list(amax_sequeeze.shape)[0])
-            scale = amax_sequeeze / bound
-            scale = scale.data
-            zero_point = torch.zeros_like(scale, dtype=torch.int32).data
-            axis = quant_dim
-            quant_min = -bound - 1 if not quantizer._unsigned else 0
-            quant_max = bound
-        
-        scale = self.correct_tensor_type(scale)
-        zero_point = self.correct_tensor_type(zero_point)
-        quant_min = self.correct_tensor_type(quant_min)
-        quant_max = self.correct_tensor_type(quant_max)
-        axis = self.correct_tensor_type(axis)
-        return scale, zero_point, quant_min, quant_max, axis
-
-    def correct_tensor_type(self,variable):
-        if torch.is_tensor(variable):
-            return torch.nn.Parameter(variable,requires_grad=False)
-        elif variable is None:
-            return variable
-        else:
-            return torch.nn.Parameter(torch.as_tensor([variable]),requires_grad=False)
-
-    def extract_quant_info(self):
-        scale, zero_point,quant_min, quant_max, axis = self._extract_info(self._input_quantizer)
-        
-        setattr(self._input_quantizer, 'quant_scale', scale)
-        setattr(self._input_quantizer, 'zero_point', zero_point)
-        setattr(self._input_quantizer, 'quant_min', quant_min)
-        setattr(self._input_quantizer, 'quant_max', quant_max)
-        if not axis == None:
-            setattr(self._input_quantizer, 'quant_axis',axis )
-
-    def quantize_input(self,quantizer,input):
-        quantizer._scale = quantizer.learned_amax
-        if quantizer.learned_amax.numel() == 1:
-            quant_input = torch.fake_quantize_per_tensor_affine(input,
-                    quantizer.quant_scale.to(torch.float32).item(),
-                    quantizer.zero_point.to(torch.long).item(),
-                    quantizer.quant_min.to(torch.long).item(),
-                    quantizer.quant_max.to(torch.long).item())
-        else:
-            quant_input = torch.fake_quantize_per_channel_affine(input,
-                    quantizer.quant_scale,
-                    quantizer.zero_point.to(torch.long),
-                    quantizer.quant_axis.to(torch.int32).item(),
-                    quantizer.quant_min.to(torch.long).item(),
-                    quantizer.quant_max.to(torch.long).item())
-
-        return quant_input
+        self.infer_input_quantizer = utils.InferQuantTensor()
 
     def forward(self, input):
-        if self.training:
+        if not torch.jit.is_scripting() and self.training:
             quant_input = self._input_quantizer(input)
-            self.extract_quant_info()
+            self.infer_input_quantizer.extract_quant_info(
+                    self._input_quantizer.learned_amax.detach(),
+                    self._input_quantizer._num_bits,
+                    self._input_quantizer._unsigned
+                    )
         else:
             # It is expected that model has already been finetuned / trained with qat.
             # For quick inference test, run a single step of train step to invoke and save quantization parameters
             if not utils.HelperFunction.export_trt:
-                quant_input = self.quantize_input(self._input_quantizer,input)
+                quant_input = self.infer_input_quantizer(input)
             else: quant_input = input
         
         output = self.adaptive_avg_pool2d(quant_input)
