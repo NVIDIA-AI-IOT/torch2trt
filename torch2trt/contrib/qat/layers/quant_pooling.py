@@ -12,7 +12,6 @@ import torch.nn.functional as F
 from torch.nn.modules.utils import _single, _pair, _triple
 from pytorch_quantization import tensor_quant
 import pytorch_quantization.nn.modules._utils as _utils 
-from absl import logging
 from . import utils
 '''
 Custom class to quantize the input of various pooling layers.
@@ -73,11 +72,6 @@ class QuantMaxPool2d(torch.nn.Module,_utils.QuantInputMixin):
             return torch.nn.Parameter(torch.as_tensor([variable]),requires_grad=False)
 
     def extract_quant_info(self):
-        logging.log_first_n(logging.WARNING, "Calculating quantization metrics for {}".format(self.__class__), 1) 
-        if self._input_quantizer.learned_amax.numel() == 1:
-            logging.log_first_n(logging.WARNING, "per tensor quantization for input quantizer", 1)
-        else:
-            logging.log_first_n(logging.WARNING, "per channel quantization for input quantizer", 1)
         scale, zero_point,quant_min, quant_max, axis = self._extract_info(self._input_quantizer)
         
         setattr(self._input_quantizer, 'quant_scale', scale)
@@ -172,11 +166,6 @@ class QuantAdaptiveAvgPool2d(torch.nn.Module,_utils.QuantInputMixin):
             return torch.nn.Parameter(torch.as_tensor([variable]),requires_grad=False)
 
     def extract_quant_info(self):
-        logging.log_first_n(logging.WARNING, "Calculating quantization metrics for {}".format(self.__class__), 1) 
-        if self._input_quantizer.learned_amax.numel() == 1:
-            logging.log_first_n(logging.WARNING, "per tensor quantization for input quantizer", 1)
-        else:
-            logging.log_first_n(logging.WARNING, "per channel quantization for input quantizer", 1)
         scale, zero_point,quant_min, quant_max, axis = self._extract_info(self._input_quantizer)
         
         setattr(self._input_quantizer, 'quant_scale', scale)
