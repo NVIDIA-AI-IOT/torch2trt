@@ -36,13 +36,13 @@ def convert_QuantConv(ctx):
     ## Add quantizatin and dequantization nodes for inputs and weights
     # Input Layer quantization
     # Adding scale as ITensor
-    scale_trt = ctx.network.add_constant(tuple(module._input_quantizer.quant_scale.shape),module._input_quantizer.quant_scale.detach().cpu().numpy())
+    scale_trt = ctx.network.add_constant(tuple(module.infer_input_quantizer.quant_scale.shape),module.infer_input_quantizer.quant_scale.detach().cpu().numpy())
     input_quantizer = ctx.network.add_quantize(
             input=input_trt,
             scale=scale_trt.get_output(0))
     
-    if hasattr(module._input_quantizer,'quant_axis'):
-        input_quantizer.axis = module._input_quantizer.quant_axis.to(torch.long).item()
+    if hasattr(module.infer_input_quantizer,'quant_axis'):
+        input_quantizer.axis = module.infer_input_quantizer.quant_axis.to(torch.long).item()
     else:
         input_quantizer.axis=0
 
@@ -50,21 +50,21 @@ def convert_QuantConv(ctx):
             input = input_quantizer.get_output(0),
             scale = scale_trt.get_output(0))
 
-    if hasattr(module._input_quantizer,'quant_axis'):
-        input_dequantizer.axis = module._input_quantizer.quant_axis.to(torch.long).item()
+    if hasattr(module.infer_input_quantizer,'quant_axis'):
+        input_dequantizer.axis = module.infer_input_quantizer.quant_axis.to(torch.long).item()
     else:
         input_dequantizer.axis=0
     
     # Weight quantization
     ## currently not using weight quantizer, waiting for a resolution on the issue.
     kernel_trt = ctx.network.add_constant(tuple(kernel.shape),kernel.cpu().numpy())
-    scale_trt = ctx.network.add_constant(tuple(module._weight_quantizer.quant_scale.shape),module._weight_quantizer.quant_scale.detach().cpu().numpy()) 
+    scale_trt = ctx.network.add_constant(tuple(module.infer_weight_quantizer.quant_scale.shape),module.infer_weight_quantizer.quant_scale.detach().cpu().numpy()) 
     weight_quantizer = ctx.network.add_quantize(
             input=kernel_trt.get_output(0),
             scale=scale_trt.get_output(0))
     
-    if hasattr(module._weight_quantizer,'quant_axis'):
-        weight_quantizer.axis = module._weight_quantizer.quant_axis.to(torch.long).item()
+    if hasattr(module.infer_weight_quantizer,'quant_axis'):
+        weight_quantizer.axis = module.infer_weight_quantizer.quant_axis.to(torch.long).item()
     else:
         weight_quantizer.axis = 0
     
@@ -72,8 +72,8 @@ def convert_QuantConv(ctx):
             input = weight_quantizer.get_output(0),
             scale = scale_trt.get_output(0))
     
-    if hasattr(module._weight_quantizer,'quant_axis'):
-        weight_dequantizer.axis = module._weight_quantizer.quant_axis.to(torch.long).item()
+    if hasattr(module.infer_weight_quantizer,'quant_axis'):
+        weight_dequantizer.axis = module.infer_weight_quantizer.quant_axis.to(torch.long).item()
     else:
         weight_dequantizer.axis = 0
 

@@ -28,13 +28,13 @@ def convert_QuantMaxPool2d(ctx):
         padding = (padding, ) * 2
 
     #Add quantization and dequantization nodes for input
-    scale_trt = ctx.network.add_constant(tuple(module._input_quantizer.quant_scale.shape),module._input_quantizer.quant_scale.detach().cpu().numpy())
+    scale_trt = ctx.network.add_constant(tuple(module.infer_input_quantizer.quant_scale.shape),module.infer_input_quantizer.quant_scale.detach().cpu().numpy())
     input_quantizer = ctx.network.add_quantize(
             input=input_trt,
             scale=scale_trt.get_output(0))
     
-    if hasattr(module._input_quantizer,'quant_axis'):
-        input_quantizer.axis = module._input_quantizer.quant_axis.to(torch.long).item()
+    if hasattr(module.infer_input_quantizer,'quant_axis'):
+        input_quantizer.axis = module.infer_input_quantizer.quant_axis.to(torch.long).item()
     else:
         input_quantizer.axis=0
 
@@ -42,8 +42,8 @@ def convert_QuantMaxPool2d(ctx):
             input = input_quantizer.get_output(0),
             scale = scale_trt.get_output(0))
 
-    if hasattr(module._input_quantizer,'quant_axis'):
-        input_dequantizer.axis = module._input_quantizer.quant_axis.to(torch.long).item()
+    if hasattr(module.infer_input_quantizer,'quant_axis'):
+        input_dequantizer.axis = module.infer_input_quantizer.quant_axis.to(torch.long).item()
     else:
         input_dequantizer.axis=0
     
