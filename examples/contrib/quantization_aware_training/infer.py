@@ -56,20 +56,22 @@ def main():
 
     ## Single dummy run to instantiate quant metrics
     out = model(rand_in)
+    print(model)
     for k,v in model.state_dict().items():
         print(k,v.shape)
+    print("-------------------------------------------")
     if args.load_ckpt:
         checkpoint = torch.load(args.load_ckpt)
+        for k,v in checkpoint['model_state_dict'].items():
+            print(k,v.shape)
         if not args.quantize:
             checkpoint = mapping_names_resnets(checkpoint)
         model.load_state_dict(checkpoint['model_state_dict'],strict=True)
         print("===>>> Checkpoint loaded successfully from {} ".format(args.load_ckpt))
 
-    model = torch.jit.script(model.eval())
-    '''
     model=model.eval()
-    test_accuracy = calculate_accuracy(model,test_loader)
-    print(" Test accuracy for Pytorch model: {0} ".format(test_accuracy))
+#    test_accuracy = calculate_accuracy(model,test_loader)
+#    print(" Test accuracy for Pytorch model: {0} ".format(test_accuracy))
     
     #Converting the model to TRT
     if args.FP16:
@@ -95,7 +97,6 @@ def main():
         trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=128)
         test_accuracy = calculate_accuracy(trt_model_calib_int8,test_loader)
         print(" TRT test accuracy at INT8 PTC: {0}".format(test_accuracy))
-    '''
 
 if __name__ == "__main__":
     main()

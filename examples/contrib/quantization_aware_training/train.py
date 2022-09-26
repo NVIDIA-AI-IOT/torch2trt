@@ -81,7 +81,7 @@ def main():
     if args.v:
         print("======>>> keys present in state dict at model creation")
         for k,_ in model.state_dict().items():
-            print(k)
+            print(k,_.shape)
 
     if args.load_ckpt:
         model.eval()
@@ -91,7 +91,7 @@ def main():
             if args.v:
                 print("====>>>>> keys present in the ckpt state dict")
                 for k,_ in model_state.items():
-                    print(k)
+                    print(k,_.shape)
             model_state = mapping_names(model_state)
             new_state_dict = add_missing_keys(model.state_dict(),model_state)
             model.load_state_dict(new_state_dict,strict=True)

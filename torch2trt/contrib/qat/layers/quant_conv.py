@@ -14,6 +14,7 @@ from pytorch_quantization import tensor_quant
 from pytorch_quantization.nn.modules.quant_conv import _QuantConvNd
 import pytorch_quantization.nn.modules._utils as _utils 
 from . import utils
+
 '''
 Custom class to quantize the input and weights of conv2d.
 '''
@@ -51,8 +52,9 @@ class QuantConv2d(_QuantConvNd):
         super(QuantConv2d, self).__init__(in_channels, out_channels, kernel_size, stride, padding, dilation, False,
                                           _pair(0), groups, bias, padding_mode,
                                           quant_desc_input=quant_desc_input, quant_desc_weight=quant_desc_weight)
+
         self.infer_input_quantizer = utils.InferQuantTensor()
-        self.infer_weight_quantizer = utils.InferQuantTensor()
+        self.infer_weight_quantizer = utils.InferQuantTensor(out_channels = self.out_channels)
 
 
     def forward(self, input):

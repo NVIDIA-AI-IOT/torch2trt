@@ -52,10 +52,26 @@ def add_missing_keys(model_state,model_state_dict):
     """
     add missing keys and defaulting the values to 1 for _amax counter
     """
+    temp_dict={}
     for k,v in model_state.items():
+        temp_dict[k] = v
         if k not in model_state_dict.keys():
-            print("adding {} to the model state dict".format(k))
-            model_state_dict[k]= torch.tensor(127)
+            if re.search(r'infer_weight_quantizer',k):
+                temp = k.split('infer_weight_quantizer.')
+                weight_name = temp[0]+"weight" 
+                shape = temp_dict[weight_name].shape[0] 
+                if temp[-1] == "amax":
+                    print("adding {} to the model state dict".format(k))
+                    model_state_dict[k]= torch.ones(tuple([shape,1,1,1]))
+                elif temp[-1] == "quant_scale" or temp[-1] == "zero_point":
+                    print("adding {} to the model state dict".format(k))
+                    model_state_dict[k]= torch.ones(tuple([shape]))
+                else:
+                    print("adding {} to the model state dict".format(k))
+                    model_state_dict[k]= torch.tensor([1]) 
+            else:
+                print("adding {} to the model state dict".format(k))
+                model_state_dict[k]= torch.tensor([1])
 
     return model_state_dict
 

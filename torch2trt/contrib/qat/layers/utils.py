@@ -22,19 +22,36 @@ class InferQuantTensor(torch.nn.Module):
     zero_point: zero_point of a tensor used for trt conversion
     quant_min: minimum value of INT8 range
     quant_max : maximum value of INT8 range
-    axis : axis along which quantization will occur (used in per channel quantization)
+    quant_axis : axis along which quantization will occur (used in per channel quantization)
     """
     export_trt = False
 
-    def __init__(self):
+    def __init__(self,out_channels=None):
         super().__init__()
-        ## All these values will be initialized later on.
-        amax = None
-        scale = None
-        zero_point = None
-        quant_min = None
-        quant_max = None
+        if out_channels == None:
+            self.register_buffer('amax',torch.tensor([1])) 
+            self.register_buffer('quant_scale',torch.tensor([1])) 
+            self.register_buffer('zero_point',torch.tensor([1]))
+        else:
+            self.register_buffer('amax',torch.ones(tuple([out_channels,1,1,1])))
+            self.register_buffer('quant_scale',torch.ones(out_channels))
+            self.register_buffer('zero_point',torch.ones(out_channels)) 
+        
+        self.register_buffer('quant_axis',torch.tensor([1]))
+        self.register_buffer('quant_min',torch.tensor([1]))
+        self.register_buffer('quant_max',torch.tensor([1]))
 
+    def __repr__(self):
+        s = super().__repr__()
+        s += " amax={}".format(self.amax.shape) if self.amax is not None else "" 
+        s += " quant_scale={}".format(self.quant_scale.shape) if self.quant_scale is not None else "" 
+        s += " zero_point={}".format(self.zero_point.shape) if self.zero_point is not None else ""
+        s += " axis={}".format(self.quant_axis) if self.quant_axis is not None else " per-tensor"
+        s += " quant_min={}".format(self.quant_min) if self.quant_min is not None else ""
+        s += " quant_max={}".format(self.quant_max) if self.quant_max is not None else ""
+        return s
+
+    
     def _extract_info(self,amax, _num_bits, _unsigned):
         bound = (1 << (_num_bits - 1 + int(_unsigned))) - 1
         if amax.numel() == 1:
@@ -64,12 +81,12 @@ class InferQuantTensor(torch.nn.Module):
         return amax, scale, zero_point, quant_min, quant_max, axis
 
     def correct_tensor_type(self,variable):
-        if torch.is_tensor(variable):
-            return torch.nn.Parameter(variable,requires_grad=False)
+        if torch.is_tensor(variable) and len(list(variable.size())) > 0:
+            return variable
         elif variable is None:
             return variable
         else:
-            return torch.nn.Parameter(torch.as_tensor([variable]),requires_grad=False)
+            return torch.as_tensor([variable])
 
     def extract_quant_info(self, amax, num_bits, unsigned):
 
