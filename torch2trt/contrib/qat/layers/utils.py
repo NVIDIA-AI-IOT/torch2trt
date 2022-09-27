@@ -29,17 +29,17 @@ class InferQuantTensor(torch.nn.Module):
     def __init__(self,out_channels=None):
         super().__init__()
         if out_channels == None:
-            self.register_buffer('amax',torch.tensor([1])) 
-            self.register_buffer('quant_scale',torch.tensor([1])) 
-            self.register_buffer('zero_point',torch.tensor([1]))
+            self.register_buffer('amax',torch.ones(1)) 
+            self.register_buffer('quant_scale',torch.ones(1)) 
+            self.register_buffer('zero_point',torch.ones(1))
         else:
             self.register_buffer('amax',torch.ones(tuple([out_channels,1,1,1])))
             self.register_buffer('quant_scale',torch.ones(out_channels))
             self.register_buffer('zero_point',torch.ones(out_channels)) 
         
-        self.register_buffer('quant_axis',torch.tensor([1]))
-        self.register_buffer('quant_min',torch.tensor([1]))
-        self.register_buffer('quant_max',torch.tensor([1]))
+        self.register_buffer('quant_axis',torch.zeros(1))
+        self.register_buffer('quant_min',torch.ones(1))
+        self.register_buffer('quant_max',torch.ones(1))
 
     def __repr__(self):
         s = super().__repr__()
