@@ -141,129 +141,132 @@ def check_torch_dtype(*tensors):
 
 def add_missing_trt_tensors(network, tensors):
     """Creates missing TensorRT tensors as constants and attaches them to the Torch Tensors"""
-    trt_tensors = [None] * len(tensors)
+    with use_shape_wrapping(False):
+        trt_tensors = [None] * len(tensors)
 
-    dtype = check_torch_dtype(*tensors)
+        dtype = check_torch_dtype(*tensors)
 
-    for i, t in enumerate(tensors):
-        trt_tensor = None
+        for i, t in enumerate(tensors):
+            trt_tensor = None
 
-        # GET TRT TENSOR (OR CREATE TRT CONSTANT)
+            # GET TRT TENSOR (OR CREATE TRT CONSTANT)
 
-        # get tensor w/ _trt
-        # or... add constant for scalar primitive
-        if isinstance(t, float) or isinstance(t, int):
-            shape = (1,)
-            scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
-            trt_tensor = network.add_constant(shape, scalar).get_output(0)
-        elif hasattr(t, "_trt"):
-            trt_tensor = t._trt
+            # get tensor w/ _trt
+            # or... add constant for scalar primitive
+            if isinstance(t, float) or isinstance(t, int):
+                shape = (1,)
+                scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
+                trt_tensor = network.add_constant(shape, scalar).get_output(0)
+            elif hasattr(t, "_trt"):
+                trt_tensor = t._trt
 
-        # or... add constant for leaf tensor w/o _trt
-        else:
+            # or... add constant for leaf tensor w/o _trt
+            else:
 
-            # remove all preceding ones, these can be re-inserted later when broadcasting
-            num_preceding_ones = 0
-            for j in range(len(t.shape)):
-                if int(t.shape[j]) == 1:
-                    num_preceding_ones += 1
-                else:
-                    break
-            shape = tuple(t.shape[num_preceding_ones:])
+                # remove all preceding ones, these can be re-inserted later when broadcasting
+                num_preceding_ones = 0
+                for j in range(len(t.shape)):
+                    if int(t.shape[j]) == 1:
+                        num_preceding_ones += 1
+                    else:
+                        break
+                shape = tuple(t.shape[num_preceding_ones:])
 
-            weight = t.detach().cpu().numpy()
-            t._trt = network.add_constant(shape, weight).get_output(0)
-            trt_tensor = t._trt
+                weight = t.detach().cpu().numpy()
+                t._trt = network.add_constant(shape, weight).get_output(0)
+                trt_tensor = t._trt
 
 
-        assert trt_tensor is not None
+            assert trt_tensor is not None
 
-        trt_tensors[i] = trt_tensor
+            trt_tensors[i] = trt_tensor
 
-    return trt_tensors
+        return trt_tensors
 
 
 def broadcast_trt_tensors(network, trt_tensors, broadcast_ndim):
     """Broadcast TensorRT tensors to the specified dimension by pre-padding shape 1 dims"""
-    broadcasted_trt_tensors = [None] * len(trt_tensors)
+    with use_shape_wrapping(False):
+        broadcasted_trt_tensors = [None] * len(trt_tensors)
 
-    for i, t in enumerate(trt_tensors):
+        for i, t in enumerate(trt_tensors):
 
-        if len(t.shape) < broadcast_ndim:
-            # append 1 size dims to front
-            diff = broadcast_ndim - len(t.shape)
-            shape = tuple([1] * diff + list(t.shape))
-            layer = network.add_shuffle(t)
-            layer.reshape_dims = shape
-            trt_tensor = layer.get_output(0)
-        else:
-            trt_tensor = t
+            if len(t.shape) < broadcast_ndim:
+                # append 1 size dims to front
+                diff = broadcast_ndim - len(t.shape)
+                shape = tuple([1] * diff + list(t.shape))
+                layer = network.add_shuffle(t)
+                layer.reshape_dims = shape
+                trt_tensor = layer.get_output(0)
+            else:
+                trt_tensor = t
 
-        broadcasted_trt_tensors[i] = trt_tensor
+            broadcasted_trt_tensors[i] = trt_tensor
 
-    return broadcasted_trt_tensors
+        return broadcasted_trt_tensors
 
 
 def trt_(network, *tensors):
     """Creates missing TensorRT tensors and adds shuffle layers to make tensors broadcastable"""
-    trt_tensors = [None] * len(tensors)
+    with use_shape_wrapping(False):
+        trt_tensors = [None] * len(tensors)
 
-    dtype = check_torch_dtype(*tensors)
+        dtype = check_torch_dtype(*tensors)
 
-    # get broadcast dimension
-    broadcast_num_dim = 0
-    for t in tensors:
-        if isinstance(t, torch.Tensor):
-            if not hasattr(t, "_trt"):
-                num_dim = len(t.shape)  # don't exclude batch for constants
-            else:
-                num_dim = len(
-                    t._trt.shape
-                )  # non-leaf tensors must already have _trt, get shape from that
-            if num_dim > broadcast_num_dim:
-                broadcast_num_dim = num_dim
+        # get broadcast dimension
+        broadcast_num_dim = 0
+        for t in tensors:
+            if isinstance(t, torch.Tensor):
+                if not hasattr(t, "_trt"):
+                    num_dim = len(t.shape)  # don't exclude batch for constants
+                else:
+                    num_dim = len(
+                        t._trt.shape
+                    )  # non-leaf tensors must already have _trt, get shape from that
+                if num_dim > broadcast_num_dim:
+                    broadcast_num_dim = num_dim
 
-    for i, t in enumerate(tensors):
-        trt_tensor = None
+        for i, t in enumerate(tensors):
+            trt_tensor = None
 
-        # GET TRT TENSOR (OR CREATE TRT CONSTANT)
+            # GET TRT TENSOR (OR CREATE TRT CONSTANT)
 
-        # get tensor w/ _trt
-        if isinstance(t, torch.Tensor) and hasattr(t, "_trt"):
-            trt_tensor = t._trt
+            # get tensor w/ _trt
+            if isinstance(t, torch.Tensor) and hasattr(t, "_trt"):
+                trt_tensor = t._trt
 
-        # or... add constant for leaf tensor w/o _trt
-        elif isinstance(t, torch.Tensor) and not hasattr(t, "_trt"):
-            # add leaf tensor
-            shape = tuple(t.shape)  #  don't exclude batch when adding constants...?
-            weight = t.detach().cpu().numpy()
-            t._trt = network.add_constant(shape, weight).get_output(0)
-            trt_tensor = t._trt
+            # or... add constant for leaf tensor w/o _trt
+            elif isinstance(t, torch.Tensor) and not hasattr(t, "_trt"):
+                # add leaf tensor
+                shape = tuple(t.shape)  #  don't exclude batch when adding constants...?
+                weight = t.detach().cpu().numpy()
+                t._trt = network.add_constant(shape, weight).get_output(0)
+                trt_tensor = t._trt
 
-        # or... add constant for scalar primitive
-        elif isinstance(t, float) or isinstance(t, int):
-            shape = (1,) * broadcast_num_dim
-            scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
-            trt_tensor = network.add_constant(shape, scalar).get_output(0)
+            # or... add constant for scalar primitive
+            elif isinstance(t, float) or isinstance(t, int):
+                shape = (1,) * broadcast_num_dim
+                scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
+                trt_tensor = network.add_constant(shape, scalar).get_output(0)
 
-        assert trt_tensor is not None
+            assert trt_tensor is not None
 
-        # MAKE TRT TENSOR BROADCASTABLE IF IT IS NOT ALREADY
+            # MAKE TRT TENSOR BROADCASTABLE IF IT IS NOT ALREADY
 
-        if len(trt_tensor.shape) < broadcast_num_dim:
-            # append 1 size dims to front
-            diff = broadcast_num_dim - len(trt_tensor.shape)
-            shape = tuple([1] * diff + list(trt_tensor.shape))
-            layer = network.add_shuffle(trt_tensor)
-            layer.reshape_dims = shape
-            trt_tensor = layer.get_output(0)
+            if len(trt_tensor.shape) < broadcast_num_dim:
+                # append 1 size dims to front
+                diff = broadcast_num_dim - len(trt_tensor.shape)
+                shape = tuple([1] * diff + list(trt_tensor.shape))
+                layer = network.add_shuffle(trt_tensor)
+                layer.reshape_dims = shape
+                trt_tensor = layer.get_output(0)
 
-        trt_tensors[i] = trt_tensor
+            trt_tensors[i] = trt_tensor
 
-    if len(trt_tensors) == 1:
-        return trt_tensors[0]
-    else:
-        return tuple(trt_tensors)
+        if len(trt_tensors) == 1:
+            return trt_tensors[0]
+        else:
+            return tuple(trt_tensors)
 
 
 # CONVERSION REGISTRY AND HOOKS
@@ -363,30 +366,31 @@ class NetworkWrapper(object):
         self._layer_counts = defaultdict(lambda: 0)
 
     def _configure_layer(self, layer):
+        with use_shape_wrapping(False):
         
-        # set layer device type
-        device_type = self._ctx.current_device_type()
-        self._ctx.builder_config.set_device_type(layer, device_type)
-        orig_device_type = device_type
-        if not self._ctx.builder_config.can_run_on_DLA(layer) and device_type == trt.DeviceType.DLA:
-            if self._ctx.torch2trt_kwargs['gpu_fallback']:
-                device_type = trt.DeviceType.GPU  # layer will fall back to GPU
-        
-        # set layer name
-        def arg_str(arg):
-            if isinstance(arg, torch.Tensor):
-                return "tensor(shape=%s, dtype=%s)" % (str(list(arg.shape)), str(arg.dtype))
-            return str(arg)
-        scope_name = self._ctx.current_module_name()# + ':' + layer.type.name
-        self._layer_counts[scope_name] += 1
-        args = [arg_str(arg) for arg in self._ctx.method_args]
-        kwargs = ["%s=%s" % (key, arg_str(arg)) for key, arg in self._ctx.method_kwargs.items()]
-        layer.name = scope_name + ':' + str(self._layer_counts[scope_name] - 1) + ':' + layer.type.name + ':' + device_type_str(device_type) 
-        
-        if orig_device_type != device_type:
-            layer.name = layer.name + '(' + device_type_str(orig_device_type) + ')'
-#         "%s [%s #%d, %s] %s(%s)" % (self._ctx.current_module_name(), layer.type.name, self._layer_counts[layer.type.name], device_type_str(device_type),
-#                                           self._ctx.method_str, ", ".join(args + kwargs))
+            # set layer device type
+            device_type = self._ctx.current_device_type()
+            self._ctx.builder_config.set_device_type(layer, device_type)
+            orig_device_type = device_type
+            if not self._ctx.builder_config.can_run_on_DLA(layer) and device_type == trt.DeviceType.DLA:
+                if self._ctx.torch2trt_kwargs['gpu_fallback']:
+                    device_type = trt.DeviceType.GPU  # layer will fall back to GPU
+            
+            # set layer name
+            def arg_str(arg):
+                if isinstance(arg, torch.Tensor):
+                    return "tensor(shape=%s, dtype=%s)" % (str(list(arg.shape)), str(arg.dtype))
+                return str(arg)
+            scope_name = self._ctx.current_module_name()# + ':' + layer.type.name
+            self._layer_counts[scope_name] += 1
+            args = [arg_str(arg) for arg in self._ctx.method_args]
+            kwargs = ["%s=%s" % (key, arg_str(arg)) for key, arg in self._ctx.method_kwargs.items()]
+            layer.name = scope_name + ':' + str(self._layer_counts[scope_name] - 1) + ':' + layer.type.name + ':' + device_type_str(device_type) 
+            
+            if orig_device_type != device_type:
+                layer.name = layer.name + '(' + device_type_str(orig_device_type) + ')'
+    #         "%s [%s #%d, %s] %s(%s)" % (self._ctx.current_module_name(), layer.type.name, self._layer_counts[layer.type.name], device_type_str(device_type),
+    #                                           self._ctx.method_str, ", ".join(args + kwargs))
     
         
     def __getattr__(self, name):
@@ -1049,7 +1053,20 @@ def _size_wrapper(input, dim=None):
 _old_getattr = torch.Tensor.__getattribute__
 
 def _new_getattr(self, name):
-    if name == 'shape':
+    if name == 'shape' and use_shape_wrapping.stack[0]:
         return _size_wrapper(self)
     else:
         return _old_getattr(self, name)
+
+class use_shape_wrapping:
+
+    stack = [True] # default true
+
+    def __init__(self, value: bool):
+        self._value = value
+    
+    def __enter__(self, *args, **kwargs):
+        self.stack.insert(0, self._value)
+
+    def __exit__(self, *args, **kwargs):
+        self.stack.pop()
