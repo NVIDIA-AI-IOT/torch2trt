@@ -13,7 +13,7 @@ import time
 from torch2trt import torch2trt
 import tensorrt as trt 
 from pytorch_quantization import nn as quant_nn
-
+import re
 
 def main():
     args = parse_args()
@@ -99,6 +99,12 @@ def main():
             model.load_state_dict(checkpoint['model_state_dict'],strict=True)
     
     ## Creating optimizer and loss function
+    print("-------------------------------------------------------------------------------")
+    for name,param in model.named_parameters():
+        if re.search(r'clip',name):
+            param.requires_grad = False
+
+
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, momentum=0.9)
@@ -107,6 +113,11 @@ def main():
         epoch = checkpoint['epoch']
         loss = checkpoint['loss']
         print("===>>> Checkpoint loaded successfully from {} at epoch {} ".format(args.load_ckpt,epoch))
+
+    for name,param in model.named_parameters():
+        if re.search(r'clip',name):
+            param.requires_grad = True
+
 
     ## Training 
 
@@ -153,8 +164,12 @@ def main():
                 'loss': running_loss,
                 }, best_ckpt_filename)
     print("Training finished")
-    
+     
     ## Testing
+    for name,param in model.named_parameters():
+        if re.search(r'clip',name):
+            print(name,param)
+
 
     if args.test_trt:
         if args.m == 'resnet34':

@@ -5,6 +5,7 @@ import collections
 from pytorch_quantization import tensor_quant
 from torch2trt.contrib.qat.layers.quant_conv import QuantConv2d
 from torch2trt.contrib.qat.layers.quant_pooling import QuantMaxPool2d, QuantAdaptiveAvgPool2d
+from pytorch_quantization.tensor_quant import QuantDescriptor
 import torchvision.models as models  
 import re
 import timeit
@@ -97,8 +98,8 @@ class QConv2d(torch.nn.Module):
             bias = None,
             padding_mode: str='zeros',
             qat: bool=False,
-            quant_desc_weight=tensor_quant.QUANT_DESC_8BIT_CONV2D_WEIGHT_PER_CHANNEL,
-            quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR):
+            quant_desc_weight=QuantDescriptor(num_bits=8,learn_amax=True),
+            quant_desc_input=QuantDescriptor(num_bits=8,learn_amax=True)):
         super().__init__()
         if qat:
             self.quant = QuantConv2d(in_channels,
@@ -143,7 +144,7 @@ class QMaxPool2d(torch.nn.Module):
             return_indices=False,
             ceil_mode=False,
             qat_mode = False,
-            quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR):
+            quant_desc_input=QuantDescriptor(num_bits=8,learn_amax=True)):
         super().__init__()
         if qat_mode:
             self.quant = QuantMaxPool2d(
@@ -177,7 +178,7 @@ class QAdaptiveAvgPool2d(torch.nn.Module):
             self,
             output_size,
             qat_mode = False,
-            quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR):
+            quant_desc_input=QuantDescriptor(num_bits=8,learn_amax=True)):
         super().__init__()
         if qat_mode:
             self.quant = QuantAdaptiveAvgPool2d(

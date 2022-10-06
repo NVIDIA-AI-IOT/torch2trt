@@ -70,6 +70,7 @@ def main():
         print("===>>> Checkpoint loaded successfully from {} ".format(args.load_ckpt))
 
     model=model.eval()
+    jit_model = torch.jit.script(model)
 #    test_accuracy = calculate_accuracy(model,test_loader)
 #    print(" Test accuracy for Pytorch model: {0} ".format(test_accuracy))
     
