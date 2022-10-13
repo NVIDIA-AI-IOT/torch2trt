@@ -13,7 +13,7 @@ def convert_split(ctx):
     
     outputs = ctx.method_return
     
-    assert(dim >= 1)
+    # assert(dim >= 1)
     
     start = [0] * len(input.shape) 
     stride = [1] * len(start)
