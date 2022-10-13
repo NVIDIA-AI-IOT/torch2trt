@@ -7,6 +7,8 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.Tensor.reshape')
 def convert_view(ctx):
     input = ctx.method_args[0]
+    if not hasattr(input, '_trt'):
+        return
     
     try:
         iter(ctx.method_args[1])

@@ -9,6 +9,10 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.unsqueeze')
 def convert_unsqueeze(ctx):
     input = ctx.method_args[0]
+
+    if not hasattr(input, '_trt'):
+        return
+
     dim = get_arg(ctx, 'dim', pos=1, default=None)
     assert(dim is not None)
     output = ctx.method_return

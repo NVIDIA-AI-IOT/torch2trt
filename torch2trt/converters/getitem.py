@@ -31,6 +31,9 @@ def convert_tensor_getitem(ctx):
     slices = ctx.method_args[1]
     output = ctx.method_return
     
+    if not hasattr(input, '_trt'):
+        return
+
     input_trt = input._trt
     
     # Step 1 - Replace ellipsis with expanded slices
