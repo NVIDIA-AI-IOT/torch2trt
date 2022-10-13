@@ -42,6 +42,7 @@ from .identity import *
 from .instance_norm import *
 from .interpolate import *
 from .layer_norm import *
+from .matmul import *
 from .max import *
 from .max_pool1d import *
 from .max_pool2d import *
