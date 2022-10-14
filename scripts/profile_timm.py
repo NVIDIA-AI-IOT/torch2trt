@@ -101,7 +101,7 @@ class Args:
             json.dump(output, f, indent=2)
 
     def stderr_filepath(self):
-        return os.path.join(self.full_output_dir(), self.id() + ".stdout")
+        return os.path.join(self.full_output_dir(), self.id() + ".stderr")
 
     def stdout_filepath(self):
         return os.path.join(self.full_output_dir(), self.id() + ".stdout")
