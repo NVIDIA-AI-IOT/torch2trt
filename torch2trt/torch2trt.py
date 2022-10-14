@@ -733,6 +733,8 @@ def torch2trt(module,
         output_names = default_output_names(output_flattener.size)
 
     if use_onnx:
+        import onnx_graphsurgeon as gs
+        import onnx
         
         module_flat = Flatten(module, input_flattener, output_flattener)
         inputs_flat = input_flattener.flatten(inputs)
@@ -751,6 +753,15 @@ def torch2trt(module,
             opset_version=onnx_opset
         )
         f.seek(0)
+        
+        onnx_graph = gs.import_onnx(onnx.load(f))
+        onnx_graph.fold_constants().cleanup()
+
+
+        f = io.BytesIO()
+        onnx.save(gs.export_onnx(onnx_graph), f)
+        f.seek(0)
+
         onnx_bytes = f.read()
         network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
         parser = trt.OnnxParser(network, logger)
