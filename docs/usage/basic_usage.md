@@ -27,7 +27,7 @@ model_trt = torch2trt(model, [x])
     execution.  The exception is
     the batch size, which can vary up to the value specified by the ``max_batch_size`` parameter.
     
-## Executution
+## Execution
 
 We can execute the returned ``TRTModule`` just like the original PyTorch model.  Here we
 execute the model and print the maximum absolute error.
