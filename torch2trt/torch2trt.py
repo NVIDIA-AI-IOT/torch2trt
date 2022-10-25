@@ -1080,4 +1080,4 @@ class use_shape_wrapping:
         self.stack.insert(0, self._value)
 
     def __exit__(self, *args, **kwargs):
-        self.stack.pop()
+        self.stack.pop(0)
