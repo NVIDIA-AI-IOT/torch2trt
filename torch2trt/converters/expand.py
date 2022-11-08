@@ -5,6 +5,10 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.Tensor.expand')
 def convert_expand(ctx):
     input = ctx.method_args[0]
+
+    if not hasattr(input, '_trt'):
+        return
+        
     sizes = ctx.method_args[1:]
     output = ctx.method_return
     

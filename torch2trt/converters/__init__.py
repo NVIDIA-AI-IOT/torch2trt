@@ -33,6 +33,7 @@ from .div import *
 from .einsum import *
 from .expand import *
 from .example_plugin import *
+from .flatten import *
 from .floordiv import *
 from .gelu import *
 from .getitem import *
@@ -41,6 +42,7 @@ from .identity import *
 from .instance_norm import *
 from .interpolate import *
 from .layer_norm import *
+from .matmul import *
 from .max import *
 from .max_pool1d import *
 from .max_pool2d import *
@@ -65,6 +67,7 @@ from .sigmoid import *
 from .silu import *
 from .softmax import *
 from .split import *
+from .squeeze import *
 from .stack import *
 from .sub import *
 from .sum import *
@@ -72,4 +75,5 @@ from .tanh import *
 from .tensor import *
 from .transpose import *
 from .unary import *
+from .unsqueeze import *
 from .view import *

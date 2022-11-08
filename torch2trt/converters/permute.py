@@ -5,6 +5,10 @@ from torch2trt.module_test import add_module_test
 @tensorrt_converter('torch.Tensor.permute')
 def convert_permute(ctx):
     input = ctx.method_args[0]
+
+    if not hasattr(input, '_trt'):
+        return 
+        
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     
@@ -14,7 +18,7 @@ def convert_permute(ctx):
     else:
         permutation = tuple(ctx.method_args[1])   # handle permute([a, b, c])
         
-    assert(permutation[0] == 0)  # cannot move batch dim
+    # assert(permutation[0] == 0)  # cannot move batch dim
     
     layer = ctx.network.add_shuffle(input_trt)
     layer.second_transpose = tuple(permutation)

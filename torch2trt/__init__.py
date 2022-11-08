@@ -2,7 +2,6 @@ from .torch2trt import *
 from .converters import *
 import tensorrt as trt
 
-
 def load_plugins():
     import torch2trt.torch_plugins
     registry = trt.get_plugin_registry()
