@@ -1,3 +1,4 @@
+import inspect
 import torch
 import tensorrt as trt
 import copy
@@ -19,6 +20,14 @@ from .dataset import (
 
 from .flattener import Flattener
 from .flatten_module import Flatten, Unflatten
+
+TORCH_NN_DIR = "torch/nn/"
+TRACE_STR_PRETTY = """
+Found '{torch_op}' ({has_converter}) in function '{function}:'
+{source_file}: {line_number}
+>   {code_context}"""
+
+
 # UTILITY FUNCTIONS
 
 
@@ -284,40 +293,66 @@ def get_arg(ctx, name, pos, default):
         return default
 
 
-def attach_converter(ctx, method, converter, method_str):
+def attach_converter(ctx, method, converter, method_str, logger):
     """Gets a function that executes PyTorch method and TensorRT converter"""
     global DUMMY_CONVERTERS
 
+    def log(torch_op, has_converter):
+        # Start with the parent of parent of this frame when looking for the original torch op call.
+        # This frame is this function, and the parent frame is the below "wrapper" function where this function is called,
+        # so the first frame where the actual torch op might reside is the parent of the parent of this frame.
+        frame = inspect.currentframe().f_back.f_back
+        trace = inspect.getframeinfo(frame)
+
+        # Ignore frames called from a module in torch.nn since these come from pytorch containers (eg. torch.nn.Sequential),
+        # which doesn't provide useful information about where the op resides in the user's python script.
+        while TORCH_NN_DIR in trace.filename:
+            frame = frame.f_back
+            trace = inspect.getframeinfo(frame)
+
+        code_context = trace.code_context[0].strip() if len(trace.code_context) > 0 else ""
+        logger.log(trt.Logger.VERBOSE, TRACE_STR_PRETTY.format(
+            torch_op=torch_op,
+            has_converter="converter available" if has_converter else "no converter available",
+            source_file=trace.filename,
+            line_number=trace.lineno,
+            function=trace.function,
+            code_context=code_context))
+
     def wrapper(*args, **kwargs):
         skip = True
+        is_real = converter["is_real"]
 
         # check if another (parent) converter has lock
         if not ctx.lock:
-            if converter["is_real"]:
+            if is_real:
                 ctx.lock = True  # only real converters can acquire lock
             skip = False
 
         # run original method
         outputs = method(*args, **kwargs)
 
-        if not skip:
-            ctx.method_args = args
-            ctx.method_kwargs = kwargs
-            ctx.method_return = outputs
-            ctx.method_str = method_str
+        if skip:
+            return outputs
 
-            #             print('%s' % (converter.__name__,))
-            converter["converter"](ctx)
+        log(method_str, is_real)
 
-            # allow overwriting output, for things like shape converter
-            outputs = ctx.method_return
+        ctx.method_args = args
+        ctx.method_kwargs = kwargs
+        ctx.method_return = outputs
+        ctx.method_str = method_str
 
-            # convert to None so conversion will fail for unsupported layers
-            ctx.method_args = None
-            ctx.method_kwargs = None
-            ctx.method_return = None
-            ctx.lock = False
+        converter["converter"](ctx)
 
+        # allow overwriting output, for things like shape converter
+        outputs = ctx.method_return
+
+        # convert to None so conversion will fail for unsupported layers
+        ctx.method_args = None
+        ctx.method_kwargs = None
+        ctx.method_return = None
+
+        ctx.lock = False
         return outputs
 
     return wrapper
@@ -326,10 +361,11 @@ def attach_converter(ctx, method, converter, method_str):
 class ConversionHook(object):
     """Attaches TensorRT converter to PyTorch method call"""
 
-    def __init__(self, ctx, key, converter):
+    def __init__(self, ctx, key, converter, logger):
         self.ctx = ctx
         self.key = key
         self.converter = converter
+        self.logger = logger
 
     def _set_method(self, method):
         module = self.converter['module']
@@ -338,7 +374,7 @@ class ConversionHook(object):
     def __enter__(self):
         self._set_method(
             attach_converter(
-                self.ctx, self.converter['method_impl'], self.converter, self.converter['method_str']
+                self.ctx, self.converter['method_impl'], self.converter, self.converter['method_str'], self.logger,
             )
         )
 
@@ -425,7 +461,7 @@ class ConversionContext(object):
         self.torch2trt_kwargs = torch2trt_kwargs
         self.builder_config = builder_config
         self.hooks = [
-            ConversionHook(self, key, converter)
+            ConversionHook(self, key, converter, logger=logger)
             for key, converter in converters.items()
         ]
         
