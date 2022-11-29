@@ -34,6 +34,7 @@ from .einsum import *
 from .expand import *
 from .example_plugin import *
 from .flatten import *
+from .flip import *
 from .floordiv import *
 from .gelu import *
 from .getitem import *
