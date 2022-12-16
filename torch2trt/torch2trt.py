@@ -406,7 +406,7 @@ class ConversionContext(object):
                     shape=tuple(torch_input.shape)[1:],
                     dtype=torch_dtype_to_trt(torch_input.dtype),
                 )
-                trt_tensor.location = torch_device_to_trt(torch_input.device)
+                trt_tensor.location = trt.TensorLocation.DEVICE
                 torch_input._trt = trt_tensor
 
     def mark_outputs(self, torch_outputs, names=None):
@@ -417,7 +417,7 @@ class ConversionContext(object):
         for i, torch_output in enumerate(torch_outputs):
             trt_tensor = torch_output._trt
             trt_tensor.name = names[i]
-            trt_tensor.location = torch_device_to_trt(torch_output.device)
+            trt_tensor.location = trt.TensorLocation.DEVICE
             trt_tensor.dtype = torch_dtype_to_trt(torch_output.dtype)
             self.network.mark_output(trt_tensor)
 
