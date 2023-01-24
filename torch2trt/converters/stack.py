@@ -3,10 +3,11 @@ from torch2trt.module_test import add_module_test
 
 
 def unsqueeze(ctx, input, dim):
-    layer = ctx.network.add_shuffle(trt_(ctx.network, input))
+    shape = input.shape[:dim] + (make_int_wrapper(1),) + input.shape[dim:]
+    shape_trt = make_size_wrapper(shape)._trt
 
-    shape = input.shape[:dim] + (1,) + input.shape[dim:]
-    layer.reshape_dims = tuple(shape)
+    layer = ctx.network.add_shuffle(trt_(ctx.network, input))
+    layer.set_input(1, shape_trt)
 
     return layer.get_output(0)
 
