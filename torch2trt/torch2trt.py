@@ -153,12 +153,12 @@ def add_missing_trt_tensors(network, tensors):
 
             # get tensor w/ _trt
             # or... add constant for scalar primitive
-            if isinstance(t, float) or isinstance(t, int):
+            if hasattr(t, "_trt") or isinstance(t, IntWrapper):
+                trt_tensor = t._trt
+            elif isinstance(t, float) or isinstance(t, int):
                 shape = (1,)
                 scalar = t * torch.ones(shape, dtype=dtype).cpu().numpy()
                 trt_tensor = network.add_constant(shape, scalar).get_output(0)
-            elif hasattr(t, "_trt"):
-                trt_tensor = t._trt
 
             # or... add constant for leaf tensor w/o _trt
             else:
@@ -232,7 +232,7 @@ def trt_(network, *tensors):
             # GET TRT TENSOR (OR CREATE TRT CONSTANT)
 
             # get tensor w/ _trt
-            if isinstance(t, torch.Tensor) and hasattr(t, "_trt"):
+            if (isinstance(t, torch.Tensor) and hasattr(t, "_trt")) or isinstance(t, IntWrapper):
                 trt_tensor = t._trt
 
             # or... add constant for leaf tensor w/o _trt
