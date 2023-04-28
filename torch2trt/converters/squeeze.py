@@ -12,6 +12,10 @@ def convert_squeeze(ctx):
     output = ctx.method_return
     dim = get_arg(ctx, 'dim', pos=1, default=None)
 
+    if dim < 0:
+        dim = len(input.shape) + dim
+    assert dim >= 0
+
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
 
     input_shape_trt = ctx.network.add_shape(input_trt).get_output(0)
@@ -46,4 +50,12 @@ class Squeeze(torch.nn.Module):
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 1, 3)])
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 1, 3)], max_batch_size=2)
 def test_squeeze():
-    return Squeeze(2)    
+    return Squeeze(2)
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 1, 1)])
+def test_squeeze_neg():
+    return Squeeze(-1)
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 1, 1)])
+def test_squeeze_neg2():
+    return Squeeze(-2)
