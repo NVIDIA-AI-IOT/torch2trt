@@ -673,6 +673,7 @@ def torch2trt(module,
               opt_shapes=None,
               onnx_opset=None,
               max_batch_size=None,
+              avg_timing_iterations=None,
               **kwargs):
 
     # capture arguments to provide to context
@@ -782,6 +783,10 @@ def torch2trt(module,
 
     # set max workspace size
     config.max_workspace_size = max_workspace_size
+
+    # set number of avg timing itrs.
+    if avg_timing_iterations is not None:
+        config.avg_timing_iterations = avg_timing_iterations
 
     if fp16_mode:
         config.set_flag(trt.BuilderFlag.FP16)
