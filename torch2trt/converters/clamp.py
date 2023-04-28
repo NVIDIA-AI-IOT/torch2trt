@@ -2,15 +2,27 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-def __add_clamp(network, trt_input, val, op):
-    
+def _add_clamp_val(network, trt_input, val, op):
     # create TensorRT constant for minimum value
     val_shape = (1, ) * len(trt_input.shape)  # broadcast all dimensions
     val_tensor = val * torch.ones(val_shape, dtype=torch_dtype_from_trt(trt_input.dtype)).cpu().numpy()
     val_trt = network.add_constant(val_shape, val_tensor)
     layer = network.add_elementwise(trt_input, val_trt.get_output(0), op)
-    
+
     return layer
+
+
+def _add_clamp_tensor(network, trt_input, tensor, op):
+    tensor_trt = trt_(network, tensor)
+    trt_input, tensor_trt = broadcast_trt_tensors(network, [trt_input, tensor_trt], max(len(trt_input.shape), len(tensor_trt.shape)))
+    layer = network.add_elementwise(trt_input, tensor_trt, op)
+
+    return layer
+
+
+def __add_clamp(network, trt_input, val, op):
+    return (_add_clamp_tensor(network, trt_input, val, op) if isinstance(val, torch.Tensor)
+        else _add_clamp_val(network, trt_input, val, op))
 
     
 # CLAMP_MIN
@@ -93,15 +105,16 @@ def convert_clamp(ctx):
     input = ctx.method_args[0]
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
-    if "min" in ctx.method_kwargs and "max" in ctx.method_kwargs:
+    if (("min" in ctx.method_kwargs and ctx.method_kwargs["min"] is not None)
+            and ("max" in ctx.method_kwargs and ctx.method_kwargs["max"] is not None)):
         min_val = ctx.method_kwargs["min"]
         max_val = ctx.method_kwargs["max"]
         layer = __add_clamp(ctx.network, input_trt, min_val, trt.ElementWiseOperation.MAX)
         layer = __add_clamp(ctx.network, layer.get_output(0), max_val, trt.ElementWiseOperation.MIN)
-    elif "min" in ctx.method_kwargs:
+    elif "min" in ctx.method_kwargs and ctx.method_kwargs["min"] is not None:
         min_val = ctx.method_kwargs["min"]
         layer = __add_clamp(ctx.network, input_trt, min_val, trt.ElementWiseOperation.MAX)
-    elif "max" in ctx.method_kwargs:
+    elif "max" in ctx.method_kwargs and ctx.method_kwargs["max"] is not None:
         max_val = ctx.method_kwargs["max"]
         layer = __add_clamp(ctx.network, input_trt, max_val, trt.ElementWiseOperation.MIN)
     else:
@@ -112,6 +125,46 @@ def convert_clamp(ctx):
     
     output._trt = layer.get_output(0)
     
+
+class TorchClampTensor(torch.nn.Module):
+    def __init__(self, min_=None, max_=None):
+        super().__init__()
+        self.min = min_
+        self.max = max_
+
+    def forward(self, x):
+        return torch.clamp(x, min=self.min, max=self.max)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224)])
+def test_torch_clamp_tensor_min():
+    return TorchClampTensor(min_=torch.ones(1, 3, 224, 224).cuda() * -0.1)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224)])
+def test_torch_clamp_tensor_min_broadcasted():
+    return TorchClampTensor(min_=torch.tensor((-0.1,)).cuda())
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224)])
+def test_torch_clamp_tensor_max():
+    return TorchClampTensor(max_=torch.ones(1, 3, 224, 224).cuda() * 0.1)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224)])
+def test_torch_clamp_tensor_max_broadcasted():
+    return TorchClampTensor(max_=torch.tensor((0.1,)).cuda())
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224)])
+def test_torch_clamp_tensor_min_max():
+    return TorchClampTensor(min_=torch.ones(1, 3, 224, 224).cuda() * -0.1, max_=torch.ones(1, 3, 224, 224).cuda() * 0.1)
+
+
+@add_module_test(torch.float32, torch.device('cuda'), [(1, 3, 224, 224)])
+def test_torch_clamp_tensor_min_max_broadcasted():
+    return TorchClampTensor(min_=torch.tensor((-0.1,)).cuda(), max_=torch.tensor((0.1,)).cuda())
+
 
 class TorchClamp(torch.nn.Module):
     def forward(self, x):
