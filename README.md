@@ -110,7 +110,7 @@ We tested the converter against these models using the [test.sh](test.sh) script
 To install the torch2trt Python library, call the following
 
 ```bash
-git clone https://github.com/NVIDIA-AI-IOT/torch2trt
+git clone https://github.com/NVIDIA-AI-IOT/torch2trt.git
 cd torch2trt
 python setup.py install
 ```
