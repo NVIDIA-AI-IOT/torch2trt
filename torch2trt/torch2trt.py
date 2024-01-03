@@ -372,7 +372,7 @@ class NetworkWrapper(object):
             device_type = self._ctx.current_device_type()
             self._ctx.builder_config.set_device_type(layer, device_type)
             orig_device_type = device_type
-            if not self._ctx.builder_config.can_run_on_DLA(layer) and device_type == trt.DeviceType.DLA:
+            if device_type == trt.DeviceType.DLA and not self._ctx.builder_config.can_run_on_DLA(layer):
                 if self._ctx.torch2trt_kwargs['gpu_fallback']:
                     device_type = trt.DeviceType.GPU  # layer will fall back to GPU
             
