@@ -6,13 +6,14 @@ import argparse
 import os,sys 
 import torch.optim as optim 
 from datasets.cifar10 import Cifar10Loaders
-from models.models import vanilla_cnn
-from models.resnet import resnet18 , resnet34
-from utils.utilities import calculate_accuracy , add_missing_keys, transfer_learning_resnet18,transfer_learning_resnet34, mapping_names
+from models.resnet import resnet18 , resnet34, resnet50
+from utils.utilities import calculate_accuracy , add_missing_keys, transfer_learning,mapping_names
 from parser import parse_args
 import time
 from torch2trt import torch2trt
 import tensorrt as trt 
+from pytorch_quantization import nn as quant_nn
+import re
 
 def main():
     args = parse_args()
@@ -45,31 +46,42 @@ def main():
     train_loader = loaders.train_loader()
     test_loader = loaders.test_loader()
 
+    #Model selection
+
     if args.m =="resnet18":
-        if args.netqat:
+        if args.quantize:
             model=resnet18(qat_mode=True)
+        elif args.pretrain:
+            model=transfer_learning("resnet18",True)
         else:
             model=resnet18()
     elif args.m =="resnet34":
-        if args.netqat:
+        if args.quantize:
             model=resnet34(qat_mode=True)
+        elif args.pretrain:
+            model = transfer_learning("resnet34", True)
         else:
             model=resnet34()
-    elif args.m == 'resnet34-tl':
-        model = transfer_learning_resnet34()
-    elif args.m == "resnet18-tl": ## resnet18 transfer learning
-        model=transfer_learning_resnet18()
+    elif args.m =="resnet50":
+        if args.quantize:
+            model=resnet50(qat_mode=True)
+        elif args.pretrain:
+            model = transfer_learning("resnet50", True)
+        else:
+            model=resnet50()
     else:
         raise NotImplementedError("model {} is not defined".format(args.m))
 
     if args.cuda:
         model = model.cuda()
-
+    
+    ## Loading checkpoint 
+    
     best_test_accuracy=0
     if args.v:
         print("======>>> keys present in state dict at model creation")
         for k,_ in model.state_dict().items():
-            print(k)
+            print(k,_.shape)
 
     if args.load_ckpt:
         model.eval()
@@ -79,14 +91,21 @@ def main():
             if args.v:
                 print("====>>>>> keys present in the ckpt state dict")
                 for k,_ in model_state.items():
-                    print(k)
-            if args.tl:
-                model_state = mapping_names(model_state)
+                    print(k,_.shape)
+            model_state = mapping_names(model_state)
             new_state_dict = add_missing_keys(model.state_dict(),model_state)
             model.load_state_dict(new_state_dict,strict=True)
         else:
             model.load_state_dict(checkpoint['model_state_dict'],strict=True)
     
+    ## Creating optimizer and loss function
+    print("-------------------------------------------------------------------------------")
+    for name,param in model.named_parameters():
+        if re.search(r'clip',name):
+            param.requires_grad = False
+
+
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, momentum=0.9)
     if args.load_ckpt:
@@ -95,11 +114,18 @@ def main():
         loss = checkpoint['loss']
         print("===>>> Checkpoint loaded successfully from {} at epoch {} ".format(args.load_ckpt,epoch))
 
+    for name,param in model.named_parameters():
+        if re.search(r'clip',name):
+            param.requires_grad = True
+
+
+    ## Training 
+
     print("===>> Training started")
+    model.train()
     for epoch in range(args.start_epoch, args.start_epoch + args.num_epochs):
         running_loss=0.0
         start=time.time()
-        model.train()
         for i, data in enumerate(train_loader,0):
             inputs, labels = data
 
@@ -115,7 +141,7 @@ def main():
             optimizer.step()
 
             running_loss +=loss.item()
-        
+
         if epoch > 0 and  epoch % args.lrdt == 0:
             print("===>> decaying learning rate at epoch {}".format(epoch))
             for param_group in optimizer.param_groups:
@@ -138,37 +164,49 @@ def main():
                 'loss': running_loss,
                 }, best_ckpt_filename)
     print("Training finished")
-    
-    ## Running metrics
+     
+    ## Testing
+    for name,param in model.named_parameters():
+        if re.search(r'clip',name):
+            print(name,param)
+
+
     if args.test_trt:
-        if args.m == 'resnet34-tl' or args.m == 'resnet34':
-            model = transfer_learning_resnet34(pretrained=False)
-        elif args.m == 'resnet18-tl' or args.m == 'resnet18':
-            model= transfer_learning_resnet18(pretrained=False)
+        if args.m == 'resnet34':
+            model = transfer_learning("resnet34",False)
+        elif args.m == 'resnet18':
+            model= transfer_learning("resnet18",False)
+        elif args.m == "resnet50":
+            model = transfer_learning("resnet50",False)
         else:
             raise NotImplementedError("model {} is not defined".format(args.m))
         
-        model=model.cuda().eval()
-        checkpoint = torch.load(best_ckpt_filename)
-        model.load_state_dict(checkpoint['model_state_dict'],strict=True)
+        with torch.no_grad():
+            model=model.cuda().eval()
+            checkpoint = torch.load(best_ckpt_filename)
+            model.load_state_dict(checkpoint['model_state_dict'],strict=True)
         
-        pytorch_test_accuracy = calculate_accuracy(model,test_loader)
-        rand_in = torch.randn([128,3,32,32],dtype=torch.float32).cuda()
+            pytorch_test_accuracy = calculate_accuracy(model,test_loader)
+            rand_in = torch.randn([1,3,32,32],dtype=torch.float32).cuda()
+            torch.cuda.synchronize()
 
-        if args.FP16:
-            trt_model_fp16 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,max_batch_size=128)
-            trtfp16_test_accuracy = calculate_accuracy(trt_model_fp16,test_loader)
-    
-        if args.INT8PTC:
-            ##preparing calib dataset
-            calib_dataset = list()
-            for i, sam in enumerate(test_loader):
-                calib_dataset.extend(sam[0])
-                if i ==5:
-                    break
+            if args.FP16:
+                trt_model_fp16 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,max_batch_size=1)
+                print("FP16 model exported")
+                torch.cuda.synchronize()
+                trtfp16_test_accuracy = calculate_accuracy(trt_model_fp16,test_loader)
+            
+            if args.INT8PTC:
+                ##preparing calib dataset
+                calib_dataset = list()
+                for i, sam in enumerate(test_loader):
+                    calib_dataset.extend(sam[0])
+                    if i == 750:
+                        break
 
-            trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=128)
-            int8_test_accuracy = calculate_accuracy(trt_model_calib_int8,test_loader)
+                trt_model_calib_int8 = torch2trt(model,[rand_in],log_level=trt.Logger.INFO,fp16_mode=True,int8_calib_dataset=calib_dataset,int8_mode=True,max_batch_size=1)
+                torch.cuda.synchronize()
+                int8_test_accuracy = calculate_accuracy(trt_model_calib_int8,test_loader)
 
         print("Test Accuracy")
         print("Pytorch model :",pytorch_test_accuracy)

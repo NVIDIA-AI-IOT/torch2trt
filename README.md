@@ -134,7 +134,7 @@ To install torch2trt with experimental community contributed features under ``to
 ```bash
 git clone https://github.com/NVIDIA-AI-IOT/torch2trt
 cd torch2trt/scripts    
-bash build_contrib.sh   
+bash build_qat.sh   
 ```
   
 This enables you to run the QAT example located [here](examples/contrib/quantization_aware_training).   

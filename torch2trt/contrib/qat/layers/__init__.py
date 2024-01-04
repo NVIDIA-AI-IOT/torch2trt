@@ -1,3 +1,4 @@
 from .quant_conv import *
-from .quant_activation import *
-from ._utils import *
+from .quant_pooling import *
+from .quant_generic_tensor import *
+from .utils import *
