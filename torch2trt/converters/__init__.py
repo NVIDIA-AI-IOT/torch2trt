@@ -77,3 +77,4 @@ from .transpose import *
 from .unary import *
 from .unsqueeze import *
 from .view import *
+from .cast import *
