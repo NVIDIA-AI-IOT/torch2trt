@@ -536,7 +536,8 @@ class ConversionContext(object):
                     shape=shape,
                     dtype=torch_dtype_to_trt(torch_input.dtype),
                 )
-                trt_tensor.location = torch_device_to_trt(torch_input.device)
+                # trt_tensor.location = torch_device_to_trt(torch_input.device)
+                trt_tensor.location = trt.TensorLocation.DEVICE
                 torch_input._trt = trt_tensor
 
     def mark_outputs(self, torch_outputs, names=None):
@@ -547,7 +548,8 @@ class ConversionContext(object):
         for i, torch_output in enumerate(torch_outputs):
             trt_tensor = torch_output._trt
             trt_tensor.name = names[i]
-            trt_tensor.location = torch_device_to_trt(torch_output.device)
+            # trt_tensor.location = torch_device_to_trt(torch_output.device)
+            trt_tensor.location = trt.TensorLocation.DEVICE
             trt_tensor.dtype = torch_dtype_to_trt(torch_output.dtype)
             self.network.mark_output(trt_tensor)
 
@@ -606,8 +608,14 @@ class TRTModule(torch.nn.Module):
     def forward(self, *inputs):
         bindings = [None] * (len(self.input_names) + len(self.output_names))
         
+        # flatten inputs
         if self.input_flattener is not None:
             inputs = self.input_flattener.flatten(inputs)
+
+        input_dtype = inputs[0].device
+
+        # place inputs on device
+        inputs = [t.cuda() for t in inputs]
 
         for i, input_name in enumerate(self.input_names):
             idx = self.engine.get_binding_index(input_name)
@@ -630,6 +638,10 @@ class TRTModule(torch.nn.Module):
             bindings, torch.cuda.current_stream().cuda_stream
         )
 
+        # map outputs to input dtype
+        outputs = [t.to(input_dtype) for t in outputs]
+
+        # unflatten outputs
         if self.output_flattener is not None:
             outputs = self.output_flattener.unflatten(outputs)
         else:
