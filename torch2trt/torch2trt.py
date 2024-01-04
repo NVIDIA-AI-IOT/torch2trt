@@ -118,6 +118,28 @@ def torch_dim_to_trt_axes(dim):
     return axes
 
 
+def trt_tensor_to_dtype(network, tensor_trt, trt_dtype):
+    if tensor_trt.dtype == trt_dtype:
+        return tensor_trt
+
+    identity_layer = network.add_identity(tensor_trt)
+    identity_layer.set_output_type(0, trt_dtype)
+
+    return identity_layer.get_output(0)
+
+
+def promote_trt_tensors_dtypes(network, trt_tensors):
+    if len(trt_tensors) == 1:
+        return trt_tensors[0]
+
+    highest_torch_dtype = torch_dtype_from_trt(trt_tensors[0].dtype)
+    for trt_tensor in trt_tensors:
+        highest_torch_dtype = torch.promote_types(highest_torch_dtype, torch_dtype_from_trt(trt_tensor.dtype))
+
+    highest_trt_dtype = torch_dtype_to_trt(highest_torch_dtype)
+    return [trt_tensor_to_dtype(network, trt_tensor, highest_trt_dtype) for trt_tensor in trt_tensors]
+
+
 def add_trt_constant(network, tensor):
     shape = tuple(tensor.shape)
     array = tensor[0].detach().cpu().numpy()
