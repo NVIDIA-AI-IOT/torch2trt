@@ -168,7 +168,7 @@ if __name__ == '__main__':
             max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt = run(test, serialize=args.serialize)
 
             # write entry
-            line = '| %70s | %s | %25s | %s | %.2E | %.2f | %.2E | %.3g | %.3g | %.3g | %.3g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt)
+            line = '| %70s | %s | %25s | %s | %.2E | %.2f | %.2E | %.5g | %.5g | %.5g | %.5g |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs), max_error,psnr_db,mse, fps, fps_trt, ms, ms_trt)
         
             if args.tolerance >= 0 and max_error > args.tolerance:
                 print(colored(line, 'yellow'))
@@ -180,7 +180,7 @@ if __name__ == '__main__':
                 print(line)
             num_success += 1
         except:
-            line = '| %s | %s | %s | %s | N/A | N/A | N/A | N/A | N/A |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs))
+            line = '| %s | %s | %s | %s | N/A | N/A | N/A | N/A | N/A | N/A | N/A |' % (name, test.dtype.__repr__().split('.')[-1], str(test.input_shapes), str(test.torch2trt_kwargs))
             print(colored(line, 'red'))
             num_error += 1
             tb = traceback.format_exc()
