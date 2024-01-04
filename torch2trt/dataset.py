@@ -58,7 +58,7 @@ class Dataset(object):
     @property
     def flattener(self):
         if not hasattr(self, '_flattener') or self._flattener is None:
-            assert(len(self) > 0, 'Cannot create default flattener without input data.')
+            assert len(self) > 0, 'Cannot create default flattener without input data.'
             value = self[0]
             self._flattener = Flattener.from_value(value)
         return self._flattener
