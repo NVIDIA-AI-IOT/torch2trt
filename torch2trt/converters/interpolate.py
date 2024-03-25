@@ -3,6 +3,11 @@ import torch.nn as nn
 from torch2trt.torch2trt import *                                 
 from torch2trt.module_test import add_module_test
 import collections
+import sys
+if sys.version_info[0] == 3 and sys.version_info[1] >= 10:
+    import collections.abc as collections
+else:
+    import collections
 
 
 def has_interpolate_plugin():
