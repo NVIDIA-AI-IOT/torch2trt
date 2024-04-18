@@ -32,6 +32,7 @@ from .compare import *
 from .div import *
 from .einsum import *
 from .expand import *
+from .expand_as import *
 from .example_plugin import *
 from .flatten import *
 from .floordiv import *
