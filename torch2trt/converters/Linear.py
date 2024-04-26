@@ -23,9 +23,12 @@ def convert_Linear(ctx):
     bias_shape = [1] * (input.ndim - 1) + [int(weight.shape[0])]
     bias = bias.reshape(bias_shape)
 
+    
+    if weight.ndim < input.ndim:
+        weight = weight[None, ...]
+        
     kernel_const = ctx.network.add_constant(tuple(weight.shape), weight)
     bias_const = ctx.network.add_constant(tuple(bias.shape), bias)
-    
 
     mm = ctx.network.add_matrix_multiply(
         input_trt,

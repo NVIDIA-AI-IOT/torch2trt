@@ -31,7 +31,7 @@ def convert_unsqueeze(ctx):
     # add unsqueeze dim
     new_shape_trt.insert(
         dim,
-        ctx.network.add_constant([1], np.array([1], dtype=np.int32)).get_output(0)
+        ctx.network.add_constant([1], np.array([1], dtype=np.int64)).get_output(0)
     )
 
     new_shape_trt = ctx.network.add_concatenation(new_shape_trt).get_output(0)

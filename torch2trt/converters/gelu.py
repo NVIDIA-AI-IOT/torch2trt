@@ -3,33 +3,51 @@ from torch2trt.module_test import add_module_test
 import math
 
 
-@tensorrt_converter('torch.nn.functional.gelu')
-def convert_gelu_v1(ctx):
-    # approximate equation 1 from paper
-    input = get_arg(ctx, 'input', 0, None)
+@tensorrt_converter("torch.nn.functional.gelu")
+def convert_gelu_native(ctx):
+
+    input = get_arg(ctx, "input", 0, None)
+    appx = get_arg(ctx, "approximate", 1, 'none')
     output = ctx.method_return
+
+    if appx == "tanh":
+        act_type = trt.ActivationType.GELU_TANH
+    else:
+        act_type = trt.ActivationType.GELU_ERF
+
+    layer = ctx.network.add_activation(input._trt, act_type)
+
+    output._trt = layer.get_output(0)
+
+
+# @tensorrt_converter('torch.nn.functional.gelu')
+# def convert_gelu_v1(ctx):
+
+#     # approximate equation 1 from paper
+#     input = get_arg(ctx, 'input', 0, None)
+#     output = ctx.method_return
     
-    x, c05, c1, cs2pi, c044, c3 = add_missing_trt_tensors(
-        ctx.network,
-        [input, 0.5, 1.0, math.sqrt(2.0 / math.pi), 0.044715, 3.0]
-    )
+#     x, c05, c1, cs2pi, c044, c3 = add_missing_trt_tensors(
+#         ctx.network,
+#         [input, 0.5, 1.0, math.sqrt(2.0 / math.pi), 0.044715, 3.0]
+#     )
     
-    x, c05, c1, cs2pi, c044, c3 = broadcast_trt_tensors(
-        ctx.network, 
-        [x, c05, c1, cs2pi, c044, c3], 
-        len(output.shape)
-    )
+#     x, c05, c1, cs2pi, c044, c3 = broadcast_trt_tensors(
+#         ctx.network, 
+#         [x, c05, c1, cs2pi, c044, c3], 
+#         len(output.shape)
+#     )
     
-    y = ctx.network.add_elementwise(x, c3, trt.ElementWiseOperation.POW).get_output(0)
-    y = ctx.network.add_elementwise(y, c044, trt.ElementWiseOperation.PROD).get_output(0)
-    y = ctx.network.add_elementwise(x, y, trt.ElementWiseOperation.SUM).get_output(0)
-    y = ctx.network.add_elementwise(y, cs2pi, trt.ElementWiseOperation.PROD).get_output(0)
-    y = ctx.network.add_activation(y, trt.ActivationType.TANH).get_output(0)
-    y = ctx.network.add_elementwise(y, c1, trt.ElementWiseOperation.SUM).get_output(0)
-    y = ctx.network.add_elementwise(x, y, trt.ElementWiseOperation.PROD).get_output(0)
-    y = ctx.network.add_elementwise(y, c05, trt.ElementWiseOperation.PROD).get_output(0)
+#     y = ctx.network.add_elementwise(x, c3, trt.ElementWiseOperation.POW).get_output(0)
+#     y = ctx.network.add_elementwise(y, c044, trt.ElementWiseOperation.PROD).get_output(0)
+#     y = ctx.network.add_elementwise(x, y, trt.ElementWiseOperation.SUM).get_output(0)
+#     y = ctx.network.add_elementwise(y, cs2pi, trt.ElementWiseOperation.PROD).get_output(0)
+#     y = ctx.network.add_activation(y, trt.ActivationType.TANH).get_output(0)
+#     y = ctx.network.add_elementwise(y, c1, trt.ElementWiseOperation.SUM).get_output(0)
+#     y = ctx.network.add_elementwise(x, y, trt.ElementWiseOperation.PROD).get_output(0)
+#     y = ctx.network.add_elementwise(y, c05, trt.ElementWiseOperation.PROD).get_output(0)
     
-    output._trt = y
+#     output._trt = y
     
     
 # @tensorrt_converter('torch.nn.functional.gelu')

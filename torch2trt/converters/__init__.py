@@ -25,11 +25,13 @@ from .adaptive_max_pool3d import *
 from .add import *
 from .avg_pool import *
 from .batch_norm import *
+from .cast import *
 from .cat import *
 from .chunk import *
 from .clamp import *
 from .compare import *
 from .div import *
+from .detach import *
 from .einsum import *
 from .expand import *
 from .example_plugin import *
@@ -72,6 +74,7 @@ from .stack import *
 from .sub import *
 from .sum import *
 from .tanh import *
+from .to import *
 from .tensor import *
 from .transpose import *
 from .unary import *

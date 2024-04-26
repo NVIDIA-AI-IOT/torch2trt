@@ -19,7 +19,8 @@ def convert_view(ctx):
     output = ctx.method_return
 
     layer = ctx.network.add_shuffle(input._trt)
-    layer.set_input(1, size._trt)
+    # layer.set_input(1, size) TODO::: Fix dynamic shape bug
+    layer.reshape_dims = tuple(size)
     output._trt = layer.get_output(0)
 
 

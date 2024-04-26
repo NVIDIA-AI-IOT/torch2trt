@@ -30,7 +30,6 @@ for method in TORCH_METHODS:
     def warn_method(ctx):
         print('Warning: Encountered known unsupported method %s' % ctx.method_str)
         
-
 @tensorrt_converter('torch.Tensor.dim', is_real=False)
 @tensorrt_converter('torch.Tensor.size', is_real=False)
 def dont_warn(ctx):

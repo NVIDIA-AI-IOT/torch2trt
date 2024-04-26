@@ -317,6 +317,9 @@ def attach_converter(ctx, method, converter, method_str):
             ctx.method_kwargs = None
             ctx.method_return = None
             ctx.lock = False
+        
+        if hasattr(outputs, "_trt"):
+            print(method_str, ctx.current_module_name(), outputs.shape, outputs._trt.shape)
 
         return outputs
 
@@ -1015,7 +1018,7 @@ class IntWrapper(int):
     def _trt(self):
         if not hasattr(self, '_raw_trt'):
             ctx = get_conversion_context()
-            self._raw_trt = ctx.network._network.add_constant([1], np.array([_int(self)], dtype=np.int32)).get_output(0)
+            self._raw_trt = ctx.network._network.add_constant([1], np.array([_int(self)], dtype=np.int64)).get_output(0)
         return self._raw_trt
 
     # lhs ops

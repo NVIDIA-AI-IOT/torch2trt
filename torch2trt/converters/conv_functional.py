@@ -2,6 +2,72 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
+@tensorrt_converter('torch.nn.functional.conv1d', enabled=True)
+def convert_conv1d_functional(ctx):
+    input = get_arg(ctx, 'input', pos=0, default=None)
+    weight = get_arg(ctx, 'weight', pos=1, default=None)
+    bias = get_arg(ctx, 'bias', pos=2, default=None)
+    stride = get_arg(ctx, 'stride', pos=3, default=1)
+    padding = get_arg(ctx, 'padding', pos=4, default=0)
+    dilation = get_arg(ctx, 'dilation', pos=5, default=1)
+    groups = get_arg(ctx, 'groups', pos=6, default=1)
+    
+
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
+    output = ctx.method_return
+
+    input_dim = input.dim() - 2
+    
+    out_channels = int(weight.shape[0])
+    kernel_size = tuple(weight.shape[2:])
+
+    if not isinstance(kernel_size, tuple):
+        kernel_size = [kernel_size] * input_dim 
+    kernel_size = tuple(list(kernel_size) + [1]) # for 2d conv
+
+    if not isinstance(stride, tuple):
+        stride = [stride] * input_dim
+    stride = tuple(list(stride) + [1])
+
+    if not isinstance(padding, tuple):
+        padding = [padding] * input_dim
+    padding = tuple(list(padding) + [0])
+
+    if not isinstance(dilation, tuple):
+        dilation = [dilation] * input_dim
+    dilation = tuple(list(dilation) + [1])
+
+    kernel = weight.detach().cpu().numpy()[..., None]
+    
+    if bias is not None:
+        bias = bias.detach().cpu().numpy()[..., None]
+
+    # convert to 2d
+    layer = ctx.network.add_shuffle(input_trt)
+    layer.reshape_dims = (0, -1, 0, 1)
+
+    # 2d conv
+    layer = ctx.network.add_convolution_nd(
+        input=layer.get_output(0),
+        num_output_maps=out_channels,
+        kernel_shape=kernel_size,
+        kernel=kernel,
+        bias=bias)
+    layer.stride_nd = stride
+    layer.padding_nd = padding
+    layer.dilation_nd = dilation
+
+    if groups is not None:
+        layer.num_groups = groups
+
+    # convert back to 1d
+    layer = ctx.network.add_shuffle(layer.get_output(0))
+    layer.reshape_dims = (0, -1, 0)
+
+    output._trt = layer.get_output(0)
+
+
+
 @tensorrt_converter('torch.nn.functional.conv2d', enabled=True)
 @tensorrt_converter('torch.nn.functional.conv3d', enabled=True)
 def convert_Conv_trt7_functional(ctx):
@@ -13,6 +79,7 @@ def convert_Conv_trt7_functional(ctx):
     dilation = get_arg(ctx, 'dilation', pos=5, default=1)
     groups = get_arg(ctx, 'groups', pos=6, default=1)
     
+
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
 
