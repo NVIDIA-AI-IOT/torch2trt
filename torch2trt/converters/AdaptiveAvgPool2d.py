@@ -17,9 +17,9 @@ def convert_AdaptiveAvgPool2d(ctx):
     stride = (input_trt.shape[-2] // output_size[-2], input_trt.shape[-1] // output_size[-1])
 
     kernel_size = stride
-    layer = ctx.network.add_pooling(
+    layer = ctx.network.add_pooling_nd(
         input=input_trt, type=trt.PoolingType.AVERAGE, window_size=kernel_size)
-    layer.stride = stride
+    layer.stride_nd = stride
 
     output._trt = layer.get_output(0)
 

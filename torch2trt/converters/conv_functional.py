@@ -2,8 +2,8 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter('torch.nn.functional.conv2d', enabled=trt_version() >= '7.0')
-@tensorrt_converter('torch.nn.functional.conv3d', enabled=trt_version() >= '7.0')
+@tensorrt_converter('torch.nn.functional.conv2d', enabled=True)
+@tensorrt_converter('torch.nn.functional.conv3d', enabled=True)
 def convert_Conv_trt7_functional(ctx):
     input = get_arg(ctx, 'input', pos=0, default=None)
     weight = get_arg(ctx, 'weight', pos=1, default=None)

@@ -1,5 +1,6 @@
 from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
+import numpy as np
 
 
 @tensorrt_converter('torch.nn.functional.linear')
@@ -10,26 +11,37 @@ def convert_Linear(ctx):
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
 
-    # reshape to ...xNx1x1
-    layer = ctx.network.add_shuffle(input_trt)
-    layer.reshape_dims = tuple([0]*input.ndim) + (1, 1) 
+    weight = weight.detach().cpu().numpy()
 
-    bias_trt = trt.Weights(torch_dtype_to_trt(weight.dtype))
+
+
     if bias is not None:
-        bias_trt = bias.detach().cpu().numpy()
-        
-    # add fully connected
-    layer = ctx.network.add_fully_connected(
-        input=layer.get_output(0),
-        num_outputs=int(weight.shape[0]),
-        kernel=weight.detach().cpu().numpy(),
-        bias=bias_trt)
+        bias = bias.detach().cpu().numpy()
+    else:
+        bias = np.zeros((int(weight.shape[0]),), dtype=weight.dtype)
 
-    # reshape back to N
-    layer = ctx.network.add_shuffle(layer.get_output(0))
-    layer.reshape_dims = tuple([0] * output.ndim)
+    bias_shape = [1] * (input.ndim - 1) + [int(weight.shape[0])]
+    bias = bias.reshape(bias_shape)
 
-    output._trt = layer.get_output(0)
+    kernel_const = ctx.network.add_constant(tuple(weight.shape), weight)
+    bias_const = ctx.network.add_constant(tuple(bias.shape), bias)
+    
+
+    mm = ctx.network.add_matrix_multiply(
+        input_trt,
+        trt.MatrixOperation.NONE,
+        kernel_const.get_output(0),
+        trt.MatrixOperation.TRANSPOSE
+    )
+
+    bias_add = ctx.network.add_elementwise(
+        mm.get_output(0), 
+        bias_const.get_output(0), 
+        trt.ElementWiseOperation.SUM
+    
+    )
+
+    output._trt = bias_add.get_output(0)
     
 
 @add_module_test(torch.float32, torch.device('cuda'), [(1, 10)])

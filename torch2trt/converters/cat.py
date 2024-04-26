@@ -4,6 +4,7 @@ from torch2trt.module_test import add_module_test
 
 @tensorrt_converter('torch.cat')
 def convert_cat(ctx):
+    print("concat")
     inputs = get_arg(ctx, 'input', pos=0, default=None)
     dim = get_arg(ctx, 'dim', pos=1, default=0)
 
@@ -17,7 +18,7 @@ def convert_cat(ctx):
 
     layer = ctx.network.add_concatenation(inputs=trt_inputs)
     layer.axis = dim
-    output._trt = layer.get_output(0)
+    output._trt = layer.get_output(0)    
 
 
 class Cat(torch.nn.Module):

@@ -35,8 +35,8 @@ def convert_max_pool1d(ctx):
         input=unsqueeze_trt, type=trt.PoolingType.MAX, window_size=kernel_size
     )
     set_layer_precision(ctx, pooling_layer)
-    pooling_layer.stride = stride
-    pooling_layer.padding = padding
+    pooling_layer.stride_nd = stride
+    pooling_layer.padding_nd = padding
 
     if ceil_mode:
         pooling_layer.padding_mode = trt.PaddingMode.EXPLICIT_ROUND_UP

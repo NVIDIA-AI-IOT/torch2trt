@@ -2,7 +2,7 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter("torch.nn.functional.avg_pool2d", enabled=trt_version() < '7.0')
+@tensorrt_converter("torch.nn.functional.avg_pool2d", enabled=True)
 def convert_avg_pool2d(ctx):
     # parse args
     input = get_arg(ctx, "input", pos=0, default=None)
@@ -29,12 +29,12 @@ def convert_avg_pool2d(ctx):
     if not isinstance(padding, tuple):
         padding = (padding,) * 2
 
-    layer = ctx.network.add_pooling(
+    layer = ctx.network.add_pooling_nd(
         input=input_trt, type=trt.PoolingType.AVERAGE, window_size=kernel_size
     )
 
-    layer.stride = stride
-    layer.padding = padding
+    layer.stride_nd = stride
+    layer.padding_nd = padding
     layer.average_count_excludes_padding = not count_include_pad
 
     if ceil_mode:

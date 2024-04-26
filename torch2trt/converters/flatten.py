@@ -28,7 +28,7 @@ def convert_flatten(ctx):
     # get flatten reduce dimensions
     if start_dim != end_dim:
         new_shape_trt.append(
-            ctx.network.add_constant([1], np.array([-1], dtype=np.int32)).get_output(0)
+            ctx.network.add_constant([1], np.array([-1], dtype=np.int64)).get_output(0)
         )
 
     # get shape after flatten

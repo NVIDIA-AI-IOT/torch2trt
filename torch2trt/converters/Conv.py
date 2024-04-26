@@ -2,8 +2,8 @@ from torch2trt.torch2trt import *
 from torch2trt.module_test import add_module_test
 
 
-@tensorrt_converter('torch.nn.Conv2d.forward', enabled=trt_version() >= '7.0')
-@tensorrt_converter('torch.nn.Conv3d.forward', enabled=trt_version() >= '7.0')
+@tensorrt_converter('torch.nn.Conv2d.forward', enabled=True)
+@tensorrt_converter('torch.nn.Conv3d.forward', enabled=True)
 def convert_Conv_trt7(ctx):
     module = ctx.method_args[0]
     input = ctx.method_args[1]

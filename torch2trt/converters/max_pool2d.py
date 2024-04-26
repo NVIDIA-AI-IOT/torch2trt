@@ -29,11 +29,11 @@ def convert_max_pool2d(ctx):
     if not isinstance(padding, tuple):
         padding = (padding, ) * 2
 
-    layer = ctx.network.add_pooling(
+    layer = ctx.network.add_pooling_nd(
         input=input_trt, type=trt.PoolingType.MAX, window_size=kernel_size)
     
-    layer.stride = stride
-    layer.padding = padding
+    layer.stride_nd = stride
+    layer.padding_nd = padding
     
     if ceil_mode:
         layer.padding_mode = trt.PaddingMode.EXPLICIT_ROUND_UP
