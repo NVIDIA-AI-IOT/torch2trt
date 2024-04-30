@@ -748,7 +748,7 @@ def torch2trt(module,
             input_names=input_names, 
             output_names=output_names,
             dynamic_axes={
-                name: {int(axis): 'axis_%d' % axis for axis in dynamic_axes_flat[index]}
+                name: {int(axis): f'input_{index}_axis_{axis}' for axis in dynamic_axes_flat[index]}
                 for index, name in enumerate(input_names)
             },
             opset_version=onnx_opset
