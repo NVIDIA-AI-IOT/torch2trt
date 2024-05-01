@@ -19,15 +19,8 @@ from .dataset import (
 
 from .flattener import Flattener
 from .flatten_module import Flatten, Unflatten
+from .version_utils import trt_version, torch_version
 # UTILITY FUNCTIONS
-
-
-def trt_version():
-    return trt.__version__
-
-
-def torch_version():
-    return torch.__version__
 
 
 def torch_dtype_to_trt(dtype):
