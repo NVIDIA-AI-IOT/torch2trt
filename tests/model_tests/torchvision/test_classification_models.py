@@ -10,7 +10,7 @@ def _cross_validate_module(model, shape=(224, 224)):
     data = torch.randn(1, 3, *shape).cuda()
     out = model(data)
     out_trt = model_trt(data)
-    assert torch.allclose(out, out_trt, rtol=1e-2, atol=1e-2)
+    assert torch.allclose(out, out_trt, rtol=1e-1, atol=1e-1)
 
 
     

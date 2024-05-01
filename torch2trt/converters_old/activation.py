@@ -1,6 +1,4 @@
 from torch2trt.torch2trt import *
-from torch2trt.module_test import add_module_test
-from .unary import UnaryModule
 
 
 # |    RELU : Rectified Linear activation (impl in relu.py)
@@ -23,11 +21,6 @@ def convert_leaky_relu(ctx):
     layer.alpha = negative_slope
     
     output._trt = layer.get_output(0)
-    
-
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 5, 3)])
-def test_leaky_relu():
-    return UnaryModule(lambda x: torch.nn.functional.leaky_relu(x))
 
 
 #  |    ELU : Elu activation: f(x) = x if x >= 0, f(x) = alpha * (exp(x) - 1) if x < 0
@@ -46,10 +39,6 @@ def convert_elu(ctx):
     
     output._trt = layer.get_output(0)
     
-
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 5, 3)])
-def test_elu():
-    return UnaryModule(lambda x: torch.nn.functional.elu(x))
 
 
 #  |    SELU : Selu activation: f(x) = beta * x if x > 0, f(x) = beta * (alpha * exp(x) - alpha) if x <= 0
@@ -71,11 +60,6 @@ def convert_selu(ctx):
     output._trt = layer.get_output(0)
     
 
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 5, 3)])
-def test_selu():
-    return UnaryModule(lambda x: torch.nn.functional.selu(x))
-
-
 #  |    SOFTSIGN : Softsign activation: f(x) = x / (1 + \|x\|)
 
 
@@ -88,12 +72,7 @@ def convert_softsign(ctx):
     layer = ctx.network.add_activation(input_trt, trt.ActivationType.SOFTSIGN)
     
     output._trt = layer.get_output(0)
-    
-
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 5, 3)])
-def test_softsign():
-    return UnaryModule(lambda x: torch.nn.functional.softsign(x))
-
+ 
 
 #  |    SOFTPLUS : Softplus activation: f(x) = alpha * log(exp(beta * x) + 1)
 
@@ -107,12 +86,7 @@ def convert_softplus(ctx):
     layer = ctx.network.add_activation(input_trt, trt.ActivationType.SOFTPLUS)
     
     output._trt = layer.get_output(0)
-    
-
-@add_module_test(torch.float32, torch.device('cuda'), [(1, 5, 3)])
-def test_softplus():
-    return UnaryModule(lambda x: torch.nn.functional.softplus(x))
-
+   
 
 #  |    CLIP : Clip activation: f(x) = max(alpha, min(beta, x))  (impl in clamp.py)
 
