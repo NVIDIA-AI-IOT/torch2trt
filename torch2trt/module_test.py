@@ -1,5 +1,4 @@
 import torch
-import torchvision
 
 
 class ModuleTest(object):
