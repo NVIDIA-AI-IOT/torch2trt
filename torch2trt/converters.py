@@ -1701,9 +1701,13 @@ def convert_squeeze(ctx):
     output = ctx.method_return
     dim = get_arg(ctx, 'dim', pos=1, default=None)
 
-    if dim < 0:
-        dim = len(input.shape) + dim
-    assert dim >= 0
+    if dim is None:
+        dim = tuple([i for i in range(input.ndim)])
+
+    dim = torch_dim_resolve_negative(dim, input.ndim) 
+    # if dim < 0:
+    #     dim = len(input.shape) + dim
+    # assert dim >= 0
 
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
 

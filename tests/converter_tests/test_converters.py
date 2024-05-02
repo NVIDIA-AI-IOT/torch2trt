@@ -612,20 +612,89 @@ def test_binary_op_elementwise(op):
     inputs = [torch.randn(1, 3, 3).cuda(), torch.randn(1, 3, 3).cuda()]
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
 
-@pytest.mark.parametrize("op", ["min","max","mean","sum"])
-def test_reduce_op(op):
-    if op == "max":
-        fn = lambda x: torch.max(x)
-    elif op == "min":
-        fn = lambda x: torch.min(x)
-    elif op == "mean":
-        fn = lambda x: torch.mean(x)
-    elif op == "sum":
-        fn = lambda x: torch.sum(x)
+unary_1d_randn_ops = {
+    "torch.max": lambda x: torch.max(x),
+    "torch.Tensor.max": lambda x: x.max(),
+    "torch.min": lambda x: torch.min(x),
+    "torch.Tensor.min": lambda x: x.min(),
+    "torch.mean": lambda x: torch.mean(x),
+    "torch.Tensor.mean": lambda x: x.mean(),
+    "torch.sum": lambda x: torch.sum(x),
+    "torch.Tensor.sum": lambda x: x.sum(),
+    "torch.prod": lambda x: torch.prod(x),
+    "torch.Tensor.prod": lambda x: x.prod(),
+    "torch.relu": lambda x: torch.relu(x),
+    "torch.nn.functional.relu": lambda x: torch.nn.functional.relu(x),
+    "torch.Tensor.relu": lambda x: x.relu(),
+    "torch.nn.functional.relu6": lambda x: torch.nn.functional.relu6(x),
+    "torch.sigmoid": lambda x: torch.sigmoid(x),
+    "torch.nn.functional.sigmoid": lambda x: torch.nn.functional.sigmoid(x),
+    "torch.Tensor.sigmoid": lambda x: x.sigmoid(),
+    "torch.nn.functional.silu": lambda x: torch.nn.functional.silu(x),
+    "torch.Tensor.softmax": lambda x: x.softmax(1),
+    "torch.nn.functional.softmax": lambda x: torch.nn.functional.softmax(x, 1),
+    "torch.Tensor.squeeze": lambda x: x.squeeze(),
+    "torch.squeeze": lambda x: torch.squeeze(x),
+    "torch.stack": lambda x: torch.stack([x, x], dim=1),
+    "torch.sub": lambda x: torch.sub(x, x),
+    "torch.Tensor.__sub__": lambda x: x - x,
+    "torch.Tensor.__rsub__[int]": lambda x: 1 - x,
+    "torch.Tensor.__rsub__[float]": lambda x: 1.0 - x,
+    "torch.tanh": lambda x: torch.tanh(x),
+    "torch.nn.functional.tanh": lambda x: torch.nn.functional.tanh(x),
+    "torch.tensor": lambda x: torch.tensor(x),
+    "torch.Tensor.transpose": lambda x: x.transpose(1, 2),
+    "torch.transpose": lambda x: torch.transpose(x, 1, 2),
+    "torch.exp": lambda x: torch.exp(x),
+    "torch.Tensor.exp": lambda x: x.exp(),
+    "torch.abs": lambda x: torch.abs(x),
+    "torch.Tensor.abs": lambda x: x.abs(),
+    "torch.neg": lambda x: torch.neg(x),
+    "torch.Tensor.neg": lambda x: -x,
+    "torch.sin": lambda x: torch.sin(x),
+    "torch.Tensor.sin": lambda x: x.sin(),
+    "torch.cos": lambda x: torch.cos(x),
+    "torch.Tensor.cos": lambda x: x.cos(),
+    "torch.sinh": lambda x: torch.sinh(x),
+    "torch.Tensor.sinh": lambda x: x.sinh(),
+    "torch.cosh": lambda x: torch.cosh(x),
+    "torch.Tensor.cosh": lambda x: x.cosh(),
+    "torch.atan": lambda x: torch.atan(x),
+    "torch.Tensor.atan": lambda x: x.atan(),
+    "torch.ceil": lambda x: torch.ceil(x),
+    "torch.Tensor.ceil": lambda x: x.ceil(),
+    "torch.floor": lambda x: torch.floor(x),
+    "torch.Tensor.floor": lambda x: x.floor()
+}
 
-    module = UnaryModule(fn).cuda().eval()
+@pytest.mark.parametrize("op", unary_1d_randn_ops.keys())
+def test_unary_1d_randn(op):
+    module = UnaryModule(unary_1d_randn_ops[op]).cuda().eval()
     inputs = [torch.randn(1, 3, 3).cuda()]
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
+
+unary_1d_positive_ops = {
+    "torch.log": lambda x: torch.log(x),
+    "torch.Tensor.log": lambda x: x.log(),
+    "torch.sqrt": lambda x: torch.sqrt(x),
+    "torch.Tensor.sqrt": lambda x: x.sqrt(),
+    "torch.reciprocal": lambda x: torch.reciprocal(x),
+    "torch.Tensor.reciprocal": lambda x: x.reciprocal(),
+    "torch.tan": lambda x: torch.tan(x),
+    "torch.Tensor.tan": lambda x: x.tan(),
+    "torch.asin": lambda x: torch.asin(x),
+    "torch.Tensor.asin": lambda x: x.asin(),
+    "torch.acos": lambda x: torch.acos(x),
+    "torch.Tensor.acos": lambda x: x.acos(),
+}
+
+@pytest.mark.parametrize("op", unary_1d_positive_ops.keys())
+def test_unary_1d_ones(op):
+    module = UnaryModule(unary_1d_positive_ops[op]).cuda().eval()
+    inputs = [0.5 * torch.ones(1, 3, 3).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
 
 @pytest.mark.parametrize("op", ["mul", "__mul__", "__rmul__"])
 @pytest.mark.parametrize("scalar", [2, 2.])
@@ -700,3 +769,35 @@ def test_permute(permutation):
 
     inputs = [torch.randn(*sizes).cuda()]
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
+@pytest.mark.parametrize("op", [
+    "torch.pow",
+    "torch.Tensor.__ipow__",
+    "torch.Tensor.__pow__",
+    "torch.Tensor.__rpow__"
+])
+@pytest.mark.parametrize("scalar", [2, 2.])
+def test_scalar_op(op, scalar):
+    if op == "torch.pow":
+        fn = lambda x: torch.pow(x, scalar)
+    elif op == "torch.Tensor.__ipow__":
+        def ipow(x):
+            x **= scalar
+            return x
+        fn = ipow
+    elif op == "torch.Tensor.__pow__":
+        fn = lambda x: x ** scalar
+    elif op == "torch.Tensor.__rpow__":
+        fn = lambda x: scalar ** x
+
+
+    module = UnaryModule(fn).cuda().eval()
+    inputs = [torch.randn(1, 2).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
+
+def test_prelu():
+    module = nn.PReLU(4).cuda().eval()
+    inputs = [torch.randn(1, 4, 3, 3).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
