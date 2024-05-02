@@ -1283,12 +1283,11 @@ def convert_mean(ctx):
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     
-    # get dims from args or kwargs
-    if 'dim' in ctx.method_kwargs: 
-        dim = ctx.method_kwargs['dim']
-    elif len(ctx.method_args) >= 2:
-        dim = ctx.method_args[1]
-        
+    dim = get_arg(ctx, "dim", 1, None)
+    
+    if dim is None:
+        dim = [i for i in range(input.ndim)]
+
     # convert list to tuple
     if isinstance(dim, list):
         dim = tuple(dim)
@@ -1414,6 +1413,7 @@ def convert_narrow(ctx):
     start = [0]*len(shape)
     stride = [1]*len(shape)
     dim = ctx.method_args[1] if get_arg(ctx, 'dim', pos=1, default=0) >=0 else len(shape)+get_arg(ctx, 'dim', pos=1, default=0)
+    
     start[dim] = ctx.method_args[2]
     shape[dim] = ctx.method_args[3] 
     # not consider batch dimension
@@ -1469,7 +1469,10 @@ def convert_pad(ctx):
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
     
-    pad = ctx.method_args[1]
+    pad = get_arg(ctx, "pad", 1, None)
+    mode = get_arg(ctx, "mode", 2, "constant")
+    value = get_arg(ctx, "value", 3, 0.)
+
     pre_padding = (pad[2], pad[0])
     post_padding = (pad[3], pad[1])
     

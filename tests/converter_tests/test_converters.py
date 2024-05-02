@@ -598,3 +598,105 @@ def test_max_pool(nd, kernel_size, stride, padding, dilation, ceil_mode):
     inputs = [torch.randn(*input_size).cuda()]
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
 
+@pytest.mark.parametrize("op", ["min","max", "fmod"])
+def test_binary_op_elementwise(op):
+    if op == "max":
+        fn = lambda x, y: torch.max(x, y)
+    elif op == "min":
+        fn = lambda x, y: torch.min(x, y)
+    elif op == "fmod":
+        fn = lambda x, y: torch.fmod(x, y)
+
+
+    module = BinaryModule(fn).cuda().eval()
+    inputs = [torch.randn(1, 3, 3).cuda(), torch.randn(1, 3, 3).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
+@pytest.mark.parametrize("op", ["min","max","mean","sum"])
+def test_reduce_op(op):
+    if op == "max":
+        fn = lambda x: torch.max(x)
+    elif op == "min":
+        fn = lambda x: torch.min(x)
+    elif op == "mean":
+        fn = lambda x: torch.mean(x)
+    elif op == "sum":
+        fn = lambda x: torch.sum(x)
+
+    module = UnaryModule(fn).cuda().eval()
+    inputs = [torch.randn(1, 3, 3).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
+@pytest.mark.parametrize("op", ["mul", "__mul__", "__rmul__"])
+@pytest.mark.parametrize("scalar", [2, 2.])
+def test_mul_scalar(op, scalar):
+
+    op_map = {
+        "mul": lambda x: torch.mul(x, scalar),
+        "__mul__": lambda x: x * scalar,
+        "__rmul__": lambda x: scalar * x
+    }
+
+    module = UnaryModule(op_map[op]).cuda().eval()
+
+    inputs = [torch.randn(1, 3, 3).cuda()]
+
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
+@pytest.mark.parametrize("dim,start,length", [
+    (0, 0, 2),
+    (1, 1, 2),
+    (-1, -1, 1)
+])
+def test_narrow(dim, start, length):
+    module = UnaryModule(lambda x: torch.narrow(x, dim, start, length)).cuda().eval()
+
+    inputs = [torch.randn(3, 3).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
+
+def test_ne_binary():
+    module = BinaryModule(lambda x, y: x != y).cuda().eval()
+    inputs = [torch.zeros(1, 3, 3).cuda()]
+    inputs.append(inputs[0].clone())
+    inputs[0][0] = 1
+
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
+
+@pytest.mark.parametrize("p", [1, 2])
+@pytest.mark.parametrize("dim", [1, 2])
+def test_normalize(p, dim):
+    module = UnaryModule(lambda x: torch.nn.functional.normalize(x, p, dim)).cuda().eval()
+    inputs = [torch.zeros(1, 3, 3).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+    
+
+@pytest.mark.parametrize("pad,mode,value", [
+    ((1, 1), "constant", 0.),
+    ((1, 1, 2, 2), "constant", 0.),
+    ((0, 1, 2, 1, 3, 3), "constant", 0.),
+])
+def test_pad(pad, mode, value):
+    module = UnaryModule(
+        lambda x: torch.nn.functional.pad(
+            x, pad, mode, value
+        )
+    ).cuda().eval()
+    inputs = [torch.randn(3, 3, 4, 2).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+    
+
+@pytest.mark.parametrize("permutation", [
+    (0, 2, 1),
+    (0, 2, 1, 3)
+])
+def test_permute(permutation):
+
+    module = UnaryModule(
+        lambda x: x.permute(*permutation)
+    ).cuda().eval()
+    sizes = [i + 1 for i in range(len(permutation))]
+
+    inputs = [torch.randn(*sizes).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
