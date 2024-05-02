@@ -1,6 +1,6 @@
 # dummy converters throw warnings method encountered
 import tensorrt as trt
-from .dummy_converters import *
+from ..converters.unimplemented_converters import *
 
 # supported converters will override dummy converters
 
