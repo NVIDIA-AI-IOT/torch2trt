@@ -348,23 +348,17 @@ def convert_clamp(ctx):
     input = ctx.method_args[0]
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
-    if (("min" in ctx.method_kwargs and ctx.method_kwargs["min"] is not None)
-            and ("max" in ctx.method_kwargs and ctx.method_kwargs["max"] is not None)):
-        min_val = ctx.method_kwargs["min"]
-        max_val = ctx.method_kwargs["max"]
+    min_val = get_arg(ctx, "min", 1, None)
+    max_val = get_arg(ctx, "max", 2, None)
+    if min_val is not None and max_val is not None:
         layer = __add_clamp(ctx.network, input_trt, min_val, trt.ElementWiseOperation.MAX)
         layer = __add_clamp(ctx.network, layer.get_output(0), max_val, trt.ElementWiseOperation.MIN)
-    elif "min" in ctx.method_kwargs and ctx.method_kwargs["min"] is not None:
-        min_val = ctx.method_kwargs["min"]
+    elif min_val is not None:
         layer = __add_clamp(ctx.network, input_trt, min_val, trt.ElementWiseOperation.MAX)
-    elif "max" in ctx.method_kwargs and ctx.method_kwargs["max"] is not None:
-        max_val = ctx.method_kwargs["max"]
+    elif max_val is not None:
         layer = __add_clamp(ctx.network, input_trt, max_val, trt.ElementWiseOperation.MIN)
     else:
-        min_val = ctx.method_args[1]
-        max_val = ctx.method_args[2]
-        layer = __add_clamp(ctx.network, input_trt, min_val, trt.ElementWiseOperation.MAX)
-        layer = __add_clamp(ctx.network, layer.get_output(0), max_val, trt.ElementWiseOperation.MIN)
+        raise RuntimeError("Unsupported argument combination")
     
     output._trt = layer.get_output(0)
     
@@ -505,10 +499,12 @@ def convert_conv_transpose2d3d(ctx):
 
     kernel = weight.detach().cpu().numpy()
     
-    bias = trt.Weights(torch_dtype_to_trt(weight.dtype))
 
     if bias is not None:
         bias = bias.detach().cpu().numpy()
+    else:
+
+        bias = trt.Weights(torch_dtype_to_trt(weight.dtype))
 
     layer = ctx.network.add_deconvolution_nd(
         input=input_trt,
