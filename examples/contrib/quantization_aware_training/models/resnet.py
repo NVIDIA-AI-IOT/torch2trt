@@ -1,10 +1,8 @@
-"""
-Resnet implementation from Pytorch
-"""
-
 import torch
 import torch.nn as nn
-from utils.utilities import qrelu,qconv2d
+from utils.utilities import QConv2d,QMaxPool2d,QAdaptiveAvgPool2d
+from torch2trt.contrib.qat.layers.quant_generic_tensor import QuantGenericTensor
+from pytorch_quantization import tensor_quant
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
@@ -24,21 +22,22 @@ model_urls = {
 }
 
 
-def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1,norm=False,act=False,qat_mode=False,infer=False):
+def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1, qat_mode=False):
     """3x3 convolution with padding"""
-    return qconv2d(in_channels=in_planes,out_channels=out_planes,kernel_size=3,stride=stride,groups=groups,padding=dilation,dilation=dilation,bias=False,act=act,norm=norm,qat=qat_mode,infer=infer)
+    return QConv2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                     padding=dilation, groups=groups, bias=False, dilation=dilation, qat=qat_mode)
 
 
-def conv1x1(in_planes, out_planes, stride=1,norm=False,act=False,qat_mode=False,infer=False):
+def conv1x1(in_planes, out_planes, stride=1, qat_mode=False):
     """1x1 convolution"""
-    return qconv2d(in_channels=in_planes,out_channels=out_planes,kernel_size=1,stride=stride,bias=False,act=act,norm=norm,qat=qat_mode,infer=infer)
+    return QConv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False, qat=qat_mode)
 
 
 class BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1,
-                 base_width=64, dilation=1, norm_layer=None,qat_mode=False,infer=False):
+                 base_width=64, dilation=1, norm_layer=None, qat_mode=False):
         super(BasicBlock, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
@@ -47,29 +46,32 @@ class BasicBlock(nn.Module):
         if dilation > 1:
             raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
-        self.conv1 = conv3x3(inplanes, planes, stride,norm=True,qat_mode=qat_mode,infer=infer)
-        #self.bn1 = norm_layer(planes)
-        self.relu1 = qrelu(inplace=True,qat=qat_mode,infer=infer)
-        self.conv2 = conv3x3(planes, planes,norm=True,qat_mode=qat_mode,infer=infer)
-        #self.bn2 = norm_layer(planes)
-        self.relu2 = qrelu(inplace=True,qat=qat_mode,infer=infer)
+        self.conv1 = conv3x3(inplanes, planes, stride,qat_mode=qat_mode)
+        self.bn1 = norm_layer(planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = conv3x3(planes, planes,qat_mode=qat_mode)
+        self.bn2 = norm_layer(planes)
         self.downsample = downsample
         self.stride = stride
+        self.qat_mode= qat_mode
+        self.QuantGenericTensor = QuantGenericTensor(quant_desc_input=tensor_quant.QUANT_DESC_8BIT_PER_TENSOR)
 
     def forward(self, x):
         identity = x
 
         out = self.conv1(x)
-        #out = self.bn1(out)
-        out = self.relu1(out)
+        out = self.bn1(out)
+        out = self.relu(out)
 
         out = self.conv2(out)
-        #out = self.bn2(out)
+        out = self.bn2(out)
 
         if self.downsample is not None:
             identity = self.downsample(x)
+        if self.qat_mode:
+            identity = self.QuantGenericTensor(identity)
         out += identity
-        out = self.relu2(out)
+        out = self.relu(out)
 
         return out
 
@@ -78,17 +80,17 @@ class Bottleneck(nn.Module):
     expansion = 4
 
     def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1,
-                 base_width=64, dilation=1, norm_layer=None,qat_mode=False):
+                 base_width=64, dilation=1, norm_layer=None, qat_mode=False):
         super(Bottleneck, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         width = int(planes * (base_width / 64.)) * groups
         # Both self.conv2 and self.downsample layers downsample the input when stride != 1
-        self.conv1 = conv1x1(inplanes, width,qat_mode=qat_mode)
+        self.conv1 = conv1x1(inplanes, width, qat_mode=qat_mode)
         self.bn1 = norm_layer(width)
-        self.conv2 = conv3x3(width, width, stride, groups, dilation,qat_mode=qat_mode)
+        self.conv2 = conv3x3(width, width, stride, groups, dilation, qat_mode=qat_mode)
         self.bn2 = norm_layer(width)
-        self.conv3 = conv1x1(width, planes * self.expansion,qat_mode=qat_mode)
+        self.conv3 = conv1x1(width, planes * self.expansion, qat_mode=qat_mode)
         self.bn3 = norm_layer(planes * self.expansion)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -121,7 +123,7 @@ class ResNet(nn.Module):
 
     def __init__(self, block, layers, num_classes=10, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
-                 norm_layer=None,qat_mode=False,infer=False):
+                 norm_layer=None,qat_mode=False):
         super(ResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
@@ -138,18 +140,19 @@ class ResNet(nn.Module):
                              "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = qconv2d(in_channels=3, out_channels=self.inplanes, kernel_size=7, stride=2,padding=3,bias=False,norm=True,act=False,qat=qat_mode,infer=infer)
-        #self.bn1 = norm_layer(self.inplanes)
-        self.relu = qrelu(inplace=True,qat=qat_mode,infer=infer)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)   
-        self.layer1 = self._make_layer(block, 64, layers[0],qat_mode=qat_mode,infer=infer)
+        self.conv1 = QConv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
+                               bias=False, qat=qat_mode)
+        self.bn1 = norm_layer(self.inplanes)
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = QMaxPool2d(kernel_size=3, stride=2, padding=1,qat_mode=qat_mode)
+        self.layer1 = self._make_layer(block, 64, layers[0], qat_mode=qat_mode)
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
-                                       dilate=replace_stride_with_dilation[0],qat_mode=qat_mode,infer=infer)
+                                       dilate=replace_stride_with_dilation[0], qat_mode=qat_mode)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
-                                       dilate=replace_stride_with_dilation[1],qat_mode=qat_mode,infer=infer)
+                                       dilate=replace_stride_with_dilation[1], qat_mode=qat_mode)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
-                                       dilate=replace_stride_with_dilation[2],qat_mode=qat_mode,infer=infer)
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+                                       dilate=replace_stride_with_dilation[2], qat_mode=qat_mode)
+        self.avgpool = QAdaptiveAvgPool2d((1, 1),qat_mode=qat_mode)
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         for m in self.modules():
@@ -169,7 +172,7 @@ class ResNet(nn.Module):
                 elif isinstance(m, BasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block, planes, blocks, stride=1, dilate=False,qat_mode=False,infer=False):
+    def _make_layer(self, block, planes, blocks, stride=1, dilate=False, qat_mode=False):
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -178,24 +181,24 @@ class ResNet(nn.Module):
             stride = 1
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                conv1x1(self.inplanes, planes * block.expansion,stride= stride,norm=True,qat_mode=qat_mode,infer=infer),
-                #norm_layer(planes * block.expansion),
+                conv1x1(self.inplanes, planes * block.expansion, stride, qat_mode=qat_mode),
+                norm_layer(planes * block.expansion),
             )
 
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
-                            self.base_width, previous_dilation, norm_layer,qat_mode,infer=infer))
+                            self.base_width, previous_dilation, norm_layer, qat_mode=qat_mode))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(block(self.inplanes, planes, groups=self.groups,
                                 base_width=self.base_width, dilation=self.dilation,
-                                norm_layer=norm_layer,qat_mode=qat_mode,infer=infer))
+                                norm_layer=norm_layer,qat_mode=qat_mode))
 
         return nn.Sequential(*layers)
 
     def forward(self, x):
         x = self.conv1(x)
-        #x = self.bn1(x)
+        x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
@@ -203,7 +206,6 @@ class ResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)

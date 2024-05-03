@@ -23,14 +23,16 @@ class Cifar10Loaders:
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
     
-    def train_loader(self,shuffle=True):
+    def train_loader(self,shuffle=True,batch_size=None):
+        if batch_size == None:
+            batch_size = self.batch_size
         trainset = torchvision.datasets.CIFAR10(root=self.data_dir, train=True, download=True, transform=self.train_transform)
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.batch_size, shuffle=shuffle, num_workers=self.num_workers, pin_memory=self.pin_memory)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=shuffle, num_workers=self.num_workers, pin_memory=self.pin_memory)
         return trainloader
     
-    def test_loader(self,shuffle=False):
+    def test_loader(self,shuffle=False,batch_size=1):
         testset = torchvision.datasets.CIFAR10(root=self.data_dir, train=False, download=True, transform=self.test_transform)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=self.batch_size, shuffle=shuffle, num_workers=self.num_workers, pin_memory=self.pin_memory)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=shuffle, num_workers=self.num_workers, pin_memory=self.pin_memory)
         return testloader
     
     

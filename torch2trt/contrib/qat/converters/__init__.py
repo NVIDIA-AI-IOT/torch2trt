@@ -1,3 +1,4 @@
 from .QuantConv import *
-from .QuantConvBN import *
-from .QuantRelu import *
+from .QuantMaxPool2d import *
+from .QuantAdaptiveAvgPool2d import *
+from .QuantGenericTensor import *
