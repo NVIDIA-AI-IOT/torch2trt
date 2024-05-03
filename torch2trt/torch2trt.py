@@ -19,64 +19,16 @@ from .dataset import (
 
 from .flattener import Flattener
 from .flatten_module import Flatten, Unflatten
+from .version_utils import trt_version, torch_version
+from .trt_module import TRTModule
+from .misc_utils import (
+    torch_device_from_trt,
+    torch_device_to_trt,
+    torch_dtype_from_trt,
+    torch_dtype_to_trt,
+    trt_int_dtype
+)
 # UTILITY FUNCTIONS
-
-
-def trt_version():
-    return trt.__version__
-
-
-def torch_version():
-    return torch.__version__
-
-
-def torch_dtype_to_trt(dtype):
-    if trt_version() >= '7.0' and dtype == torch.bool:
-        return trt.bool
-    elif dtype == torch.int8:
-        return trt.int8
-    elif dtype == torch.int32:
-        return trt.int32
-    elif dtype == torch.float16:
-        return trt.float16
-    elif dtype == torch.float32:
-        return trt.float32
-    else:
-        raise TypeError("%s is not supported by tensorrt" % dtype)
-
-
-def torch_dtype_from_trt(dtype):
-    if dtype == trt.int8:
-        return torch.int8
-    elif trt_version() >= '7.0' and dtype == trt.bool:
-        return torch.bool
-    elif dtype == trt.int32:
-        return torch.int32
-    elif dtype == trt.float16:
-        return torch.float16
-    elif dtype == trt.float32:
-        return torch.float32
-    else:
-        raise TypeError("%s is not supported by torch" % dtype)
-
-
-def torch_device_to_trt(device):
-    if device.type == torch.device("cuda").type:
-        return trt.TensorLocation.DEVICE
-    elif device.type == torch.device("cpu").type:
-        return trt.TensorLocation.HOST
-    else:
-        return TypeError("%s is not supported by tensorrt" % device)
-
-
-def torch_device_from_trt(device):
-    if device == trt.TensorLocation.DEVICE:
-        return torch.device("cuda")
-    elif device == trt.TensorLocation.HOST:
-        return torch.device("cpu")
-    else:
-        return TypeError("%s is not supported by torch" % device)
-
 
 def trt_num_inputs(engine):
     count = 0
@@ -555,94 +507,6 @@ class ConversionContext(object):
 
 
 
-class TRTModule(torch.nn.Module):
-    def __init__(self, engine=None, input_names=None, output_names=None, input_flattener=None, output_flattener=None):
-        super(TRTModule, self).__init__()
-        self._register_state_dict_hook(TRTModule._on_state_dict)
-        self.engine = engine
-        if self.engine is not None:
-            self.context = self.engine.create_execution_context()
-        self.input_names = input_names
-        self.output_names = output_names
-        self.input_flattener = input_flattener
-        self.output_flattener = output_flattener
-    
-    def _on_state_dict(self, state_dict, prefix, local_metadata):
-        state_dict[prefix + "engine"] = bytearray(self.engine.serialize())
-        state_dict[prefix + "input_names"] = self.input_names
-        state_dict[prefix + "output_names"] = self.output_names
-        state_dict[prefix + "input_flattener"] = self.input_flattener.dict()
-        state_dict[prefix + "output_flattener"] = self.output_flattener.dict()
-
-    def _load_from_state_dict(
-        self,
-        state_dict,
-        prefix,
-        local_metadata,
-        strict,
-        missing_keys,
-        unexpected_keys,
-        error_msgs,
-    ):
-        engine_bytes = state_dict[prefix + "engine"]
-
-        with trt.Logger() as logger, trt.Runtime(logger) as runtime:
-            self.engine = runtime.deserialize_cuda_engine(engine_bytes)
-            self.context = self.engine.create_execution_context()
-
-        self.input_names = state_dict[prefix + "input_names"]
-        self.output_names = state_dict[prefix + "output_names"]
-
-        if 'input_flattener' in state_dict:
-            self.input_flattener = Flattener.from_dict(state_dict['input_flattener'])
-        else:
-            self.input_flattener = None
-
-        if 'output_flattener' in state_dict:
-            self.output_flattener = Flattener.from_dict(state_dict['output_flattener'])
-        else:
-            self.output_flattener = None
-
-    def forward(self, *inputs):
-        bindings = [None] * (len(self.input_names) + len(self.output_names))
-        
-        if self.input_flattener is not None:
-            inputs = self.input_flattener.flatten(inputs)
-
-        for i, input_name in enumerate(self.input_names):
-            idx = self.engine.get_binding_index(input_name)
-            shape = tuple(inputs[i].shape)
-            bindings[idx] = inputs[i].contiguous().data_ptr()
-            self.context.set_binding_shape(idx, shape)
-
-        # create output tensors
-        outputs = [None] * len(self.output_names)
-        for i, output_name in enumerate(self.output_names):
-            idx = self.engine.get_binding_index(output_name)
-            dtype = torch_dtype_from_trt(self.engine.get_binding_dtype(idx))
-            shape = tuple(self.context.get_binding_shape(idx))
-            device = torch_device_from_trt(self.engine.get_location(idx))
-            output = torch.empty(size=shape, dtype=dtype, device=device)
-            outputs[i] = output
-            bindings[idx] = output.data_ptr()
-
-        self.context.execute_async_v2(
-            bindings, torch.cuda.current_stream().cuda_stream
-        )
-
-        if self.output_flattener is not None:
-            outputs = self.output_flattener.unflatten(outputs)
-        else:
-            outputs = tuple(outputs)
-            if len(outputs) == 1:
-                outputs = outputs[0]
-
-        return outputs
-
-    def enable_profiling(self):
-        if not self.context.profiler:
-            self.context.profiler = trt.Profiler()
-
 def infer_dynamic_axes(min_shapes_flat, max_shapes_flat):
     dynamic_axes = [[] for i in range(len(min_shapes_flat))]
     for i, (mins, maxs) in enumerate(zip(min_shapes_flat, max_shapes_flat)):
@@ -782,7 +646,9 @@ def torch2trt(module,
             ctx.mark_outputs(outputs_flat, output_names)
 
     # set max workspace size
-    config.max_workspace_size = max_workspace_size
+    if trt_version() < "10.0":
+        config.max_workspace_size = max_workspace_size
+    
 
     # set number of avg timing itrs.
     if avg_timing_iterations is not None:
@@ -830,7 +696,10 @@ def torch2trt(module,
 
     # BUILD ENGINE
 
-    engine = builder.build_engine(network, config)
+    if trt_version() < "10.0":
+        engine = builder.build_engine(network, config)
+    else:
+        engine = builder.build_serialized_network(network, config)
 
     module_trt = TRTModule(engine, input_names, output_names, input_flattener=input_flattener, output_flattener=output_flattener)
 
@@ -912,16 +781,6 @@ def set_layer_precision(ctx, layer):
         layer.precision = trt.float16
         layer.set_output_type(0, trt.float16)
 
-        
-
-# from torch2trt.torch2trt import (
-#     torch2trt, 
-#     trt,
-#     tensorrt_converter,
-#     get_conversion_context,
-#     get_arg
-# )
-
 
 # SHAPE WRAPPING
 _int = int
@@ -937,7 +796,7 @@ class IntWrapper(int):
     def _trt(self):
         if not hasattr(self, '_raw_trt'):
             ctx = get_conversion_context()
-            self._raw_trt = ctx.network._network.add_constant([1], np.array([_int(self)], dtype=np.int32)).get_output(0)
+            self._raw_trt = ctx.network._network.add_constant([1], np.array([_int(self)], dtype=trt_int_dtype())).get_output(0)
         return self._raw_trt
 
     # lhs ops

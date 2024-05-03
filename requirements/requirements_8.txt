@@ -1,0 +1,5 @@
+tensorrt==8.6.1
+torch
+torchvision
+timm
+onnx_graphsurgeon

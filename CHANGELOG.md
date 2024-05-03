@@ -2,6 +2,10 @@
 
 ## [master](https://github.com/NVIDIA-AI-IOT/torch2trt/tree/master)
 
+- Added inference and conversion support for TensorRT 10
+- Removed redundant converters, and merged converters for ND convolutions, pooling, etc.
+- Migrated test cases to use PyTest
+- Added unique axis names when using ONNX to support mis-matched dynamic axes (needed for whisper)
 
 ## [v0.5.0](https://github.com/NVIDIA-AI-IOT/torch2trt/tree/v0.5.0) - 05/3/2024
 
