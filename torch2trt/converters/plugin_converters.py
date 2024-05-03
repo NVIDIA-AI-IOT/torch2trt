@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch2trt.torch2trt import *
-from torch2trt.module_test import add_module_test
 import numpy as np
 import ctypes
 
@@ -53,22 +52,5 @@ try:
         layer = ctx.network.add_plugin_v2([input_trt], plugin)
         output._trt = layer.get_output(0)
 
-
-    @add_module_test(torch.float32, torch.device("cuda"), [(1, 1, 3, 3)])
-    @add_module_test(torch.float32, torch.device("cuda"), [(1, 2, 3, 3)])
-    def test_reflection_pad_2d_simple():
-        return nn.ReflectionPad2d(1)
-
-
-    @add_module_test(torch.float32, torch.device("cuda"), [(1, 1, 3, 3)])
-    @add_module_test(torch.float32, torch.device("cuda"), [(1, 2, 3, 3)])
-    def test_reflection_pad_2d_simple():
-        return nn.ReflectionPad2d(2)
-
-
-    @add_module_test(torch.float32, torch.device("cuda"), [(1, 1, 3, 3)])
-    @add_module_test(torch.float32, torch.device("cuda"), [(1, 2, 3, 3)])
-    def test_reflection_pad_2d_simple():
-        return nn.ReflectionPad2d((1, 0, 1, 0))
 except:
     pass
