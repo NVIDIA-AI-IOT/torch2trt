@@ -76,48 +76,30 @@ def convert_softplus(ctx):
     output._trt = layer.get_output(0)
    
 
-@tensorrt_converter('torch.nn.functional.adaptive_avg_pool2d')
-def convert_adaptive_avg_pool2d(ctx):
-    input = ctx.method_args[0]
-    output_size = ctx.method_args[1]
-    output = ctx.method_return
-    
-    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
-
-    if not isinstance(output_size, tuple):
-        output_size = (output_size, ) * 2
-
-    stride = (input_trt.shape[-2] // output_size[-2], input_trt.shape[-1] // output_size[-1])
-
-    kernel_size = stride
-    layer = ctx.network.add_pooling(
-        input=input_trt, type=trt.PoolingType.AVERAGE, window_size=kernel_size)
-    layer.stride = stride
-
-    output._trt = layer.get_output(0)
-
-
-@tensorrt_converter('torch.nn.functional.adaptive_avg_pool3d')
-def convert_adaptive_avg_pool3d(ctx):
+def convert_adaptive_pool(ctx, pool_type: trt.PoolingType):
     input = ctx.method_args[0]
     output_size = ctx.method_args[1]
     output = ctx.method_return
 
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
 
-    if not isinstance(output_size, tuple):
-        output_size = (output_size,) * 3
+    nd = input.ndim - 2
 
-    stride = (
-        input_trt.shape[-3] // output_size[-3],
-        input_trt.shape[-2] // output_size[-2],
-        input_trt.shape[-1] // output_size[-1],
-    )
+    if nd == 1:
+        raise NotImplementedError
+        
+    if not isinstance(output_size, tuple):
+        output_size = (output_size,) * nd
+
+    stride = []
+    for i in range(nd):
+        idx = i - nd
+        stride.append(input.shape[idx] // output_size[idx])
 
     kernel_size = stride
     layer = ctx.network.add_pooling_nd(
         input=input_trt,
-        type=trt.PoolingType.AVERAGE,
+        type=pool_type,
         window_size=kernel_size,
     )
     layer.stride_nd = stride
@@ -125,47 +107,18 @@ def convert_adaptive_avg_pool3d(ctx):
     output._trt = layer.get_output(0)
 
 
+@tensorrt_converter('torch.nn.functional.adaptive_avg_pool1d')
+@tensorrt_converter('torch.nn.functional.adaptive_avg_pool2d')
+@tensorrt_converter('torch.nn.functional.adaptive_avg_pool3d')
+def convert_adaptive_avg_pool(ctx):
+    convert_adaptive_pool(ctx, trt.PoolingType.AVERAGE)
+
+
+@tensorrt_converter('torch.nn.functional.adaptive_max_pool1d')
 @tensorrt_converter('torch.nn.functional.adaptive_max_pool2d')
-def convert_adaptive_max_pool2d(ctx):
-    input = ctx.method_args[0]
-    output = ctx.method_return
-    
-    output_size = ctx.method_args[1]
-    if isinstance(output_size, int):
-        output_size = (output_size, ) * 2
-
-    stride = (input._trt.shape[-2] // output_size[-2], input._trt.shape[-1] // output_size[-1])
-
-    kernel_size = stride
-    layer = ctx.network.add_pooling(
-        input=input._trt, type=trt.PoolingType.MAX, window_size=kernel_size)
-    layer.stride = stride
-
-    output._trt = layer.get_output(0)
-
-
-@tensorrt_converter("torch.nn.functional.adaptive_max_pool3d")
-def convert_adaptive_max_pool3d(ctx):
-    input = ctx.method_args[0]
-    output = ctx.method_return
-
-    output_size = ctx.method_args[1]
-    if isinstance(output_size, int):
-        output_size = (output_size,) * 3
-
-    stride = (
-        input._trt.shape[-3] // output_size[-3],
-        input._trt.shape[-2] // output_size[-2],
-        input._trt.shape[-1] // output_size[-1],
-    )
-    
-    kernel_size = stride
-    layer = ctx.network.add_pooling_nd(
-        input=input._trt, type=trt.PoolingType.MAX, window_size=kernel_size
-    )
-    layer.stride_nd = stride
-
-    output._trt = layer.get_output(0)
+@tensorrt_converter('torch.nn.functional.adaptive_max_pool3d')
+def convert_adaptive_max_pool(ctx):
+    convert_adaptive_pool(ctx, trt.PoolingType.MAX)
 
 
 @tensorrt_converter('torch.add')
@@ -182,47 +135,6 @@ def convert_add(ctx):
     output._trt = layer.get_output(0)
 
 
-
-@tensorrt_converter('torch.nn.functional.avg_pool2d')
-@tensorrt_converter('torch.nn.functional.avg_pool3d')
-def convert_avg_pool(ctx):
-    # parse args
-    input = get_arg(ctx, 'input', pos=0, default=None)
-    kernel_size = get_arg(ctx, 'kernel_size', pos=1, default=None)
-    stride = get_arg(ctx, 'stride', pos=2, default=None)
-    padding = get_arg(ctx, 'padding', pos=3, default=0)
-    ceil_mode = get_arg(ctx, 'ceil_mode', pos=4, default=False)
-    count_include_pad = get_arg(ctx, 'count_include_pad', pos=5, default=True)
-    
-    # get input trt tensor (or create constant if it doesn't exist)
-    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
-    output = ctx.method_return
-
-    input_dim = input.dim() - 2
-
-    # get kernel size
-    if not isinstance(kernel_size, tuple):
-        kernel_size = (kernel_size, ) * input_dim
-
-    # get stride
-    if not isinstance(stride, tuple):
-        stride = (stride, ) * input_dim
-
-    # get padding
-    if not isinstance(padding, tuple):
-        padding = (padding, ) * input_dim
-
-    layer = ctx.network.add_pooling_nd(
-        input=input_trt, type=trt.PoolingType.AVERAGE, window_size=kernel_size)
-    
-    layer.stride_nd = stride
-    layer.padding_nd = padding
-    layer.average_count_excludes_padding = not count_include_pad
-    
-    if ceil_mode:
-        layer.padding_mode = trt.PaddingMode.EXPLICIT_ROUND_UP
-
-    output._trt = layer.get_output(0)
 
 
 @tensorrt_converter('torch.nn.functional.batch_norm')
@@ -607,7 +519,7 @@ def convert_flatten(ctx):
     # get flatten reduce dimensions
     if start_dim != end_dim:
         new_shape_trt.append(
-            ctx.network.add_constant([1], np.array([-1], dtype=np.int32)).get_output(0)
+            ctx.network.add_constant([1], np.array([-1], dtype=trt_int_dtype())).get_output(0)
         )
 
     # get shape after flatten
@@ -771,6 +683,21 @@ def convert_tensor_getitem(ctx):
     sizes = make_size_wrapper(sizes)
     strides = make_size_wrapper(strides)
     
+    # make positive
+    def make_positive(size):
+        sizes = []
+        for i in range(len(size)):
+            size_i = size[i]
+            if size_i < 0:
+                input_size_i = input_size[i]
+                size_i = input_size_i + size_i
+            sizes.append(size_i)
+        return make_size_wrapper(sizes)
+
+    starts = make_positive(starts)
+    sizes = make_positive(sizes)
+    strides = make_positive(strides)
+
     layer = ctx.network.add_slice(input_trt, starts, sizes, strides)
     layer.set_input(1, starts._trt)
     layer.set_input(2, sizes._trt)
@@ -1009,11 +936,35 @@ def convert_interpolate(ctx):
             scales = [scales] * input_dim
         layer.scales = [1, 1] + list(scales)
 
-    resize_mode = mode
-    if resize_mode.lower() in ["linear","bilinear","trilinear"]:
-        layer.resize_mode = trt.ResizeMode.LINEAR
+    def configure_resize_trt_10(layer):
+        if mode.lower() in ["linear", "bilinear", "trilinear"]:
+            layer.resize_mode = trt.InterpolationMode.LINEAR
+            layer.coordinate_transformation = trt.ResizeCoordinateTransformation.HALF_PIXEL
+        elif mode.lower() == 'nearest':
+            layer.resize_mode = trt.InterpolationMode.NEAREST
+        elif mode.lower() == "bicubic":
+            layer.resize_mode = trt.InterpolationMode.CUBIC
+            layer.coordinate_transformation = trt.ResizeCoordinateTransformation.HALF_PIXEL
+        else:
+            raise RuntimeError(f"Interpolation with mode={mode} is not supported by torch2trt.")
+        
+    
+    def configure_resize_trt_pre_10(layer):
+        if mode.lower() in ["linear", "bilinear", "trilinear"]:
+            layer.resize_mode = trt.ResizeMode.LINEAR
+            layer.coordinate_transformation = trt.ResizeCoordinateTransformation.HALF_PIXEL
+        elif mode.lower() == 'nearest':
+            layer.resize_mode = trt.ResizeMode.NEAREST
+        elif mode.lower() == "bicubic":
+            layer.resize_mode = trt.ResizeMode.CUBIC
+            layer.coordinate_transformation = trt.ResizeCoordinateTransformation.HALF_PIXEL
+        else:
+            raise RuntimeError(f"Interpolation with mode={mode} is not supported by torch2trt.")
+            
+    if trt_version() >= "10.0":
+        configure_resize_trt_10(layer)
     else:
-        layer.resize_mode=trt.ResizeMode.NEAREST
+        configure_resize_trt_pre_10(layer)
 
     if align_corners != None:
         if trt_version() > '8.0':
@@ -1098,26 +1049,61 @@ def convert_linear(ctx):
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
     output = ctx.method_return
 
-    # reshape to ...xNx1x1
-    layer = ctx.network.add_shuffle(input_trt)
-    layer.reshape_dims = tuple([0]*input.ndim) + (1, 1) 
+    if trt_version() < "10.0":
+        # reshape to ...xNx1x1
+        layer = ctx.network.add_shuffle(input_trt)
+        layer.reshape_dims = tuple([0]*input.ndim) + (1, 1) 
 
-    bias_trt = trt.Weights(torch_dtype_to_trt(weight.dtype))
-    if bias is not None:
-        bias_trt = bias.detach().cpu().numpy()
+        bias_trt = trt.Weights(torch_dtype_to_trt(weight.dtype))
+        if bias is not None:
+            bias_trt = bias.detach().cpu().numpy()
+            
+        # add fully connected
+        layer = ctx.network.add_fully_connected(
+            input=layer.get_output(0),
+            num_outputs=int(weight.shape[0]),
+            kernel=weight.detach().cpu().numpy(),
+            bias=bias_trt)
+
+        # reshape back to N
+        layer = ctx.network.add_shuffle(layer.get_output(0))
+        layer.reshape_dims = tuple([0] * output.ndim)
+        output._trt = layer.get_output(0)
+    else:
+        weight = weight.detach().cpu().numpy()
+
+        if bias is not None:
+            bias = bias.detach().cpu().numpy()
+        else:
+            bias = np.zeros((int(weight.shape[0]),), dtype=weight.dtype)
+
+        bias_shape = [1] * (input.ndim - 1) + [int(weight.shape[0])]
+        bias = bias.reshape(bias_shape)
+
         
-    # add fully connected
-    layer = ctx.network.add_fully_connected(
-        input=layer.get_output(0),
-        num_outputs=int(weight.shape[0]),
-        kernel=weight.detach().cpu().numpy(),
-        bias=bias_trt)
+        if weight.ndim < input.ndim:
+            weight = weight[None, ...]
+            
+        kernel_const = ctx.network.add_constant(tuple(weight.shape), weight)
+        bias_const = ctx.network.add_constant(tuple(bias.shape), bias)
 
-    # reshape back to N
-    layer = ctx.network.add_shuffle(layer.get_output(0))
-    layer.reshape_dims = tuple([0] * output.ndim)
+        mm = ctx.network.add_matrix_multiply(
+            input_trt,
+            trt.MatrixOperation.NONE,
+            kernel_const.get_output(0),
+            trt.MatrixOperation.TRANSPOSE
+        )
 
-    output._trt = layer.get_output(0)
+        bias_add = ctx.network.add_elementwise(
+            mm.get_output(0), 
+            bias_const.get_output(0), 
+            trt.ElementWiseOperation.SUM
+        
+        )
+
+        output._trt = bias_add.get_output(0)
+        
+
 
 
 @tensorrt_converter('torch.nn.functional.log_softmax')
@@ -1150,59 +1136,13 @@ def convert_matmul(ctx):
     z._trt = layer.get_output(0)
 
 
-@tensorrt_converter('torch.nn.functional.max_pool1d')
-def convert_max_pool1d(ctx):
-    # At the time of this implementation, TensorRT 8.x does not yet support max pooling in 1D using `add_pooling_nd(...)`.
-    # As such, we use a workaround here, by unsqueezing another dimension into the input (thus transforming it from
-    # (N, C, L) to (N, C, L, 1)) so that we can use 2D max pooling across the last three dimensions.
-
-    input = get_arg(ctx, 'input', pos=0, default=None)
-    input_trt = trt_(ctx.network, input)
-    output = ctx.method_return
-
-    kernel_size = get_arg(ctx, 'kernel_size', pos=1, default=None)
-    stride = get_arg(ctx, 'stride', pos=2, default=None)
-    padding = get_arg(ctx, 'padding', pos=3, default=0)
-    dilation = get_arg(ctx, 'dilation', pos=4, default=1)  # Unused.
-    return_indices = get_arg(ctx, 'return_indices', pos=5, default=False) # Unused.
-    ceil_mode = get_arg(ctx, 'ceil_mode', pos=6, default=False)
-
-    # Convert inputs to be 2d compatible as inputs will always be 1d.
-    kernel_size = (kernel_size, 1)
-    stride = kernel_size if not stride else (stride, 1)
-    padding = (padding, 0)
-
-    # Shuffle layer to unsqueeze another dimension for 2D max pooling.
-    unsqueeze_layer = ctx.network.add_shuffle(input_trt)
-    set_layer_precision(ctx, unsqueeze_layer)
-    unsqueeze_layer.reshape_dims = tuple([0]*input.ndim) + (1,) 
-    unsqueeze_trt = unsqueeze_layer.get_output(0)
-
-    # Use 2D max pooling here to fake 1D max pooling.
-    pooling_layer = ctx.network.add_pooling_nd(
-        input=unsqueeze_trt, type=trt.PoolingType.MAX, window_size=kernel_size
-    )
-    set_layer_precision(ctx, pooling_layer)
-    pooling_layer.stride = stride
-    pooling_layer.padding = padding
-
-    if ceil_mode:
-        pooling_layer.padding_mode = trt.PaddingMode.EXPLICIT_ROUND_UP
-
-    pooling_trt = pooling_layer.get_output(0)
-
-    # Shuffle layer to squeeze out dimension that was just added for 2D max pooling so return is still in 1D.
-    squeeze_layer = ctx.network.add_shuffle(pooling_trt)
-    set_layer_precision(ctx, squeeze_layer)
-    squeeze_layer.reshape_dims = tuple([0] * input.ndim)
-    output._trt = squeeze_layer.get_output(0)
-
-
 @tensorrt_converter("torch.nn.functional.max_pool3d")
 @tensorrt_converter("torch.max_pool3d")
 @tensorrt_converter("torch.nn.functional.max_pool2d")
 @tensorrt_converter("torch.max_pool2d")
-def convert_max_pool3d(ctx):
+@tensorrt_converter("torch.nn.functional.max_pool1d")
+@tensorrt_converter("torch.max_pool1d")
+def convert_max_pool_nd(ctx):
     # parse args
     input = get_arg(ctx, "input", pos=0, default=None)
     kernel_size = get_arg(ctx, "kernel_size", pos=1, default=None)
@@ -1210,6 +1150,8 @@ def convert_max_pool3d(ctx):
     padding = get_arg(ctx, "padding", pos=3, default=0)
     dilation = get_arg(ctx, "dilation", pos=4, default=1)
     ceil_mode = get_arg(ctx, "ceil_mode", pos=5, default=False)
+
+    trt_pooling_type = trt.PoolingType.MAX
 
     # get input trt tensor (or create constant if it doesn't exist)
     input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
@@ -1230,17 +1172,104 @@ def convert_max_pool3d(ctx):
     if not isinstance(padding, tuple):
         padding = (padding,) * ndim
 
-    layer = ctx.network.add_pooling_nd(
-        input=input_trt, type=trt.PoolingType.MAX, window_size=kernel_size
+    # Shuffle layer to unsqueeze another dimension for 2D max pooling.
+    if ndim == 1:
+        kernel_size = kernel_size + (1,)
+        stride = stride + (1,)
+        padding = padding + (0,)
+        unsqueeze_layer = ctx.network.add_shuffle(input_trt)
+        set_layer_precision(ctx, unsqueeze_layer)
+        unsqueeze_layer.reshape_dims = tuple([0]*input.ndim) + (1,) 
+        pool_input = unsqueeze_layer.get_output(0)
+    else:
+        pool_input = input_trt
+
+    pooling_layer = ctx.network.add_pooling_nd(
+        input=pool_input, type=trt_pooling_type, window_size=kernel_size
     )
 
-    layer.stride_nd = stride
-    layer.padding_nd = padding
+    pooling_layer.stride_nd = stride
+    pooling_layer.padding_nd = padding
 
     if ceil_mode:
-        layer.padding_mode = trt.PaddingMode.EXPLICIT_ROUND_UP
+        pooling_layer.padding_mode = trt.PaddingMode.EXPLICIT_ROUND_UP
 
-    output._trt = layer.get_output(0)
+    
+    if ndim == 1:
+        squeeze_layer = ctx.network.add_shuffle(pooling_layer.get_output(0))
+        set_layer_precision(ctx, squeeze_layer)
+        squeeze_layer.reshape_dims = tuple([0] * input.ndim)
+
+        output._trt = squeeze_layer.get_output(0)
+    else:
+        output._trt = pooling_layer.get_output(0)
+
+
+
+@tensorrt_converter("torch.nn.functional.avg_pool3d")
+@tensorrt_converter("torch.avg_pool3d")
+@tensorrt_converter("torch.nn.functional.avg_pool2d")
+@tensorrt_converter("torch.avg_pool2d")
+@tensorrt_converter("torch.nn.functional.avg_pool1d")
+@tensorrt_converter("torch.avg_pool1d")
+def convert_avg_pool_nd(ctx):
+    # parse args
+    input = get_arg(ctx, 'input', pos=0, default=None)
+    kernel_size = get_arg(ctx, 'kernel_size', pos=1, default=None)
+    stride = get_arg(ctx, 'stride', pos=2, default=None)
+    padding = get_arg(ctx, 'padding', pos=3, default=0)
+    ceil_mode = get_arg(ctx, 'ceil_mode', pos=4, default=False)
+    count_include_pad = get_arg(ctx, 'count_include_pad', pos=5, default=True)
+    
+    # get input trt tensor (or create constant if it doesn't exist)
+    input_trt = add_missing_trt_tensors(ctx.network, [input])[0]
+    output = ctx.method_return
+
+    input_dim = input.dim() - 2
+
+    # get kernel size
+    if not isinstance(kernel_size, tuple):
+        kernel_size = (kernel_size, ) * input_dim
+
+    # get stride
+    if not isinstance(stride, tuple):
+        stride = (stride, ) * input_dim
+
+    # get padding
+    if not isinstance(padding, tuple):
+        padding = (padding, ) * input_dim
+
+    # Shuffle layer to unsqueeze another dimension for 2D max pooling.
+    if input_dim == 1:
+        kernel_size = kernel_size + (1,)
+        stride = stride + (1,)
+        padding = padding + (0,)
+        unsqueeze_layer = ctx.network.add_shuffle(input_trt)
+        set_layer_precision(ctx, unsqueeze_layer)
+        unsqueeze_layer.reshape_dims = tuple([0]*input.ndim) + (1,) 
+        pool_input = unsqueeze_layer.get_output(0)
+    else:
+        pool_input = input_trt
+
+    pooling_layer = ctx.network.add_pooling_nd(
+        input=pool_input, type=trt.PoolingType.AVERAGE, window_size=kernel_size)
+    
+    pooling_layer.stride_nd = stride
+    pooling_layer.padding_nd = padding
+    pooling_layer.average_count_excludes_padding = not count_include_pad
+    
+    if ceil_mode:
+        pooling_layer.padding_mode = trt.PaddingMode.EXPLICIT_ROUND_UP
+
+    if input_dim == 1:
+        squeeze_layer = ctx.network.add_shuffle(pooling_layer.get_output(0))
+        set_layer_precision(ctx, squeeze_layer)
+        squeeze_layer.reshape_dims = tuple([0] * input.ndim)
+
+        output._trt = squeeze_layer.get_output(0)
+    else:
+        output._trt = pooling_layer.get_output(0)
+
 
 
 def __convert_max_elementwise(ctx):
@@ -1992,7 +2021,7 @@ def convert_unsqueeze(ctx):
     # add unsqueeze dim
     new_shape_trt.insert(
         dim,
-        ctx.network.add_constant([1], np.array([1], dtype=np.int32)).get_output(0)
+        ctx.network.add_constant([1], np.array([1], dtype=trt_int_dtype())).get_output(0)
     )
 
     new_shape_trt = ctx.network.add_concatenation(new_shape_trt).get_output(0)

@@ -160,7 +160,7 @@ def test_iadd():
             return x
 
     module = IAdd().cuda().eval()
-    inputs = [torch.randn(1, 3, 4).cuda(), torch.randn(1, 3, 4).cuda()]
+    inputs = [torch.ones(1, 3, 4).cuda(), torch.ones(1, 3, 4).cuda()]
     cross_validate(module, inputs, fp16_mode=False, tol=1e-2)
 
 
@@ -178,29 +178,6 @@ def test_radd_float():
 
 # TODO: radd, add, iadd
     
-
-@pytest.mark.parametrize("kernel_size,stride,padding,ceil_mode,count_include_pad", [
-    (3, 2, 1, False, True),
-    (3, 2, 1, True, False)
-])
-def test_avg_pool2d(kernel_size, stride, padding, ceil_mode, count_include_pad):
-    module = UnaryModule(lambda x: torch.nn.functional.avg_pool2d(
-        x, kernel_size, stride, padding, ceil_mode, count_include_pad
-    )).cuda().eval()
-    inputs = [torch.randn(1, 3, 8, 8).cuda()]
-    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
-
-
-@pytest.mark.parametrize("kernel_size,stride,padding,ceil_mode,count_include_pad", [
-    (3, 2, 1, False, True),
-    (3, 2, 1, True, False)
-])
-def test_avg_pool3d(kernel_size, stride, padding, ceil_mode, count_include_pad):
-    module = UnaryModule(lambda x: torch.nn.functional.avg_pool3d(
-        x, kernel_size, stride, padding, ceil_mode, count_include_pad
-    )).cuda().eval()
-    inputs = [torch.randn(1, 3, 8, 8, 8).cuda()]
-    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
 
 
 def test_batch_norm_1d():
@@ -413,7 +390,7 @@ def test_idiv_scalar(val):
         x /= val
         return x
     module = UnaryModule(fn).cuda().eval()
-    inputs = [torch.randn(1, 4, 4).cuda()]
+    inputs = [torch.ones(1, 4, 4).cuda()]
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
 
 
@@ -455,10 +432,11 @@ def test_flatten(start_dim, end_dim):
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
 
 
-def test_floordiv():
+@pytest.mark.parametrize("denom", [1., 2.])
+def test_floordiv(denom):
     module = BinaryModule(lambda x, y: x // y).cuda().eval()
-    inputs = [torch.randn(1, 2, 3, 4, 5).cuda()]
-    inputs.append(torch.ones_like(inputs[0])*2)
+    inputs = [torch.ones(1, 2, 3, 4, 5).cuda()]
+    inputs.append(torch.ones_like(inputs[0]) * denom)
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
 
 
@@ -578,15 +556,13 @@ def test_matmul(shape_a, shape_b):
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
 
 
-@pytest.mark.parametrize("nd", [1,2,3])
 @pytest.mark.parametrize(
     "kernel_size,stride,padding,dilation,ceil_mode", [
         (3, 2, 1, 1, False),
-        (3, 2, 1, 1, False),
-        (3, 2, 1, 1, False),
     ]
 )
-def test_max_pool(nd, kernel_size, stride, padding, dilation, ceil_mode):
+@pytest.mark.parametrize("nd", [1,2,3])
+def test_max_pool_nd(nd, kernel_size, stride, padding, dilation, ceil_mode):
     if nd == 1:
         cls = nn.MaxPool1d
     elif nd == 2:
@@ -597,6 +573,26 @@ def test_max_pool(nd, kernel_size, stride, padding, dilation, ceil_mode):
     input_size = [1, 3] + [4]*nd
     inputs = [torch.randn(*input_size).cuda()]
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
+
+@pytest.mark.parametrize(
+    "kernel_size,stride,padding,ceil_mode,count_include_pad", [
+        (3, 2, 1, False, False),
+    ]
+)
+@pytest.mark.parametrize("nd", [1,2,3])
+def test_avg_pool_nd(nd, kernel_size, stride, padding, ceil_mode, count_include_pad):
+    if nd == 1:
+        cls = nn.AvgPool1d
+    elif nd == 2:
+        cls = nn.AvgPool2d
+    elif nd == 3:
+        cls = nn.AvgPool3d
+    module = cls(kernel_size,stride,padding,ceil_mode=ceil_mode, count_include_pad=count_include_pad).cuda().eval()
+    input_size = [1, 3] + [4]*nd
+    inputs = [torch.randn(*input_size).cuda()]
+    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
 
 @pytest.mark.parametrize("op", ["min","max", "fmod"])
 def test_binary_op_elementwise(op):

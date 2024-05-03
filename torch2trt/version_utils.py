@@ -4,11 +4,11 @@ import torch
 
 
 def trt_version():
-    return trt.__version__
+    return Version(trt.__version__)
 
 
 def torch_version():
-    return torch.__version__
+    return Version(torch.__version__)
 
 
 class Version(packaging.version.Version):
