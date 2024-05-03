@@ -51,7 +51,7 @@ if '--contrib' in sys.argv:
 
 setup(
     name='torch2trt',
-    version='0.4.0',
+    version='0.5.0',
     description='An easy to use PyTorch to TensorRT converter',
     packages=find_packages(exclude=exclude_dir),
     ext_package='torch2trt',
