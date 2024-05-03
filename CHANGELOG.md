@@ -2,6 +2,9 @@
 
 ## [master](https://github.com/NVIDIA-AI-IOT/torch2trt/tree/master)
 
+
+## [v0.5.0](https://github.com/NVIDIA-AI-IOT/torch2trt/tree/v0.5.0) - 05/3/2024
+
 - Added tensor shape tracking to support dynamic shapes for flatten, squeeze, unsqueeze, view, reshape, interpolate, and getitem methods
 - Added EasyOCR example
 - Added the ``DatasetRecorder`` context manager, allowing to easily capture of module inputs in large pipeline for calibration and shape inference
