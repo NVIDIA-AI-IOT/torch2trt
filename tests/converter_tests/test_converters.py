@@ -179,22 +179,28 @@ def test_radd_float():
 # TODO: radd, add, iadd
     
 
+@pytest.mark.parametrize("with_conv", [True, False])
+@pytest.mark.parametrize("nd", [1,2,3])
+def test_batch_norm_nd(nd, with_conv):
+    modules = []
+    if nd == 1:
+        if with_conv:
+            modules.append(nn.Conv1d(3, 3, 1)) # with conv, because scale layer not implemented sometimes.
+        modules.append(nn.BatchNorm1d(3))
+    if nd == 2:
+        if with_conv:
+            modules.append(nn.Conv2d(3, 3, 1))
+        modules.append(nn.BatchNorm2d(3))
+    if nd == 3:
+        if with_conv:
+            modules.append(nn.Conv3d(3, 3, 1))
+        modules.append(nn.BatchNorm3d(3))
 
-def test_batch_norm_1d():
-    module = nn.BatchNorm1d(3).cuda().eval()
-    inputs = [torch.randn(2, 3, 4).cuda()]
-    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+    module = nn.Sequential(*modules).cuda().eval()
 
+    input_size = [2, 3] + [4] * nd
 
-def test_batch_norm_2d():
-    module = nn.BatchNorm2d(3).cuda().eval()
-    inputs = [torch.randn(2, 3, 4, 4).cuda()]
-    cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
-
-
-def test_batch_norm_3d():
-    module = nn.BatchNorm3d(3).cuda().eval()
-    inputs = [torch.randn(2, 3, 4, 4, 4).cuda()]
+    inputs = [torch.randn(*input_size).cuda()]
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
 
 

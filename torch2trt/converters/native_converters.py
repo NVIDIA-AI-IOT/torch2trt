@@ -342,10 +342,6 @@ def convert_gt(ctx):
 
 
 @tensorrt_converter('torch.nn.functional.conv1d')
-def convert_conv1d(ctx):
-    raise NotImplementedError
-
-
 @tensorrt_converter('torch.nn.functional.conv2d')
 @tensorrt_converter('torch.nn.functional.conv3d')
 def convert_conv2d3d(ctx):
@@ -376,31 +372,53 @@ def convert_conv2d3d(ctx):
     if not isinstance(dilation, tuple):
         dilation = (dilation, ) * input_dim
 
+
     kernel = weight.detach().cpu().numpy()
     
     if bias is not None:
         bias = bias.detach().cpu().numpy()
 
-    layer = ctx.network.add_convolution_nd(
-        input=input_trt,
+    # Handle reshape 1D to 2D
+    if input_dim == 1:
+        kernel_size = kernel_size + (1,)
+        stride = stride + (1,)
+        padding = padding + (0,)
+        dilation = dilation + (1,)
+        unsqueeze_layer = ctx.network.add_shuffle(input_trt)
+        set_layer_precision(ctx, unsqueeze_layer)
+        unsqueeze_layer.reshape_dims = tuple([0]*input.ndim) + (1,) 
+        conv_input = unsqueeze_layer.get_output(0)
+    else:
+        conv_input = input_trt
+
+
+    conv_layer = ctx.network.add_convolution_nd(
+        input=conv_input,
         num_output_maps=out_channels,
         kernel_shape=kernel_size,
         kernel=kernel,
         bias=bias)
-    layer.stride_nd = stride
-    layer.padding_nd = padding
-    layer.dilation_nd = dilation
+    conv_layer.stride_nd = stride
+    conv_layer.padding_nd = padding
+    conv_layer.dilation_nd = dilation
 
     if groups is not None:
-        layer.num_groups = groups
+        conv_layer.num_groups = groups
 
-    output._trt = layer.get_output(0)
+    output._trt = conv_layer.get_output(0)
+
+    # Handle reshape 2D backt o 1D
+    if input_dim == 1:
+        squeeze_layer = ctx.network.add_shuffle(conv_layer.get_output(0))
+        set_layer_precision(ctx, squeeze_layer)
+        squeeze_layer.reshape_dims = tuple([0] * input.ndim)
+        output._trt = squeeze_layer.get_output(0)
+    else:
+        output._trt = conv_layer.get_output(0)
+
 
 
 @tensorrt_converter('torch.nn.functional.conv_transpose1d')
-def convert_conv_transpose1d(ctx):
-    raise NotImplementedError
-
 @tensorrt_converter('torch.nn.functional.conv_transpose2d')
 @tensorrt_converter('torch.nn.functional.conv_transpose3d')
 def convert_conv_transpose2d3d(ctx):
@@ -442,19 +460,43 @@ def convert_conv_transpose2d3d(ctx):
 
         bias = trt.Weights(torch_dtype_to_trt(weight.dtype))
 
-    layer = ctx.network.add_deconvolution_nd(
-        input=input_trt,
+
+    # Handle reshape 1D to 2D
+    if input_dim == 1:
+        kernel_size = kernel_size + (1,)
+        stride = stride + (1,)
+        padding = padding + (0,)
+        dilation = dilation + (1,)
+        unsqueeze_layer = ctx.network.add_shuffle(input_trt)
+        set_layer_precision(ctx, unsqueeze_layer)
+        unsqueeze_layer.reshape_dims = tuple([0]*input.ndim) + (1,) 
+        conv_input = unsqueeze_layer.get_output(0)
+    else:
+        conv_input = input_trt
+
+
+    conv_layer = ctx.network.add_deconvolution_nd(
+        input=conv_input,
         num_output_maps=out_channels,
         kernel_shape=kernel_size,
         kernel=kernel,
         bias=bias)
-    layer.stride_nd = stride
-    layer.padding_nd = padding
+    conv_layer.stride_nd = stride
+    conv_layer.padding_nd = padding
     
     if groups is not None:
-        layer.num_groups = groups
+        conv_layer.num_groups = groups
 
-    output._trt = layer.get_output(0)
+
+    # Handle reshape 2D backt o 1D
+    if input_dim == 1:
+        squeeze_layer = ctx.network.add_shuffle(conv_layer.get_output(0))
+        set_layer_precision(ctx, squeeze_layer)
+        squeeze_layer.reshape_dims = tuple([0] * input.ndim)
+        output._trt = squeeze_layer.get_output(0)
+    else:
+        output._trt = conv_layer.get_output(0)
+
 
 
 @tensorrt_converter('torch.div')
