@@ -3,7 +3,7 @@ import torch
 
 
 def _default_condition(x):
-    return isinstance(x, torch.Tensor) and (x.dtype is torch.half or x.dtype is torch.float or x.dtype == torch.bool)
+    return isinstance(x, torch.Tensor) and (x.dtype is torch.half or x.dtype is torch.float or x.dtype == torch.bool or x.dtype == torch.int32 or x.dtype == torch.int64 or x.dtype == torch.long)
 
 
 def _make_schema_from_value(value, condition=_default_condition, size=0):
