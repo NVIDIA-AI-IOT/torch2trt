@@ -203,6 +203,11 @@ def test_batch_norm_nd(nd, with_conv):
     inputs = [torch.randn(*input_size).cuda()]
     cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
 
+    if nd == 1:
+        input_size = [2, 3]
+        inputs = [torch.randn(*input_size).cuda()]
+        cross_validate(module, inputs, fp16_mode=False, tol=1e-1)
+
 
 @pytest.mark.parametrize("dim", [1, -1])
 def test_cat(dim):

@@ -156,7 +156,7 @@ def convert_batch_norm(ctx):
     bias = bias.detach().cpu().numpy() - running_mean.detach().cpu().numpy() * scale
     power = np.ones_like(scale)
 
-    if ndim == 1:
+    if ndim == 1 or ndim == 0:
         # reshape to 2D
         layer = ctx.network.add_shuffle(input_trt)
         
@@ -171,7 +171,7 @@ def convert_batch_norm(ctx):
 
     layer = ctx.network.add_scale_nd(scale_input, trt.ScaleMode.CHANNEL, bias, scale, power, 1)
 
-    if ndim == 1:
+    if ndim == 1 or ndim == 0:
         # reshape back to 1D
         layer = ctx.network.add_shuffle(layer.get_output(0))
         if len(input.shape) == 2:
