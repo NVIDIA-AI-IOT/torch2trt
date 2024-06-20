@@ -18,7 +18,7 @@ If you find an issue, please [let us know](../..//issues)!
 
 ## Usage
 
-Below are some usage examples, for more check out the [notebooks](notebooks).
+Below are some usage examples, for more check out the [examples](examples).
 
 ### Convert
 
